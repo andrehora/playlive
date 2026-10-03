@@ -2,12 +2,8 @@
 
 https://andrehora.github.io/playlive/
 
-Playlive runs end-to-end tests live in the browser. Write tests in a small YAML
-format, pick one of the 50 example sites, press **Run all**, and watch each step
-happen while the results update. Tests export to Playwright and Cypress.
-
-No build step: plain ES modules, served as they are. `index.html` is the page,
-`src/` is the app, and each example site is a real page in `examples/`.
+Playlive runs end-to-end tests live in the browser.
+Write tests in a small YAML format.
 
 ## Running it locally
 
@@ -27,12 +23,5 @@ of the shipped page.
 npm install
 npx playwright install chromium
 
-npm test                 # everything, about a minute
-npm run test:examples    # every example site's own tests
-npm run test:app         # the app: picker, editor, running, recorder, export, layout
-npm run test:exports     # every export is valid JavaScript
-npm run test:report      # open the report of the last run
+npm test
 ```
-
-The suite starts its own server. It needs network access, because the page loads
-js-yaml from cdnjs.
