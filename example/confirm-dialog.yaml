@@ -1,0 +1,20 @@
+site: confirm-dialog
+
+beforeEach:
+  - click: { role: button, name: Delete project }
+
+test: Asks before deleting
+steps:
+  - expectVisible: { role: dialog }
+  - expectText: "This can't be undone."
+
+test: Cancel keeps the project
+steps:
+  - click: { role: button, name: Cancel }
+  - expectText: Kept Website redesign.
+
+test: Confirm deletes the project
+steps:
+  - click: { role: button, name: Delete }
+  - expectText: Project deleted.
+  - expectText: No projects.

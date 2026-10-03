@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Coupon code</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#b45309}</style>
+</head>
+<body>
+<h1>Your order</h1>
+<p>Subtotal: $60.00</p><p id="disc" hidden></p><p id="ship"></p><p id="total"><strong></strong></p>
+<label for="code">Coupon code</label><input id="code" autocomplete="off">
+<button id="apply" type="button">Apply</button>
+<p id="err" role="alert"></p><p id="ok" class="ok" hidden></p>
+
+<script>
+const SUB=60;let disc=0,ship=5;
+function upd(){$('disc').hidden=!disc;$('disc').textContent='Discount: -$'+disc.toFixed(2);
+  $('ship').textContent='Shipping: '+(ship?'$'+ship.toFixed(2):'Free');$('total').firstChild.textContent='Total: $'+(SUB-disc+ship).toFixed(2);}
+$('apply').onclick=()=>{const c=$('code').value.trim().toUpperCase();$('ok').hidden=true;$('err').textContent='';disc=0;ship=5;
+  if(c==='SAVE10'){disc=SUB*0.1;$('ok').hidden=false;$('ok').textContent='SAVE10 applied: 10% off.';}
+  else if(c==='FREESHIP'){ship=0;$('ok').hidden=false;$('ok').textContent='FREESHIP applied: free shipping.';}
+  else if(c==='SUMMER20'){$('err').textContent='This code expired on August 31.';}
+  else if(!c){$('err').textContent='Enter a coupon code.';}
+  else{$('err').textContent="We don't recognize the code "+c+'.';}
+  upd();};
+upd();
+</script>
+</body>
+</html>

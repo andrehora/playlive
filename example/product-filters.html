@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Product filters</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#b45309}</style>
+</head>
+<body>
+<h1>Shop</h1>
+<fieldset><legend>Category</legend>
+<label class="inline"><input type="checkbox" class="cat" value="Shoes"> Shoes</label>
+<label class="inline"><input type="checkbox" class="cat" value="Shirts"> Shirts</label>
+<label class="inline"><input type="checkbox" class="cat" value="Hats"> Hats</label></fieldset>
+<label class="inline"><input type="checkbox" id="stock"> In stock only</label>
+<label for="sort">Sort by</label><select id="sort"><option>Name</option><option>Price: low to high</option><option>Price: high to low</option></select>
+<p id="count"></p><ul id="list" class="clean"></ul>
+
+<script>
+const P=[['Runner shoes','Shoes',80,true],['Trail boots','Shoes',120,false],['Linen shirt','Shirts',45,true],['Flannel shirt','Shirts',55,false],['Sun hat','Hats',25,true],['Wool beanie','Hats',20,true]];
+function upd(){const cats=[...document.querySelectorAll('.cat:checked')].map(c=>c.value),s=$('sort').value;
+  const r=P.filter(p=>(!cats.length||cats.includes(p[1]))&&(!$('stock').checked||p[3]));
+  r.sort((a,b)=>s==='Name'?a[0].localeCompare(b[0]):s==='Price: low to high'?a[2]-b[2]:b[2]-a[2]);
+  $('count').textContent=r.length?'Showing '+r.length+(r.length===1?' product':' products'):'No products match these filters.';
+  $('list').innerHTML='';r.forEach((p,i)=>{const li=document.createElement('li');li.textContent=(i+1)+'. '+p[0]+' · $'+p[2]+(p[3]?'':' · out of stock');$('list').appendChild(li);});}
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('change',upd));upd();
+</script>
+</body>
+</html>

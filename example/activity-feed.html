@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Load more feed</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Activity</h1><p id="count"></p><ul id="feed" class="clean"></ul>
+<button id="more" type="button">Load more</button><p id="end" hidden>You're all caught up.</p>
+
+<script>
+const who=['Ana','Ben','Cleo','Dev','Eva','Finn'];const what=['liked your photo','commented on your post','started following you','shared your article','mentioned you'];
+const A=[];for(let i=0;i<30;i++)A.push(who[i%6]+' '+what[i%5]);let shown=0;
+function render(){$('feed').innerHTML='';A.slice(0,shown).forEach((a,i)=>{const li=document.createElement('li');li.textContent=(i+1)+'. '+a;$('feed').appendChild(li);});
+  $('count').textContent='Showing '+shown+' of '+A.length;$('more').hidden=shown>=A.length;$('end').hidden=shown<A.length;}
+$('more').onclick=()=>{const b=$('more');b.disabled=true;b.textContent='Loading…';
+  setTimeout(()=>{b.disabled=false;b.textContent='Load more';shown=Math.min(shown+10,A.length);render();},400);};
+shown=10;render();
+</script>
+</body>
+</html>

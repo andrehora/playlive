@@ -1,0 +1,17 @@
+site: retry-on-error
+
+# The first request always fails, like a dropped connection.
+# The tests check that the error is clear and that retrying works.
+
+test: Shows a clear error first
+steps:
+  - click: { role: button, name: Load orders }
+  - expectText: "We couldn't load your orders."
+  - expectVisible: { role: button, name: Try again }
+
+test: Retrying loads the orders
+steps:
+  - click: { role: button, name: Load orders }
+  - click: { role: button, name: Try again }
+  - expectText: 3 orders
+  - expectText: "Order #5002 · Shipped"

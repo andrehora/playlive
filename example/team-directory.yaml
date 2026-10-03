@@ -1,0 +1,24 @@
+site: team-directory
+
+test: Sorted by name by default
+steps:
+  - expectText: Sorted by name, A to Z
+  - expectText: 1 Ana Souza
+
+test: Clicking the name again reverses the order
+steps:
+  - click: { role: button, name: Sort by name }
+  - expectText: Sorted by name, Z to A
+  - expectText: 1 Eva Lund
+
+test: Sorts by start year
+steps:
+  - click: { role: button, name: Sort by start year }
+  - expectText: Sorted by start year, oldest first
+  - expectText: 1 Dev Patel
+
+test: Filters by name
+steps:
+  - fill: { label: Filter by name }
+    value: lund
+  - expectText: 1 of 5 people

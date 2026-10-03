@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Photo gallery</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Travel photos</h1>
+<figure style="margin:0"><div id="img" style="height:180px;border-radius:10px"></div><figcaption id="cap" style="margin-top:8px;font-weight:600"></figcaption></figure>
+<p id="pos"></p>
+<div class="row"><button id="prev" type="button" class="secondary">Previous photo</button><button id="next" type="button" class="secondary">Next photo</button></div>
+<div class="row" id="thumbs"></div>
+
+<script>
+const P=[['Lighthouse at dawn','#f59e0b'],['Mountain lake','#0ea5e9'],['City at night','#312e81'],['Desert road','#d97706'],['Forest path','#15803d']];let i=0;
+P.forEach((p,k)=>{const b=document.createElement('button');b.type='button';b.style.cssText='width:44px;height:30px;padding:0;margin-top:10px;background:'+p[1];
+  b.setAttribute('aria-label','Show '+p[0]);b.onclick=()=>{i=k;render();};$('thumbs').appendChild(b);});
+function render(){$('img').style.background=P[i][1];$('cap').textContent=P[i][0];$('pos').textContent='Photo '+(i+1)+' of '+P.length;}
+$('prev').onclick=()=>{i=(i+P.length-1)%P.length;render();};$('next').onclick=()=>{i=(i+1)%P.length;render();};render();
+</script>
+</body>
+</html>

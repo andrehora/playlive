@@ -1,0 +1,40 @@
+site: expense-splitter
+
+flows:
+  ana_pays_dinner:
+    - fill: { label: Description }
+      value: Dinner
+    - fill: { label: Amount }
+      value: 30
+    - select: { label: Paid by }
+      value: Ana
+    - click: { role: button, name: Add expense }
+
+test: One payer, two people owe
+steps:
+  - use: ana_pays_dinner
+  - expectText: "Total: $30.00 · $10.00 each"
+  - expectText: Ben owes Ana $10.00
+  - expectText: Cleo owes Ana $10.00
+
+test: Two payers
+steps:
+  - use: ana_pays_dinner
+  - fill: { label: Description }
+    value: Museum
+  - fill: { label: Amount }
+    value: 30
+  - select: { label: Paid by }
+    value: Ben
+  - click: { role: button, name: Add expense }
+  - expectText: Cleo owes Ana $10.00
+  - expectText: Cleo owes Ben $10.00
+
+test: The amount must be positive
+steps:
+  - fill: { label: Description }
+    value: Taxi
+  - fill: { label: Amount }
+    value: 0
+  - click: { role: button, name: Add expense }
+  - expectText: Enter an amount above 0.

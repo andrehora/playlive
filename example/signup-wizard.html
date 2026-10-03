@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Signup wizard</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>Create your account</h1>
+<div id="s1">
+  <p class="step">Step 1 of 3</p>
+  <label for="fullName">Full name</label><input id="fullName">
+  <label for="email">Email</label><input id="email" type="email">
+  <button id="next1" type="button">Next</button>
+  <p id="err1" role="alert"></p>
+</div>
+<div id="s2" hidden>
+  <p class="step">Step 2 of 3</p>
+  <label for="plan">Plan</label>
+  <select id="plan"><option>Free</option><option>Pro</option><option>Team</option></select>
+  <label class="inline"><input type="checkbox" id="terms"> I accept the terms</label>
+  <button id="next2" type="button">Next</button>
+  <p id="err2" role="alert"></p>
+</div>
+<div id="s3" hidden>
+  <p class="step">Step 3 of 3</p>
+  <h2>Review</h2>
+  <p id="rName"></p><p id="rEmail"></p><p id="rPlan"></p>
+  <button id="back" class="secondary" type="button">Back</button><button id="create" type="button">Create account</button>
+</div>
+<div id="s4" hidden><p id="done" class="ok"></p></div>
+
+<script>
+const show=n=>['s1','s2','s3','s4'].forEach((id,i)=>$(id).hidden=i!==n-1);
+$('next1').onclick=()=>{
+  if(!$('fullName').value.trim()||!$('email').value.includes('@')){$('err1').textContent='Enter your name and a valid email.';return;}
+  $('err1').textContent='';show(2);
+};
+$('next2').onclick=()=>{
+  if(!$('terms').checked){$('err2').textContent='Please accept the terms.';return;}
+  $('err2').textContent='';
+  $('rName').textContent='Name: '+$('fullName').value.trim();
+  $('rEmail').textContent='Email: '+$('email').value.trim();
+  $('rPlan').textContent='Plan: '+$('plan').value;show(3);
+};
+$('back').onclick=()=>show(2);
+$('create').onclick=()=>{const b=$('create');b.disabled=true;b.textContent='Creating…';
+  setTimeout(()=>{$('done').textContent='Account created for '+$('fullName').value.trim()+'!';show(4);},700);};
+</script>
+</body>
+</html>

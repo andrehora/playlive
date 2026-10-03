@@ -1,0 +1,19 @@
+site: cookie-consent
+
+test: Accept all hides the banner
+steps:
+  - click: { role: button, name: Accept all }
+  - expectText: "Cookie preferences: analytics on, marketing on"
+  - expectNoText: We use cookies
+
+test: Reject all
+steps:
+  - click: { role: button, name: Reject all }
+  - expectText: "Cookie preferences: analytics off, marketing off"
+
+test: Allows only analytics
+steps:
+  - click: { role: button, name: Customize }
+  - check: { label: Analytics }
+  - click: { role: button, name: Save preferences }
+  - expectText: "Cookie preferences: analytics on, marketing off"

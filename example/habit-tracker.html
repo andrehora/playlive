@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Habit tracker</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#7c3aed}</style>
+</head>
+<body>
+<h1>Habits this week</h1><div id="habits"></div>
+
+<script>
+const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];const habits=['Drink water','Read 20 minutes'];
+habits.forEach(h=>{const d=document.createElement('div');d.className='card';const t=document.createElement('h2');t.textContent=h;d.appendChild(t);
+  const row=document.createElement('div');row.className='row';
+  days.forEach(day=>{const lab=document.createElement('label');lab.className='inline';const cb=document.createElement('input');cb.type='checkbox';
+    cb.setAttribute('aria-label',h+' on '+day);cb.onchange=upd;lab.append(cb,' '+day.slice(0,3));row.appendChild(lab);});
+  const p=document.createElement('p');p.className='sum';d.append(row,p);$('habits').appendChild(d);});
+function upd(){[...document.querySelectorAll('#habits .card')].forEach((c,i)=>{const n=c.querySelectorAll('input:checked').length;
+  c.querySelector('.sum').textContent=habits[i]+': '+n+' of 7 days'+(n===7?' · Perfect week!':'');});}
+upd();
+</script>
+</body>
+</html>

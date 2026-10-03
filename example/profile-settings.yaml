@@ -1,0 +1,26 @@
+site: profile-settings
+
+test: Updates the name and bio
+steps:
+  - fill: { label: Display name }
+    value: Ana Souza
+  - fill: { label: Bio }
+    value: Coffee and code
+  - expectText: You have pending edits
+  - click: { role: button, name: Save changes }
+  - expectText: Profile updated
+  - expectText: Ana Souza · Private profile
+  - expectText: Coffee and code
+
+test: Makes the profile public
+steps:
+  - check: { label: Show my profile publicly }
+  - click: { role: button, name: Save changes }
+  - expectText: Ana · Public profile
+
+test: The display name is required
+steps:
+  - fill: { label: Display name }
+    value: ""
+  - click: { role: button, name: Save changes }
+  - expectText: "Display name can't be empty."

@@ -1,0 +1,21 @@
+site: product-search
+
+test: Finds matching products
+steps:
+  - fill: { label: Search products }
+    value: mug
+  - expectText: 3 results for “mug”
+  - expectText: Mug warmer
+
+test: Explains when nothing matches
+steps:
+  - fill: { label: Search products }
+    value: blender
+  - expectText: No results for “blender”. Try another word.
+
+test: Clearing shows everything again
+steps:
+  - fill: { label: Search products }
+    value: coffee
+  - click: { role: button, name: Clear search }
+  - expectText: All 8 products

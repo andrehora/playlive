@@ -1,0 +1,20 @@
+site: paged-list
+
+test: Goes to the next page
+steps:
+  - click: { role: button, name: Next }
+  - expectText: Page 2 of 3
+  - expectText: "Order #1011"
+
+test: The last page is shorter
+steps:
+  - click: { role: button, name: Next }
+  - click: { role: button, name: Next }
+  - expectText: Showing 21–23 of 23 orders
+  - expectText: "Order #1023"
+
+test: Goes back
+steps:
+  - click: { role: button, name: Next }
+  - click: { role: button, name: Previous }
+  - expectText: Page 1 of 3

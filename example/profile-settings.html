@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Profile settings</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#1d4ed8}</style>
+</head>
+<body>
+<h1>Profile</h1>
+<div class="card"><strong id="pvName">Ana</strong> · <span id="pvVis">Private profile</span><p id="pvBio">No bio yet.</p></div>
+<label for="dn">Display name</label><input id="dn" value="Ana">
+<label for="bio">Bio</label><textarea id="bio"></textarea>
+<label class="inline"><input type="checkbox" id="pub"> Show my profile publicly</label>
+<button id="save" type="button">Save changes</button>
+<p id="status" role="status">No pending edits</p><p id="err" role="alert"></p>
+
+<script>
+['dn','bio'].forEach(id=>$(id).addEventListener('input',()=>{$('status').textContent='You have pending edits';}));
+$('pub').addEventListener('change',()=>{$('status').textContent='You have pending edits';});
+$('save').onclick=()=>{const n=$('dn').value.trim();
+  if(!n){$('err').textContent="Display name can't be empty.";return;}
+  $('err').textContent='';$('pvName').textContent=n;$('pvVis').textContent=$('pub').checked?'Public profile':'Private profile';
+  $('pvBio').textContent=$('bio').value.trim()||'No bio yet.';$('status').textContent='Profile updated';};
+</script>
+</body>
+</html>

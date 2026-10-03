@@ -1,0 +1,14 @@
+site: autosave-editor
+
+test: Stores the draft after you stop typing
+steps:
+  - fill: { label: Message draft }
+    value: See you at the station
+  - expectText: Draft stored · 5 words
+
+test: Discards the draft
+steps:
+  - fill: { label: Message draft }
+    value: Running late
+  - click: { role: button, name: Discard draft }
+  - expectText: Draft discarded

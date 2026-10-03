@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Poll</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#0e7490}</style>
+</head>
+<body>
+<h1>Which feature should we build next?</h1>
+<label class="inline"><input type="radio" name="opt" value="Dark mode"> Dark mode</label>
+<label class="inline"><input type="radio" name="opt" value="Offline sync"> Offline sync</label>
+<label class="inline"><input type="radio" name="opt" value="Calendar view"> Calendar view</label>
+<button id="vote" type="button">Vote</button><p id="err" role="alert"></p><div id="res"></div>
+
+<script>
+const V={'Dark mode':12,'Offline sync':7,'Calendar view':5};
+$('vote').onclick=()=>{const r=document.querySelector('input[name=opt]:checked');if(!r){$('err').textContent='Pick an option first.';return;}
+  $('err').textContent='';V[r.value]++;const tot=Object.values(V).reduce((a,b)=>a+b,0);$('res').innerHTML='';
+  const t=document.createElement('p');t.className='ok';t.textContent='Thanks for voting! '+tot+' votes so far.';$('res').appendChild(t);
+  Object.entries(V).forEach(([k,v])=>{const p=document.createElement('p');p.textContent=k+': '+v+(v===1?' vote':' votes')+' ('+Math.round(v*100/tot)+'%)';$('res').appendChild(p);});
+  $('vote').disabled=true;document.querySelectorAll('input[name=opt]').forEach(i=>{i.disabled=true;});};
+</script>
+</body>
+</html>

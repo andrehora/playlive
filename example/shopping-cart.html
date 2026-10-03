@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shopping cart</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#b45309}</style>
+</head>
+<body>
+<h1>Snack shop</h1>
+<p>Small-batch snacks, shipped fast.</p>
+<ul id="products" class="clean"></ul>
+<p id="count">Cart: 0 items</p>
+<p id="total">Total: $0.00</p>
+<button id="checkout" type="button" disabled>Checkout</button>
+<p id="done" class="ok" hidden></p>
+
+<script>
+const items=[['Coffee beans',12],['Green tea',8.5],['Dark chocolate',5]];const cart=[];
+items.forEach(([n,p])=>{
+  const li=document.createElement('li');
+  const info=document.createElement('span');info.textContent=n+' · $'+p.toFixed(2);
+  const b=document.createElement('button');b.type='button';b.textContent='Add';
+  b.setAttribute('aria-label','Add '+n+' to cart');b.onclick=()=>{cart.push(p);upd();};
+  li.append(info,b);$('products').appendChild(li);
+});
+function upd(){
+  $('count').textContent='Cart: '+cart.length+(cart.length===1?' item':' items');
+  $('total').textContent='Total: $'+cart.reduce((a,b)=>a+b,0).toFixed(2);
+  $('checkout').disabled=!cart.length;
+}
+$('checkout').onclick=()=>{const b=$('checkout');b.disabled=true;b.textContent='Placing order…';
+  setTimeout(()=>{$('done').hidden=false;$('done').textContent='Order placed! '+cart.length+' items, '+$('total').textContent.replace('Total: ','')+'.';},800);};
+</script>
+</body>
+</html>

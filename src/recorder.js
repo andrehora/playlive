@@ -1,0 +1,105 @@
+import { SITES } from '../example/examples.js';
+import { ACTIONS, highlight } from './actions.js';
+import { doc, errorEl, specEl } from './dom.js';
+import { labelText, rawName, roleOf } from './find.js';
+import { validate } from './parse.js';
+import { setView } from './picker.js';
+import { preview, syncUI, withUnique } from './run.js';
+import { loadApp, persist } from './sites.js';
+import { TIMEOUT, editorSite, recording, running, setRecording, setRunning, setStepTimeout, stepTimeout } from './state.js';
+import { toast } from './ui.js';
+import { clean } from './util.js';
+
+/* ---------- Recorder: use the site, get YAML steps ---------- */
+export let recOriginal = '', recCount = 0;
+// YAML-safe scalar: plain when harmless, double-quoted otherwise
+export function yq(s){
+  s = String(s);
+  if (/^[A-Za-z][A-Za-z0-9 ._@'!?-]*$/.test(s) && !/^(true|false|yes|no|on|off|null)$/i.test(s) && !/[ ]$/.test(s)) return s;
+  return JSON.stringify(s);
+}
+// The same target vocabulary the runner understands
+export function targetFor(el){
+  if (/^(input|textarea|select)$/i.test(el.tagName)){
+    const label = clean(el.getAttribute('aria-label') || labelText(el));
+    if (label) return `{ label: ${yq(label)} }`;
+    const ph = el.getAttribute('placeholder'); if (ph) return `{ placeholder: ${yq(ph)} }`;
+  }
+  const role = roleOf(el), name = rawName(el);
+  if (role) return name ? `{ role: ${role}, name: ${yq(name)} }` : `{ role: ${role} }`;
+  return name ? `{ text: ${yq(name)} }` : null;
+}
+export function addStep(yamlStep){
+  const ind = '  ';
+  specEl.value += yamlStep.split('\n').map(l => ind + l).join('\n') + '\n';
+  specEl.scrollTop = specEl.scrollHeight;
+  recCount++; persist(); preview();
+}
+export function attachRecorder(){
+  const d = doc(); if (!d || d.__recorder) return;
+  d.__recorder = true;
+  d.addEventListener('click', e => {
+    if (!recording) return;
+    const t = e.target;
+    if (e.shiftKey){                       // Shift+click adds a check instead of clicking
+      e.preventDefault(); e.stopPropagation();
+      const control = t.closest('button,a[href],[role=button],[role=link],h1,h2,h3,h4,h5,h6');
+      if (control){ addStep(`- expectVisible: ${targetFor(control)}`); highlight(control, 'check added', '#1F8A55', 700); return; }
+      const text = clean(t.innerText || t.textContent).slice(0, 80);
+      if (text){ addStep(`- expectText: ${yq(text)}`); highlight(t, 'check added', '#1F8A55', 700); }
+      return;
+    }
+    const el = t.closest('button,a[href],[role=button],[role=link],input[type=checkbox],input[type=radio],input[type=submit],input[type=button]');
+    if (!el || el.disabled) return;
+    const ty = (el.type || '').toLowerCase();
+    const target = targetFor(el); if (!target) return;
+    if (ty === 'checkbox') addStep(`- ${el.checked ? 'check' : 'uncheck'}: ${target}`);
+    else if (ty === 'radio') addStep(`- check: ${target}`);
+    else addStep(`- click: ${target}`);
+  }, true);
+  d.addEventListener('change', e => {
+    if (!recording) return;
+    const el = e.target, ty = (el.type || '').toLowerCase();
+    const target = targetFor(el); if (!target) return;
+    if (el.tagName === 'SELECT') addStep(`- select: ${target}\n  value: ${yq(clean(el.selectedOptions[0]?.textContent ?? el.value))}`);
+    else if (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['checkbox','radio','submit','button'].includes(ty))) addStep(`- fill: ${target}\n  value: ${yq(el.value)}`);
+  }, true);
+}
+export function startRecording(){
+  errorEl.textContent = '';
+  recOriginal = specEl.value;
+  let text = specEl.value;
+  if (!text.trim()) text = `site: ${editorSite}\n`;
+  else {
+    const v = validate(text);
+    if (v.error){ errorEl.textContent = 'Fix these problems before recording:\n' + v.error; return; }
+    if (/^tests:/m.test(text)){ errorEl.textContent = 'This file uses an old "tests:" list. Write each test as "test: <title>" to record new tests into it.'; return; }
+  }
+  text = text.replace(/\s*$/, '\n');
+  const site = (/^site:\s*([\w-]+)/m.exec(text) || [])[1];
+  const n = (text.match(/Recorded test \d+/g) || []).length + 1;
+  specEl.value = text + `\ntest: Recorded test ${n}\nsteps:\n`;
+  specEl.scrollTop = specEl.scrollHeight;
+  recCount = 0;
+  setView(SITES[site] ? site : editorSite);
+  prepareRecording(validate(recOriginal).spec);
+}
+// Record from where tests start: a fresh page with the file's beforeEach steps already done
+export async function prepareRecording(spec){
+  const pre = spec && spec.tests.length ? spec.tests[0].steps.filter(s => s.from === 'beforeEach') : [];
+  setRunning(true); syncUI();
+  await loadApp('/');
+  const unique = Date.now().toString(36);
+  try {
+    for (const st of pre){ setStepTimeout(st.timeout || TIMEOUT); await ACTIONS[st.action](withUnique(st, unique)); }
+    if (pre.length) toast('beforeEach steps done, now recording');
+  } catch (e) {
+    errorEl.textContent = 'The beforeEach steps failed, so recording starts from the plain page:\n' + e.message;
+  }
+  setRunning(false); setRecording(true); syncUI();
+}
+export function stopRecording(){
+  setRecording(false);
+  if (!recCount) specEl.value = recOriginal;   // nothing recorded: leave the file as it was
+  persist(); syncUI(); preview();
+}

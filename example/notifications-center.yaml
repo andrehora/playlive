@@ -1,0 +1,18 @@
+site: notifications-center
+
+test: Marks one as read
+steps:
+  - expectText: 3 unread
+  - click: { role: button, name: "Mark as read: Your export is ready" }
+  - expectText: 2 unread
+
+test: Marks everything as read
+steps:
+  - click: { role: button, name: Mark all as read }
+  - expectText: No unread notifications
+
+test: Clears the list
+steps:
+  - click: { role: button, name: Clear all }
+  - expectText: "You're all caught up."
+  - expectNoText: Ana commented on your post

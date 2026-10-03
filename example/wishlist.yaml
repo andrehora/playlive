@@ -1,0 +1,15 @@
+site: wishlist
+
+test: Saves two items
+steps:
+  - click: { role: button, name: Save Desk lamp to wishlist }
+  - click: { role: button, name: Save Plant pot to wishlist }
+  - expectText: Wishlist (2)
+  - expectNoText: Your wishlist is empty.
+
+test: Removes a saved item
+steps:
+  - click: { role: button, name: Save Linen throw to wishlist }
+  - expectText: Wishlist (1)
+  - click: { role: button, name: Remove Linen throw from wishlist }
+  - expectText: Your wishlist is empty.

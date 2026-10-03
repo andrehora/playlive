@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wishlist</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#b45309}</style>
+</head>
+<body>
+<h1>Home goods</h1><p id="count">Wishlist (0)</p>
+<ul id="products" class="clean"></ul>
+<h2>Wishlist</h2><ul id="saved" class="clean"></ul><p id="empty">Your wishlist is empty.</p>
+
+<script>
+const items=[['Desk lamp',39],['Linen throw',59],['Plant pot',19]];const saved=new Set();
+function render(){$('products').innerHTML='';
+  items.forEach(([n,p])=>{const li=document.createElement('li');const s=document.createElement('span');s.textContent=n+' · $'+p;
+    const b=document.createElement('button');b.type='button';const on=saved.has(n);b.textContent=on?'♥ Saved':'♡ Save';b.className=on?'':'secondary';
+    b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-label',on?'Remove '+n+' from wishlist':'Save '+n+' to wishlist');
+    b.onclick=()=>{if(on)saved.delete(n);else saved.add(n);render();};li.append(s,b);$('products').appendChild(li);});
+  $('count').textContent='Wishlist ('+saved.size+')';$('saved').innerHTML='';
+  [...saved].forEach(n=>{const li=document.createElement('li');li.textContent=n;$('saved').appendChild(li);});$('empty').hidden=saved.size>0;}
+render();
+</script>
+</body>
+</html>

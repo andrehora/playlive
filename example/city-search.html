@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>City autocomplete</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Where to?</h1>
+<label for="dest">Destination</label><input id="dest" autocomplete="off" aria-autocomplete="list" aria-controls="sugg">
+<p id="hint" role="status"></p><ul id="sugg" role="listbox" class="clean"></ul>
+<p id="result" class="ok" hidden></p>
+
+<script>
+const C=[['Paris',129],['Parma',149],['Paramaribo',612],['Porto',99],['Prague',109],['Lisbon',89],['London',79],['Lima',540]];
+function upd(){const q=$('dest').value.trim().toLowerCase();$('sugg').innerHTML='';$('result').hidden=true;
+  if(q.length<2){$('hint').textContent=q?'Keep typing…':'';return;}
+  const r=C.filter(c=>c[0].toLowerCase().startsWith(q));
+  $('hint').textContent=r.length?r.length+(r.length===1?' suggestion':' suggestions'):'No cities match “'+q+'”';
+  r.forEach(c=>{const li=document.createElement('li');li.setAttribute('role','option');li.textContent=c[0];li.style.cursor='pointer';
+    li.onclick=()=>{$('dest').value=c[0];$('sugg').innerHTML='';$('hint').textContent='';$('result').hidden=false;$('result').textContent='Flights to '+c[0]+' from $'+c[1];};
+    $('sugg').appendChild(li);});}
+$('dest').addEventListener('input',upd);
+</script>
+</body>
+</html>

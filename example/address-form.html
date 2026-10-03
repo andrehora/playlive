@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Address form</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>Shipping address</h1>
+<label for="country">Country</label><select id="country"><option>United States</option><option>United Kingdom</option><option>Brazil</option></select>
+<label for="street">Street</label><input id="street">
+<label for="postal" id="postalLabel">ZIP code</label><input id="postal">
+<button id="save" type="button">Save address</button>
+<p id="err" role="alert"></p><p id="ok" class="ok" hidden></p>
+
+<script>
+const names={'United States':'ZIP code','United Kingdom':'Postcode','Brazil':'CEP'};
+$('country').onchange=()=>{$('postalLabel').textContent=names[$('country').value];};
+$('save').onclick=()=>{const c=$('country').value,p=$('postal').value.trim().split('-').join('');$('ok').hidden=true;
+  if(!$('street').value.trim()){$('err').textContent='Enter a street.';return;}
+  const valid=c==='United States'?/^[0-9]{5}$/.test(p):c==='Brazil'?/^[0-9]{8}$/.test(p):p.length>=5;
+  if(!valid){$('err').textContent='Enter a valid '+names[c]+'.';return;}
+  $('err').textContent='';$('ok').hidden=false;$('ok').textContent='Address saved for '+c+'.';};
+</script>
+</body>
+</html>

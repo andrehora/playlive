@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contact form</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>Contact support</h1>
+<p>Questions about your order? Send us a message.</p>
+<button id="openBtn" type="button">Open form</button>
+<form id="form" hidden>
+  <label for="nameInput">Your name</label><input id="nameInput">
+  <label for="msgInput">Message</label><textarea id="msgInput"></textarea>
+  <label for="topicSel">Topic</label>
+  <select id="topicSel"><option>Orders</option><option>Billing</option><option>Other</option></select>
+  <button type="submit">Send</button>
+  <p id="err" role="alert"></p>
+</form>
+<p id="ok" class="ok" hidden></p>
+
+<script>
+$('openBtn').addEventListener('click',()=>{$('form').hidden=false;$('openBtn').hidden=true;});
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();
+  if(!$('msgInput').value.trim()){$('err').textContent='Please write a message.';return;}
+  $('err').textContent='';
+  const b=$('form').querySelector('button');b.disabled=true;b.textContent='Sending…';
+  setTimeout(()=>{$('form').hidden=true;$('ok').hidden=false;
+    $('ok').textContent='Thanks for your message, '+($('nameInput').value.trim()||'friend')+'!';},700);
+});
+</script>
+</body>
+</html>

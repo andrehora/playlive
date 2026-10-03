@@ -1,0 +1,32 @@
+site: quiz-app
+
+test: All answers right
+steps:
+  - check: { label: Jupiter }
+  - check: { label: Seven }
+  - check: { label: Carbon dioxide }
+  - click: { role: button, name: Submit answers }
+  - expectText: You scored 3 of 3 · Perfect!
+
+test: Some answers wrong
+steps:
+  - check: { label: Mars }
+  - check: { label: Seven }
+  - check: { label: Oxygen }
+  - click: { role: button, name: Submit answers }
+  - expectText: You scored 1 of 3
+
+test: Every question needs an answer
+steps:
+  - check: { label: Jupiter }
+  - click: { role: button, name: Submit answers }
+  - expectText: Answer all 3 questions first.
+
+test: Try again clears the answers
+steps:
+  - check: { label: Venus }
+  - check: { label: Five }
+  - check: { label: Nitrogen }
+  - click: { role: button, name: Submit answers }
+  - click: { role: button, name: Try again }
+  - expectNoText: You scored

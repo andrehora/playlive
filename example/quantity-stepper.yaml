@@ -1,0 +1,23 @@
+site: quantity-stepper
+
+test: Increases the quantity
+steps:
+  - click: { role: button, name: Increase quantity }
+  - click: { role: button, name: Increase quantity }
+  - expectText: "Quantity: 3"
+  - expectText: "Total: $54.00"
+
+test: Stops at the maximum
+steps:
+  - click: { role: button, name: Increase quantity }
+  - click: { role: button, name: Increase quantity }
+  - click: { role: button, name: Increase quantity }
+  - click: { role: button, name: Increase quantity }
+  - expectText: Maximum 5 per order.
+
+test: Decreases again
+steps:
+  - click: { role: button, name: Increase quantity }
+  - expectText: "Quantity: 2"
+  - click: { role: button, name: Decrease quantity }
+  - expectText: "Quantity: 1"

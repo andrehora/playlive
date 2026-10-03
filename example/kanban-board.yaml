@@ -1,0 +1,22 @@
+site: kanban-board
+
+test: Moves a card forward
+steps:
+  - click: { role: button, name: Move Write tests to Doing }
+  - expectText: To do (1)
+  - expectText: Doing (2)
+
+test: Finishing every card completes the sprint
+steps:
+  - click: { role: button, name: Move Write tests to Doing }
+  - click: { role: button, name: Move Write tests to Done }
+  - click: { role: button, name: Move Fix login bug to Doing }
+  - click: { role: button, name: Move Fix login bug to Done }
+  - click: { role: button, name: Move Design review to Done }
+  - expectText: Done (3)
+  - expectText: Sprint complete!
+
+test: Moves a card back
+steps:
+  - click: { role: button, name: Move Design review to To do }
+  - expectText: To do (3)

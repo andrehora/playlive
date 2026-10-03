@@ -1,0 +1,16 @@
+site: activity-feed
+
+test: Loads ten more items
+steps:
+  - expectText: Showing 10 of 30
+  - click: { role: button, name: Load more }
+  - expectText: Showing 20 of 30
+  - expectText: 11. Eva liked your photo
+
+test: Ends when everything is loaded
+steps:
+  - click: { role: button, name: Load more }
+  - expectText: Showing 20 of 30
+  - click: { role: button, name: Load more }
+  - expectText: "You're all caught up."
+  - expectNoText: Load more

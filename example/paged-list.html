@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Paginated list</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Orders</h1><p id="range"></p><ul id="list" class="clean"></ul>
+<div class="row"><button id="prev" type="button" class="secondary">Previous</button><span id="page"></span><button id="next" type="button" class="secondary">Next</button></div>
+
+<script>
+const N=23,PER=10,pages=Math.ceil(N/PER);let pg=1;
+function render(){const a=(pg-1)*PER+1,b=Math.min(pg*PER,N);$('range').textContent='Showing '+a+'–'+b+' of '+N+' orders';
+  $('list').innerHTML='';for(let i=a;i<=b;i++){const li=document.createElement('li');li.textContent='Order #'+(1000+i);$('list').appendChild(li);}
+  $('page').textContent='Page '+pg+' of '+pages;$('prev').disabled=pg===1;$('next').disabled=pg===pages;}
+$('prev').onclick=()=>{pg--;render();};$('next').onclick=()=>{pg++;render();};render();
+</script>
+</body>
+</html>

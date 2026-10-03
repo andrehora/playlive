@@ -1,0 +1,16 @@
+site: pricing-tabs
+
+test: Monthly is shown first
+steps:
+  - expectText: Cancel anytime.
+
+test: Yearly shows the saving
+steps:
+  - click: { role: tab, name: Yearly }
+  - expectText: Two months free compared to monthly.
+  - expectNoText: Cancel anytime.
+
+test: Lifetime plan
+steps:
+  - click: { role: tab, name: Lifetime }
+  - expectText: Pro, $299 once

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Newsletter signup</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>Newsletter</h1><p>One email a week with the best recipes.</p>
+<label for="em">Email address</label><input id="em" type="email">
+<label class="inline"><input type="checkbox" id="agree"> I agree to receive emails</label>
+<button id="sub" type="button">Subscribe</button>
+<p id="err" role="alert"></p><p id="ok" class="ok" hidden></p>
+
+<script>
+$('sub').onclick=()=>{const e=$('em').value.trim();
+  if(!e.includes('@')){$('err').textContent='Enter a valid email address.';return;}
+  if(!$('agree').checked){$('err').textContent='Please agree to receive emails.';return;}
+  $('err').textContent='';$('ok').hidden=false;$('ok').textContent='Check your inbox to confirm '+e+'.';};
+</script>
+</body>
+</html>

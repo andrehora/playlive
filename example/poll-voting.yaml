@@ -1,0 +1,20 @@
+site: poll-voting
+
+test: Voting shows the results
+steps:
+  - check: { label: Dark mode }
+  - click: { role: button, name: Vote }
+  - expectText: Thanks for voting! 25 votes so far.
+  - expectText: "Dark mode: 13 votes (52%)"
+
+test: Percentages follow the vote
+steps:
+  - check: { label: Calendar view }
+  - click: { role: button, name: Vote }
+  - expectText: "Calendar view: 6 votes (24%)"
+  - expectText: "Dark mode: 12 votes (48%)"
+
+test: An option is required
+steps:
+  - click: { role: button, name: Vote }
+  - expectText: Pick an option first.

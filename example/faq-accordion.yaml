@@ -1,0 +1,20 @@
+site: faq-accordion
+
+test: Opens an answer
+steps:
+  - click: { role: button, name: How long does shipping take? }
+  - expectText: Orders arrive in 3 to 5 business days.
+
+test: Only one answer is open at a time
+steps:
+  - click: { role: button, name: How long does shipping take? }
+  - click: { role: button, name: Can I return an item? }
+  - expectText: Yes, within 30 days of delivery.
+  - expectNoText: Orders arrive in 3 to 5 business days.
+
+test: Clicking again closes it
+steps:
+  - click: { role: button, name: Do you ship abroad? }
+  - expectText: We ship to 40 countries.
+  - click: { role: button, name: Do you ship abroad? }
+  - expectNoText: We ship to 40 countries.

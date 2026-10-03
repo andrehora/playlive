@@ -1,0 +1,13 @@
+site: help-center
+
+test: Opens a topic from the menu
+steps:
+  - click: { role: link, name: Installation }
+  - expectText: Help center / Installation
+  - expectText: Run npm install our-sdk
+
+test: Sends page feedback
+steps:
+  - click: { role: link, name: Troubleshooting }
+  - click: { role: button, name: "No" }
+  - expectText: Sorry about that. We will improve this page.

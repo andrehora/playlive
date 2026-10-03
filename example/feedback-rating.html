@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Feedback rating</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>How was your order?</h1>
+<div class="row" id="stars"></div><p id="sel">No rating yet</p>
+<label for="cm">Comment (optional)</label><textarea id="cm"></textarea>
+<button id="send" type="button">Send feedback</button>
+<p id="err" role="alert"></p><p id="ok" class="ok" hidden></p>
+
+<script>
+let rating=0;
+for(let i=1;i<=5;i++){const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent='★';
+  b.setAttribute('aria-label','Rate '+i+(i===1?' star':' stars'));
+  b.onclick=()=>{rating=i;$('sel').textContent='You chose '+i+' of 5';[...$('stars').children].forEach((x,j)=>{x.style.color=j<i?'#f59e0b':'#9ca3af';});};
+  $('stars').appendChild(b);}
+$('send').onclick=()=>{if(!rating){$('err').textContent='Choose a rating first.';return;}
+  $('err').textContent='';$('ok').hidden=false;$('ok').textContent='Thanks for your '+rating+'-star feedback!';$('send').disabled=true;};
+</script>
+</body>
+</html>

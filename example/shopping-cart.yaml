@@ -1,0 +1,17 @@
+site: shopping-cart
+
+test: Add two products and check out
+steps:
+  - click: { role: button, name: Add Coffee beans to cart }
+  - click: { role: button, name: Add Green tea to cart }
+  - expectText: "Cart: 2 items"
+  - expectText: "Total: $20.50"
+  - click: { role: button, name: Checkout }
+  - expectText: "Order placed! 2 items, $20.50."
+
+test: One product uses the singular "item"
+steps:
+  - click: { role: button, name: Add Dark chocolate to cart }
+  - expectText: "Cart: 1 item"
+  - expectText: "Total: $5.00"
+

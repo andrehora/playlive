@@ -1,0 +1,26 @@
+site: habit-tracker
+
+test: Counts completed days
+steps:
+  - check: { label: Drink water on Monday }
+  - check: { label: Drink water on Tuesday }
+  - check: { label: Drink water on Friday }
+  - expectText: "Drink water: 3 of 7 days"
+
+test: Seven days is a perfect week
+steps:
+  - check: { label: Read 20 minutes on Monday }
+  - check: { label: Read 20 minutes on Tuesday }
+  - check: { label: Read 20 minutes on Wednesday }
+  - check: { label: Read 20 minutes on Thursday }
+  - check: { label: Read 20 minutes on Friday }
+  - check: { label: Read 20 minutes on Saturday }
+  - check: { label: Read 20 minutes on Sunday }
+  - expectText: "Read 20 minutes: 7 of 7 days · Perfect week!"
+
+test: Unchecking a day lowers the count
+steps:
+  - check: { label: Drink water on Sunday }
+  - expectText: "Drink water: 1 of 7 days"
+  - uncheck: { label: Drink water on Sunday }
+  - expectText: "Drink water: 0 of 7 days"

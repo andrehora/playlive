@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quantity stepper</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#b45309}</style>
+</head>
+<body>
+<h1>Ceramic vase</h1><p>Handmade, $18.00 each</p>
+<div class="row"><button id="dec" type="button" aria-label="Decrease quantity" class="secondary">−</button><span id="qty"></span><button id="inc" type="button" aria-label="Increase quantity" class="secondary">+</button></div>
+<p id="total"></p><p id="note" role="status"></p>
+
+<script>
+let q=1;const MAX=5;
+function upd(){$('qty').textContent='Quantity: '+q;$('total').textContent='Total: $'+(q*18).toFixed(2);
+  $('dec').disabled=q<=1;$('inc').disabled=q>=MAX;$('note').textContent=q>=MAX?'Maximum '+MAX+' per order.':'';}
+$('inc').onclick=()=>{if(q<MAX)q++;upd();};$('dec').onclick=()=>{if(q>1)q--;upd();};upd();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Counter</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#0e7490}</style>
+</head>
+<body>
+<h1>Counter</h1><p id="count" style="font-size:32px;font-weight:700;color:#111827">Count: 0</p>
+<label for="step">Step</label><select id="step"><option>1</option><option>5</option><option>10</option></select>
+<div class="row"><button id="dec" type="button" class="secondary">Decrement</button><button id="inc" type="button">Increment</button><button id="reset" type="button" class="secondary">Reset</button></div>
+<p id="msg" role="status"></p>
+
+<script>
+let c=0;const st=()=>Number($('step').value);
+function upd(m){$('count').textContent='Count: '+c;$('msg').textContent=m||'';}
+$('inc').onclick=()=>{c+=st();upd();};
+$('dec').onclick=()=>{if(c-st()<0){upd("Count can't go below 0.");return;}c-=st();upd();};
+$('reset').onclick=()=>{c=0;upd('Counter reset.');};
+</script>
+</body>
+</html>

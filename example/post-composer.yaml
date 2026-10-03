@@ -1,0 +1,22 @@
+site: post-composer
+
+test: Counts characters as you type
+steps:
+  - fill: { label: Your post }
+    value: Hello
+  - expectText: 45 characters left
+
+test: Publishes a post
+steps:
+  - fill: { label: Your post }
+    value: Shipping our new feature today
+  - click: { role: button, name: Post }
+  - expectText: Posted!
+  - expectText: Shipping our new feature today
+  - expectNoText: Nothing posted yet.
+
+test: Warns when the post is too long
+steps:
+  - fill: { label: Your post }
+    value: "The quick brown fox jumps over the lazy dog every day!!"
+  - expectText: Too long by 5 characters

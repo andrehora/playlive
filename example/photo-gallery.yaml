@@ -1,0 +1,18 @@
+site: photo-gallery
+
+test: Shows the next photo
+steps:
+  - click: { role: button, name: Next photo }
+  - expectText: Photo 2 of 5
+  - expectText: Mountain lake
+
+test: Wraps around from the first photo
+steps:
+  - click: { role: button, name: Previous photo }
+  - expectText: Photo 5 of 5
+  - expectText: Forest path
+
+test: Jumps with a thumbnail
+steps:
+  - click: { role: button, name: Show City at night }
+  - expectText: Photo 3 of 5

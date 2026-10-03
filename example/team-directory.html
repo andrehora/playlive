@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sortable table</title>
+<script src="hooks.js"></script>
+<link rel="stylesheet" href="site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Team directory</h1>
+<label for="filter">Filter by name</label><input id="filter">
+<p id="count"></p>
+<table><thead><tr><th>#</th><th><button id="sName" type="button" class="th" aria-label="Sort by name">Name</button></th><th>Role</th><th><button id="sYear" type="button" class="th" aria-label="Sort by start year">Start year</button></th></tr></thead><tbody id="rows"></tbody></table>
+<p id="sorted" role="status"></p>
+
+<script>
+const T=[['Ana Souza','Engineer',2019],['Ben Ito','Designer',2016],['Cleo Park','Manager',2021],['Dev Patel','Engineer',2014],['Eva Lund','Designer',2020]];
+let key=0,dir=1;
+function render(){const q=$('filter').value.trim().toLowerCase();
+  const r=T.filter(t=>t[0].toLowerCase().includes(q)).sort((a,b)=>(key===0?a[0].localeCompare(b[0]):a[2]-b[2])*dir);
+  $('rows').innerHTML='';r.forEach((t,i)=>{const tr=document.createElement('tr');[i+1,t[0],t[1],t[2]].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});$('rows').appendChild(tr);});
+  $('count').textContent=r.length+' of '+T.length+' people';
+  $('sorted').textContent='Sorted by '+(key===0?'name':'start year')+', '+(key===0?(dir>0?'A to Z':'Z to A'):(dir>0?'oldest first':'newest first'));}
+function sortBy(k){if(key===k)dir=-dir;else{key=k;dir=1;}render();}
+$('sName').onclick=()=>sortBy(0);$('sYear').onclick=()=>sortBy(1);$('filter').addEventListener('input',render);render();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+site: shipping-options
+
+test: Standard shipping is the default
+steps:
+  - expectText: "Total: $44.99"
+
+test: Express costs more
+steps:
+  - check: { label: Express }
+  - expectText: "Delivery: Express, 1–2 business days"
+  - expectText: "Total: $52.99"
+
+test: Pickup with gift wrap
+steps:
+  - check: { label: Pickup in store }
+  - check: { label: Gift wrap }
+  - expectText: "Total: $43.00"

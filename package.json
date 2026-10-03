@@ -1,0 +1,19 @@
+{
+  "name": "playlive",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Run end-to-end tests live in the browser",
+  "scripts": {
+    "serve": "node tests/server.mjs 4173",
+    "test": "playwright test",
+    "test:examples": "playwright test tests/examples.spec.js",
+    "test:app": "playwright test tests/app.spec.js",
+    "test:exports": "playwright test tests/exports.spec.js",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}
