@@ -4,6 +4,14 @@
   --syn-key:#6D28D9; --syn-act:#B45309; --syn-str:#15803D; --syn-var:#BE185D; --syn-com:#8A93A3; --syn-num:#0E7490;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
   --left-w:480px; --editor-h:36vh;
+  /* Control sizing, mobile first. These are the touch-sized values; the
+     min-width:901px block near the bottom compacts them for a mouse. */
+  --tap:44px; --btn-font:15px; --btn-pad:11px 14px; --btn-r:10px;
+  --small-tap:38px; --small-font:14px; --small-pad:9px 12px; --small-r:9px;
+  --ctl-font:16px; --ctl-pad:10px 12px;   /* 16px: anything smaller makes iOS zoom on focus */
+  --icon-tap:42px; --chev:36px;
+  --sw-w:36px; --sw-h:20px; --sw-dot:16px;
+  --code-font:16px; --code-line:26px;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -21,7 +29,7 @@
   --syn-key:#C4B5FD; --syn-act:#FBBF24; --syn-str:#86EFAC; --syn-var:#F9A8D4; --syn-com:#6B7588; --syn-num:#67E8F9;
   --shadow:0 1px 2px rgba(0,0,0,.4);
 }
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -37,24 +45,24 @@ svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .appbar .spacer{flex:1}
 
 /* ---------- Buttons and controls ---------- */
-button{font:inherit;font-size:13.5px;line-height:1;border-radius:8px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+button{font:inherit;font-size:var(--btn-font);line-height:1;border-radius:var(--btn-r);padding:var(--btn-pad);min-height:var(--tap);cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 button:hover:not(:disabled){border-color:color-mix(in srgb,var(--ink) 25%,var(--line))}
 button.primary{background:var(--run);border-color:var(--run);color:var(--on-run);font-weight:500}
 button.primary:hover:not(:disabled){filter:brightness(1.06);border-color:var(--run)}
 button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
 button.ghost:hover:not(:disabled){background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);border-color:transparent}
 button.ghost.danger,button.ghost.danger:hover:not(:disabled){color:#fff;background:var(--fail);border-color:var(--fail)}
-button.small{font-size:12.5px;padding:6px 9px;border-radius:7px}
+button.small{font-size:var(--small-font);padding:var(--small-pad);min-height:var(--small-tap);border-radius:var(--small-r)}
 button:disabled{opacity:.45;cursor:not-allowed}
 button:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--run);outline-offset:2px}
 kbd{font:500 11px "IBM Plex Mono",ui-monospace,monospace;padding:2px 5px;border-radius:4px;background:color-mix(in srgb,var(--on-run) 18%,transparent)}
-select{font:inherit;font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
-.field{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px}
-.switch{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:12.5px;cursor:pointer;user-select:none}
-.switch input{appearance:none;width:28px;height:16px;border-radius:999px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
-.switch input::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+select{font:inherit;font-size:var(--ctl-font);padding:var(--ctl-pad);min-height:var(--tap);border-radius:var(--small-r);border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.field{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:var(--small-font)}
+.switch{display:inline-flex;align-items:center;gap:8px;min-height:var(--small-tap);color:var(--muted);font-size:var(--small-font);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.switch input{appearance:none;width:var(--sw-w);height:var(--sw-h);border-radius:999px;background:var(--line);position:relative;margin:0;flex:none;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:var(--sw-dot);height:var(--sw-dot);border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
 .switch input:checked{background:var(--run)}
-.switch input:checked::after{transform:translateX(12px)}
+.switch input:checked::after{transform:translateX(calc(var(--sw-w) - var(--sw-dot) - 4px))}
 #record .rec-dot{width:9px;height:9px;border-radius:50%;background:var(--rec)}
 #record.recording{background:var(--rec);border-color:var(--rec);color:#fff}
 #record.recording .rec-dot{background:#fff;animation:pulse 1.2s ease-in-out infinite}
@@ -86,16 +94,16 @@ body.resizing{user-select:none}
 body.resizing iframe{pointer-events:none}
 
 /* ---------- Editor with highlighting ---------- */
-.editor{display:grid;grid-template-columns:auto minmax(0,1fr);height:var(--editor-h);min-height:110px;background:var(--panel-2);font:12.5px/20px "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;position:relative}
+.editor{display:grid;grid-template-columns:auto minmax(0,1fr);height:var(--editor-h);min-height:110px;background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;position:relative}
 .editor:focus-within{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
 .gutter{padding:12px 10px 12px 12px;text-align:right;color:var(--muted);user-select:none;overflow:hidden;border-right:1px solid var(--line);min-width:42px}
-.gutter div{height:20px;opacity:.55}
+.gutter div{height:var(--code-line);opacity:.55}
 .gutter div.cur{opacity:1;color:var(--running-ink);font-weight:600}
 .gutter div.bad{opacity:1;color:var(--fail);font-weight:600}
 .code{position:relative;overflow:hidden}
 .hl,#spec{position:absolute;inset:0;margin:0;padding:12px 14px;font:inherit;white-space:pre;tab-size:2;border:0;letter-spacing:0}
 .hl{overflow:hidden;pointer-events:none;color:var(--ink)}
-.hl .l{display:block;min-height:20px}
+.hl .l{display:block;min-height:var(--code-line)}
 .hl .l.cur{background:color-mix(in srgb,var(--running) 24%,transparent);box-shadow:inset 3px 0 var(--running)}
 .hl .l.bad{background:color-mix(in srgb,var(--fail) 13%,transparent);box-shadow:inset 2px 0 var(--fail)}
 .hl i{font-style:normal}
@@ -129,8 +137,8 @@ body.resizing iframe{pointer-events:none}
 #results{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 .test{border-bottom:1px solid var(--line)}
 .test:last-child{border-bottom:0}
-.test-head{display:grid;grid-template-columns:20px 12px minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:8px 10px 6px 8px}
-.chev{border:0;background:transparent;padding:2px;color:var(--muted);border-radius:5px}
+.test-head{display:grid;grid-template-columns:var(--chev) 12px minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:8px 10px 6px 8px}
+.chev{border:0;background:transparent;padding:0;width:var(--chev);height:var(--chev);min-height:0;color:var(--muted);border-radius:7px}
 .chev svg.i{width:14px;height:14px;transition:transform .15s}
 .test.collapsed .chev svg.i{transform:rotate(-90deg)}
 .test.collapsed .steps,.test.collapsed .warnings{display:none}
@@ -141,7 +149,7 @@ body.resizing iframe{pointer-events:none}
 .test[data-state="passed"] .tstate{border-color:var(--pass);background:var(--pass)}
 .test[data-state="failed"] .tstate{border-color:var(--fail);background:var(--fail)}
 .test[data-state="idle"],.test[data-state="notrun"]{opacity:.5}
-.run-one{font-size:12px;padding:4px 9px}
+.run-one{font-size:var(--small-font);padding:var(--small-pad);min-height:var(--small-tap);border-radius:var(--small-r)}
 .hist{display:flex;gap:2px;align-items:center}
 .hist i{width:4px;height:12px;border-radius:2px;background:var(--line)}
 .hist i.h-pass{background:var(--pass)} .hist i.h-fail{background:var(--fail)}
@@ -178,28 +186,28 @@ body.resizing iframe{pointer-events:none}
 .browser{min-height:0}
 .site-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .picker{position:relative}
-.site-btn{font-weight:600;gap:8px;padding:7px 10px;min-width:230px}
+.site-btn{font-weight:600;gap:8px;justify-content:flex-start;min-width:230px}
 .site-btn .caret{margin-left:auto;color:var(--muted)}
 .swatch{width:9px;height:9px;border-radius:50%;flex:none}
 .tres{font-size:11px;font-weight:700;line-height:1}
 [data-status="pass"] .tres{color:var(--pass)} [data-status="pass"] .tres::before{content:"✓"}
 [data-status="fail"] .tres{color:var(--fail)} [data-status="fail"] .tres::before{content:"✕"}
 .pop{position:absolute;z-index:30;top:calc(100% + 6px);left:0;width:min(360px,86vw);max-height:min(72vh,560px);display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 48px rgba(16,24,40,.22);overflow:hidden}
-#siteSearch{margin:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);font:inherit;font-size:13px;outline:none}
+#siteSearch{margin:8px;padding:var(--ctl-pad);min-height:var(--tap);border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);font:inherit;font-size:var(--ctl-font);outline:none}
 #siteSearch:focus{border-color:var(--run)}
 .pop-list{overflow:auto;padding:0 6px 8px;overscroll-behavior:contain}
 .pop-cat{font-size:11.5px;font-weight:600;color:var(--muted);padding:10px 8px 4px;display:flex;align-items:center;gap:7px}
-.pop-list .tab{width:100%;justify-content:flex-start;gap:9px;border:0;border-radius:7px;padding:7px 8px;background:transparent;font-size:13px}
+.pop-list .tab{width:100%;justify-content:flex-start;gap:9px;border:0;border-radius:7px;padding:7px 8px;min-height:var(--tap);background:transparent;font-size:var(--btn-font)}
 .pop-list .tab:hover,.pop-list .tab:focus-visible{background:color-mix(in srgb,var(--ink) 6%,transparent);outline:none}
 .pop-list .tab[aria-pressed="true"]{background:color-mix(in srgb,var(--run) 13%,transparent);font-weight:600}
 .pop-list .tab .tres{margin-left:auto}
 .pop-empty{color:var(--muted);font-size:13px;padding:6px 14px 14px;margin:0}
 .stepper{display:flex;align-items:center;gap:2px}
-.site-count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:48px;text-align:center}
+.site-count{font-size:var(--small-font);color:var(--muted);font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
 .addr{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}
-.icon-btn{padding:6px;border-radius:7px}
+.icon-btn{padding:0;width:var(--icon-tap);height:var(--icon-tap);min-height:0;flex:none;border-radius:var(--small-r)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;background:var(--panel-2)}
-.seg button{border:0;background:transparent;padding:5px 7px;border-radius:6px;color:var(--muted)}
+.seg button{border:0;background:transparent;padding:5px 7px;min-height:0;border-radius:6px;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 12px;border-bottom:1px solid var(--line)}
 .snapbar{background:color-mix(in srgb,var(--run) 10%,transparent);color:var(--run)}
@@ -231,34 +239,96 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 .code-view .p{color:var(--muted)}
 .dlg-foot{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--line)}
 .dlg-tabs{display:flex;gap:4px;padding:10px 16px}
-.dlg-tabs button{border-radius:8px;padding:6px 12px 6px 9px;font-size:13px;background:transparent;gap:7px}
+.dlg-tabs button{border-radius:8px;padding:6px 12px 6px 9px;font-size:var(--small-font);background:transparent;gap:7px}
 .dlg-tabs button svg{width:18px;height:18px;flex:none;background:var(--logo-bg,transparent);border-radius:5px;padding:var(--logo-pad,0)}
 .dlg-tabs button[aria-selected="true"]{background:color-mix(in srgb,var(--run) 12%,var(--panel));border-color:var(--run);color:var(--ink);font-weight:600}
 #dlgCopied{color:var(--pass);font-size:13px}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10}
+.toast{position:fixed;left:50%;max-width:calc(100vw - 32px);text-align:center;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 /* ---------- Desktop: a fixed workspace, panels scroll inside ---------- */
 @media (min-width:901px){
+  /* A mouse does not need 44px targets, so the tokens shrink back here. */
+  :root{
+    --tap:32px; --btn-font:13.5px; --btn-pad:8px 12px; --btn-r:8px;
+    --small-tap:28px; --small-font:12.5px; --small-pad:6px 9px; --small-r:7px;
+    --ctl-font:13px; --ctl-pad:6px 8px;
+    --icon-tap:30px; --chev:20px;
+    --sw-w:28px; --sw-h:16px; --sw-dot:12px;
+    --code-font:12.5px; --code-line:20px;
+  }
   html,body{height:100%}
   body{display:flex;flex-direction:column}
   .appbar{flex:none}
   main{flex:1;min-height:560px;grid-template-rows:minmax(0,1fr)}
   .left{min-height:0}
   .tests-panel{flex:none}
+  .site-btn{padding:7px 10px}
 }
 /* ---------- Narrow screens: one column, site right after the editor ---------- */
 @media (max-width:900px){
-  main{grid-template-columns:minmax(0,1fr);gap:12px;padding:10px}
+  main{grid-template-columns:minmax(0,1fr);gap:12px;padding:10px max(10px,env(safe-area-inset-right,0px)) 14px max(10px,env(safe-area-inset-left,0px))}
   .left{display:contents}
-  .tests-panel{order:1} .browser{order:2;height:70vh} .results-panel{order:3}
+  .tests-panel{order:1} .browser{order:2} .results-panel{order:3}
   .resizer{display:none}
-  .editor{height:300px}
-  #results{max-height:60vh}
+  .appbar{padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
   .tagline{display:none}
+
+  /* Panel heads: the actions get a line of their own rather than being squeezed */
+  .panel-head{flex-wrap:wrap;row-gap:2px;padding:8px 10px}
+  .head-actions{gap:6px}
+  .tests-panel .head-actions{flex-wrap:wrap;margin-left:auto}
+
+  /* Editor: taller lines, and 16px keeps iOS from zooming when it takes focus */
+  .editor{height:clamp(220px,42dvh,380px)}
+  .gutter{min-width:38px;padding:10px 8px 10px 10px}
+  .hl,#spec{padding:10px 12px}
+
+  .toolbar{padding:10px;gap:8px}
+
+  /* Site panel */
+  .browser{height:clamp(360px,70dvh,640px)}
+  .site-head{gap:8px;padding:10px}
   .picker{flex:1} .site-btn{width:100%;min-width:0}
+  .stepper{gap:4px}
   .seg{display:none}
-  .tests-panel .panel-head{flex-wrap:wrap;row-gap:4px} .tests-panel .head-actions{margin-left:auto}
-  .appbar{padding:8px 12px}
+
+  /* The example list opens as a sheet, so it is reachable wherever the page sits */
+  .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px)) 8px;width:auto;max-height:min(70dvh,560px);border-radius:14px}
+  .pop-cat{padding:12px 8px 4px}
+
+  /* Text that is comfortable at arm's length rather than at desk distance */
+  .panel-head h2{font-size:15px}
+  .file-status{font-size:13px}
+  #summary,.empty,.pop-empty{font-size:14px}
+  .desc{font-size:14.5px}
+  .err,.warn,#error{font-size:13.5px}
+  .ms{font-size:12px}
+  #dlgText{font-size:13.5px}
+  #dlgNote{font-size:14px}
+
+  /* Results: roomier rows, and the list scrolls inside its own panel */
+  #results{max-height:70dvh}
+  .test-head{gap:6px;padding:6px 8px}
+  .steps li{padding:6px 10px 6px 16px}
+  .warn{padding:2px 12px 4px 30px}
+  .hist{display:none}
+
+  /* Export dialog fills the screen, with the copy button always in reach */
+  dialog[open]{display:flex;flex-direction:column;width:calc(100vw - 16px);max-height:calc(100dvh - 24px)}
+  .dlg-head,.dlg-tabs,#dlgNote,.dlg-foot{flex:none}
+  .dlg-tabs{flex-wrap:wrap}
+  #dlgText{flex:1 1 auto;height:auto;min-height:140px}
+}
+/* ---------- Phones: one control per row rather than a crowded line ---------- */
+@media (max-width:600px){
+  /* Run all is the primary target, so it takes whatever room the row has spare */
+  .toolbar #run{flex:1 1 auto}
+  .toolbar .opts{width:100%;margin-left:0;gap:8px}
+  .toolbar .opts .field{flex:1 1 150px;justify-content:space-between}
+  .toolbar .opts select{flex:1 1 auto;min-width:0}
+  /* The example name gets a full row, the stepper and reload the next one */
+  .picker{flex:1 1 100%}
+  .results-panel .head-actions{flex-wrap:wrap}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}

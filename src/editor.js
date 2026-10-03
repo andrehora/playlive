@@ -114,12 +114,14 @@ export function lineForStep(text, src){
   }
   return -1;
 }
+// The line box is taller on phones than on desktop, so it is read, not assumed
+export const lineH = () => parseFloat(getComputedStyle(specEl).lineHeight) || 20;
 export function setCurrentLine(n){
   if (n === curLine) return;
   curLine = n; renderEditor(true);
   if (n >= 0){
-    const top = n * 20, h = specEl.clientHeight;
-    if (top < specEl.scrollTop + 20 || top > specEl.scrollTop + h - 50) specEl.scrollTop = Math.max(0, top - h / 3);
+    const lh = lineH(), top = n * lh, h = specEl.clientHeight;
+    if (top < specEl.scrollTop + lh || top > specEl.scrollTop + h - lh - 30) specEl.scrollTop = Math.max(0, top - h / 3);
   }
 }
 export function renderEditor(force){
@@ -151,7 +153,7 @@ errorEl.addEventListener('click', () => {
   const pos = lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0);
   specEl.focus({ preventScroll: true });
   specEl.setSelectionRange(pos + lines[line].search(/\S|$/), pos + lines[line].length);
-  specEl.scrollTop = Math.max(0, line * 20 - specEl.clientHeight / 3);
+  specEl.scrollTop = Math.max(0, line * lineH() - specEl.clientHeight / 3);
 });
 // Tab inserts two spaces instead of leaving the editor
 specEl.addEventListener('keydown', e => {

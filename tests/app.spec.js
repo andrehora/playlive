@@ -427,6 +427,53 @@ test.describe('Layout and theming', () => {
     expect(errors).toEqual([]);
     await expect(page.locator('#run')).toBeVisible();
   });
+
+  // The controls are sized mobile first: comfortable to tap, and compacted only
+  // once there is a wide screen to compact them for.
+  for (const width of [360, 390, 768]){
+    test(`every control is big enough to tap at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await openApp(page);
+      await page.click('#siteBtn');          // so the example list is measured too
+      await expect(page.locator('#sitePop')).toBeVisible();
+
+      const small = await page.$$eval(
+        'button:not([hidden]), select, #siteSearch, .pop-list .tab',
+        els => els
+          .filter(e => e.offsetParent !== null && !e.closest('[hidden]'))
+          .map(e => ({ what: e.id || e.className || e.tagName, h: e.getBoundingClientRect().height }))
+          .filter(e => e.h < 34)
+      );
+      expect(small, `too small to tap: ${JSON.stringify(small)}`).toEqual([]);
+    });
+  }
+
+  test('a phone gets one column, no sideways scrolling, and the example list on screen', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await openApp(page);
+    const sideways = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(sideways).toBeLessThanOrEqual(1);
+
+    // The example list opens as a sheet, so it is on screen wherever the page sits.
+    await page.click('#siteBtn');
+    const pop = await page.locator('#sitePop').boundingBox();
+    expect(pop.y).toBeGreaterThanOrEqual(0);
+    expect(pop.y + pop.height).toBeLessThanOrEqual(740 + 1);
+    await page.click('#tabs .tab[data-site="login"]');
+    await expect(page.locator('#siteName')).toHaveText('Login');
+  });
+
+  test('the editor gutter lines up with the code at any size', async ({ page }) => {
+    for (const width of [390, 1440]){
+      await page.setViewportSize({ width, height: 900 });
+      await openApp(page);
+      const { line, gutter } = await page.evaluate(() => ({
+        line: parseFloat(getComputedStyle(document.getElementById('spec')).lineHeight),
+        gutter: document.querySelector('#gutter div').getBoundingClientRect().height
+      }));
+      expect(Math.abs(line - gutter), `gutter and code disagree at ${width}px`).toBeLessThan(0.5);
+    }
+  });
 });
 
 test.describe('Accessibility basics', () => {

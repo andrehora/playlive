@@ -110,6 +110,7 @@ Three things: a page, its tests, and a line in the manifest.
 
 - **Colors mean things.** Yellow `--running`, green `--pass`, red `--fail`. Blue `--run` is for interactive controls only — never show progress in blue.
 - **Theming.** Define every color three times: light, `prefers-color-scheme: dark`, and `[data-theme="dark"]`.
+- **Sizing is mobile first.** `:root` holds the touch-sized control tokens (`--tap`, `--btn-font`, `--btn-pad`, `--ctl-font`, `--icon-tap`, `--chev`, `--code-font`, `--code-line`, …) and `@media (min-width:901px)` redefines them smaller for a mouse. Size controls with the tokens rather than with literals, so both ends follow; `--ctl-font` stays at 16px on phones because anything smaller makes iOS zoom on focus. A test measures every visible control at 360, 390 and 768px.
 - **Scrolling.** Never call `scrollIntoView` inside the iframe; it scrolls the outer page. Use `scrollWithinFrame` and `followInResults`.
 - **Results** are folded by default, and folds the user opens stay open across runs (`expandedTests`).
 - **Toolbar order** is Run all, Stop, Record; in Step by step mode Run all becomes Next step, with no separate button.
