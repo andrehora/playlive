@@ -1,0 +1,18 @@
+site: delete-account
+
+test: Deletes after typing DELETE
+steps:
+  - fill: { label: Type DELETE to confirm, value: DELETE }
+  - click: { role: button, name: Delete my account }
+  - expectText: Your account has been deleted.
+
+test: Asks for capital letters
+steps:
+  - fill: { label: Type DELETE to confirm, value: delete }
+  - expectText: Type DELETE in capital letters.
+
+test: Cancel keeps the account
+steps:
+  - click: { role: button, name: Cancel }
+  - expectText: Nothing was deleted.
+  - expectVisible: { role: button, name: Delete my account }

@@ -1,4 +1,4 @@
-import { SITES } from '../example/examples.js';
+import { SITES } from '../examples/examples.js';
 import { frame, specEl } from './dom.js';
 import { attachRecorder } from './recorder.js';
 import { hideSnapshot } from './snapshots.js';
@@ -12,7 +12,7 @@ export const exampleCache = {};
 export async function exampleTests(id){
   if (exampleCache[id] === undefined){
     try {
-      const res = await fetch(`example/${id}.yaml`);
+      const res = await fetch(`examples/${id}.yaml`);
       exampleCache[id] = res.ok ? await res.text() : '';
     } catch { exampleCache[id] = ''; }
   }
@@ -33,7 +33,7 @@ export function persist(){
   try { localStorage.setItem(STORE, JSON.stringify({ savedTests, editorSite })); } catch {}
 }
 
-// example/hooks.js, which every example page loads, reports the storage keys the
+// examples/hooks.js, which every example page loads, reports the storage keys the
 // site writes so Reset can clear that site's data
 export const SITE_KEYS = 'live-test-runner:site-keys:v1';
 export let siteKeys = {};
@@ -52,6 +52,6 @@ export function loadApp(path = '/'){
   return new Promise(res => {
     frame.onload = () => { attachRecorder(); res(); };
     frame.removeAttribute('srcdoc');          // a snapshot may have been showing
-    frame.src = `example/${currentSite}.html?load=${++loadCount}`;
+    frame.src = `examples/${currentSite}.html?load=${++loadCount}`;
   });
 }

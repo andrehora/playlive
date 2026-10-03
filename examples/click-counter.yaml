@@ -1,0 +1,20 @@
+site: click-counter
+
+test: Counts up
+steps:
+  - click: { role: button, name: Increment }
+  - click: { role: button, name: Increment }
+  - click: { role: button, name: Increment }
+  - expectText: "Count: 3"
+
+test: Uses a bigger step
+steps:
+  - select: { label: Step, value: 5 }
+  - click: { role: button, name: Increment }
+  - click: { role: button, name: Increment }
+  - expectText: "Count: 10"
+
+test: Cannot go below zero
+steps:
+  - click: { role: button, name: Decrement }
+  - expectText: "Count can't go below 0."

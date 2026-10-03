@@ -1,0 +1,17 @@
+site: unit-converter
+
+test: Converts kilometers to miles
+steps:
+  - fill: { label: Value, value: 10 }
+  - expectText: 10 km = 6.21 mi
+
+test: Converts Celsius to Fahrenheit
+steps:
+  - select: { label: Conversion, value: Celsius to Fahrenheit }
+  - fill: { label: Value, value: 100 }
+  - expectText: 100 °C = 212.00 °F
+
+test: Explains invalid input
+steps:
+  - fill: { label: Value, value: abc }
+  - expectText: Enter a number, like 12.5

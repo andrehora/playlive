@@ -1,3 +1,4 @@
+import { STEP_OPTS } from './parse.js';
 import { ACTIONS } from './actions.js';
 import { $id, errorEl, specEl } from './dom.js';
 
@@ -7,7 +8,6 @@ export const escH = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
 // Built on first use: ACTIONS lives in a module that imports this one back
 let actionKeys = null;
 export const isAction = key => (actionKeys ||= new Set([...Object.keys(ACTIONS), 'use'])).has(key);
-export const STEP_OPTS = new Set(['value', 'timeout']);
 export function hlValue(v){
   const re = /("(?:[^"\\]|\\.)*"?|'(?:[^']|'')*'?|\$\{\w+\}|[{}\[\],]|[A-Za-z_][\w-]*(?=:(?:\s|$))|\b\d+(?:\.\d+)?\b)/g;
   let out = '', last = 0, m;

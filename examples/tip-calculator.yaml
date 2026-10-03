@@ -1,0 +1,20 @@
+site: tip-calculator
+
+test: Splits the bill
+steps:
+  - fill: { label: Bill amount, value: 60 }
+  - fill: { label: People, value: 3 }
+  - expectText: "Tip: $9.00"
+  - expectText: "Total: $69.00"
+  - expectText: "Each person pays: $23.00"
+
+test: A bigger tip
+steps:
+  - fill: { label: Bill amount, value: 50 }
+  - select: { label: Tip, value: "20%" }
+  - expectText: "Tip: $10.00"
+
+test: Needs at least one person
+steps:
+  - fill: { label: People, value: 0 }
+  - expectText: At least 1 person.

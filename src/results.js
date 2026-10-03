@@ -1,4 +1,4 @@
-import { SITES } from '../example/examples.js';
+import { SITES } from '../examples/examples.js';
 import { $id, resultsEl } from './dom.js';
 import { describeStep } from './find.js';
 import { paintHistory, testKey } from './history.js';

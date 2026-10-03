@@ -1,4 +1,4 @@
-import { SITES } from '../example/examples.js';
+import { SITES } from '../examples/examples.js';
 import { ACTIONS, highlight } from './actions.js';
 import { doc, errorEl, specEl } from './dom.js';
 import { labelText, rawName, roleOf } from './find.js';
@@ -18,6 +18,8 @@ export function yq(s){
   if (/^[A-Za-z][A-Za-z0-9 ._@'!?-]*$/.test(s) && !/^(true|false|yes|no|on|off|null)$/i.test(s) && !/[ ]$/.test(s)) return s;
   return JSON.stringify(s);
 }
+// The value a step types or picks goes inside its target
+export const withValue = (target, value) => target.replace(/\s*\}$/, `, value: ${yq(value)} }`);
 // The same target vocabulary the runner understands
 export function targetFor(el){
   if (/^(input|textarea|select)$/i.test(el.tagName)){
@@ -61,8 +63,8 @@ export function attachRecorder(){
     if (!recording) return;
     const el = e.target, ty = (el.type || '').toLowerCase();
     const target = targetFor(el); if (!target) return;
-    if (el.tagName === 'SELECT') addStep(`- select: ${target}\n  value: ${yq(clean(el.selectedOptions[0]?.textContent ?? el.value))}`);
-    else if (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['checkbox','radio','submit','button'].includes(ty))) addStep(`- fill: ${target}\n  value: ${yq(el.value)}`);
+    if (el.tagName === 'SELECT') addStep(`- select: ${withValue(target, clean(el.selectedOptions[0]?.textContent ?? el.value))}`);
+    else if (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['checkbox','radio','submit','button'].includes(ty))) addStep(`- fill: ${withValue(target, el.value)}`);
   }, true);
 }
 export function startRecording(){

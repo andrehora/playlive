@@ -1,4 +1,4 @@
-import { SITES } from '../example/examples.js';
+import { SITES } from '../examples/examples.js';
 import { editorSite } from './state.js';
 
 /* ---------- Export to Playwright: the same tests as code for CI ---------- */

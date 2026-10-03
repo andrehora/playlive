@@ -1,4 +1,4 @@
-import { SITES, SITE_IDS } from '../example/examples.js';
+import { SITES, SITE_IDS } from '../examples/examples.js';
 import { $id, errorEl, recordBtn, resetBtn, runBtn, specEl, speedMode, stopBtn, summaryEl } from './dom.js';
 import { toCypress, toPlaywright } from './exports.js';
 import { HIST, runHistory } from './history.js';

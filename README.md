@@ -7,7 +7,7 @@ format, pick one of the 50 example sites, press **Run all**, and watch each step
 happen while the results update. Tests export to Playwright and Cypress.
 
 No build step: plain ES modules, served as they are. `index.html` is the page,
-`src/` is the app, and each example site is a real page in `example/`.
+`src/` is the app, and each example site is a real page in `examples/`.
 
 ## Running it locally
 

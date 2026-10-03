@@ -89,6 +89,66 @@ test.describe('Running', () => {
     expect(await page.evaluate(() => localStorage.getItem('live-test-runner:status:v1'))).toContain('contact-form');
   });
 
+  test('a step carries its value inside the target', async ({ page }) => {
+    await openApp(page, { site: 'contact-form' });
+    await setSpeed(page, 'fast');
+    await page.fill('#spec', [
+      'site: contact-form',
+      'beforeEach:',
+      '  - click: { role: button, name: Open form }',
+      '',
+      'test: Value inside the target',
+      'steps:',
+      '  - fill: { label: Your name, value: Ana }',
+      '  - fill: { label: Message, value: hello }',
+      '  - select: { label: Topic, value: Billing }',
+      '  - click: { role: button, name: Send }',
+      '  - expectText: "Thanks for your message, Ana!"',
+      '    timeout: 8000',
+      ''
+    ].join('\n'));
+    await expect(page.locator('#error')).toHaveText('');
+
+    const res = await runAll(page);
+    expect(res.state, describeFailures(res)).toBe('ok');
+
+    // The value reaches the exports as the thing typed, not as part of the target.
+    const code = await page.evaluate(() => {
+      const { validate, toPlaywright } = window.playlive;
+      return toPlaywright(validate(document.getElementById('spec').value).spec);
+    });
+    expect(code).toContain(`await page.getByLabel("Your name", { exact: true }).fill("Ana");`);
+  });
+
+  test('a value on its own line says where it belongs', async ({ page }) => {
+    await openApp(page, { site: 'contact-form' });
+    await page.fill('#spec', [
+      'site: contact-form',
+      '',
+      'test: Value on its own line',
+      'steps:',
+      '  - fill: { label: Message }',
+      '    value: hello',
+      ''
+    ].join('\n'));
+    await expect(page.locator('#error')).toContainText('put the value inside the target');
+    await page.click('#run');
+    await expect(page.locator('#summary')).toHaveText('');
+  });
+
+  test('fill without a value is reported', async ({ page }) => {
+    await openApp(page, { site: 'contact-form' });
+    await page.fill('#spec', [
+      'site: contact-form',
+      '',
+      'test: No value',
+      'steps:',
+      '  - fill: { label: Message }',
+      ''
+    ].join('\n'));
+    await expect(page.locator('#error')).toContainText('needs a value');
+  });
+
   test('a failing step is explained, later steps are skipped, and the summary is red', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'fast');
@@ -120,8 +180,7 @@ test.describe('Running', () => {
       '',
       'test: Mistyped label',
       'steps:',
-      `  - fill: { label: ${label}XYZ }`,
-      '    value: hello',
+      `  - fill: { label: ${label}XYZ, value: hello }`,
       '    timeout: 500',
       ''
     ].join('\n'));

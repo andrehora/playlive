@@ -7,15 +7,15 @@ Everything is client-side and buildless: the files are served exactly as they ar
 ## Layout
 
 ```
-index.html         The page: markup only, plus <script type="module" src="src/main.js">
-src/app.css        All of the app's styles
-src/*.js           The app, as ES modules (see below)
-example/<id>.html  One example site per file, a real page the iframe loads
-example/<id>.yaml  That site's example tests
-example/examples.js  The manifest: name, category, host, accent, storage keys
-example/site.css   The stylesheet every example page shares
-example/hooks.js   Loaded first by every example page: $(id), error and storage hooks
-tests/             Playlive's own Playwright suite (dev only)
+index.html            The page: markup only, plus <script type="module" src="src/main.js">
+src/app.css           All of the app's styles
+src/*.js              The app, as ES modules (see below)
+examples/<id>.html    One example site per file, a real page the iframe loads
+examples/<id>.yaml    That site's example tests
+examples/examples.js  The manifest: name, category, host, accent, storage keys
+examples/site.css     The stylesheet every example page shares
+examples/hooks.js     Loaded first by every example page: $(id), error and storage hooks
+tests/                Playlive's own Playwright suite (dev only)
 ```
 
 The modules, roughly in dependency order: `dom` (elements) · `state` · `util` · `sites` (loading a site, saved tests) · `find` (locating elements, "did you mean…?") · `actions` (what a step does) · `parse` · `history` · `snapshots` · `results` · `run` · `recorder` · `exports` · `dialog` · `picker` · `editor` · `ui` · `layout` · `main` (wiring and boot).
@@ -36,7 +36,7 @@ npm test                                         # ~1 minute, must be green
 npm run serve                                    # http://localhost:4173
 ```
 
-The suite starts its own server but needs network access for js-yaml. It derives the site list from `example/examples.js`, so a new example site gets a test automatically. **Flaky app** is excluded from the run tests, because it fails on purpose.
+The suite starts its own server but needs network access for js-yaml. It derives the site list from `examples/examples.js`, so a new example site gets a test automatically. **Flaky app** is excluded from the run tests, because it fails on purpose.
 
 It already covers: every example site's tests passing with no page errors, light/dark/390px, and every export being valid comment-free JavaScript. If you touched layout, also screenshot and look — the desktop page must never scroll, panels scroll inside themselves. Add a test alongside any new action, exporter rule or site.
 
@@ -48,13 +48,13 @@ vars:                       # used as ${name}; ${unique} is new on every run
   email: ana@example.test
 flows:                      # reusable step lists: "- use: login"
   login:
-    - fill: { label: Email }
-      value: ${email}
+    - fill: { label: Email, value: "${email}" }
 beforeEach:                 # runs at the start of every test
   - use: login
 
 test: Shows the dashboard   # every test starts with "test:" at column 0
 steps:
+  - fill: { label: Password, value: hunter2 }
   - click: { role: button, name: Log in }
   - expectText: Welcome back
     timeout: 8000           # optional per-step wait, in ms
@@ -64,6 +64,8 @@ steps:
 - Each test starts from a fresh page at `/` and must not depend on other tests.
 - Only `site`, `vars`, `flows`, `beforeEach` and `failOnPageErrors` may appear before the first test.
 - Targets describe what a user sees: `{ role, name }`, `{ label }`, `{ placeholder }`, `{ text }`, or a bare string meaning `{ text }`.
+- **The value goes inside the target**, so a step is one line: `- select: { label: Country, value: United Kingdom }`. A `value:` on its own line is an error that says so. Inside the braces, quote any value holding `,` `:` `{` `}` or a `${var}`: `value: "${email}"`.
+- `timeout:` goes inside the target too, or on its own line for the steps that have no target (`expectText`, `expectNoText`, `wait`, `goto`).
 
 Actions: `goto`, `click`, `fill`, `select`, `check`, `uncheck`, `wait`, `expectText`, `expectNoText`, `expectVisible`, and `use` for flows. Steps wait up to 4s (`TIMEOUT`) unless they set `timeout:`.
 
@@ -74,7 +76,7 @@ Adding an action means updating **all** of: `ACTIONS`, `normalizeStep`, `describ
 Three things: a page, its tests, and a line in the manifest.
 
 ```html
-<!-- example/coupon-code.html -->
+<!-- examples/coupon-code.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -92,7 +94,7 @@ Three things: a page, its tests, and a line in the manifest.
 ```
 
 ```js
-// example/examples.js
+// examples/examples.js
 "coupon-code": { name: "Coupon code", category: "Shopping", host: "localhost:3019", accent: "#b45309" },
 ```
 

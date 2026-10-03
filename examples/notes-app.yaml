@@ -1,0 +1,24 @@
+site: notes-app
+
+flows:
+  groceries:
+    - fill: { label: Title, value: Groceries }
+    - fill: { label: Note, value: "Eggs, spinach, lemons" }
+    - click: { role: button, name: Add note }
+
+test: Adds a note
+steps:
+  - use: groceries
+  - expectText: 1 note
+  - expectText: Eggs, spinach, lemons
+
+test: Deletes a note
+steps:
+  - use: groceries
+  - click: { role: button, name: "Delete note: Groceries" }
+  - expectText: No notes yet.
+
+test: A title is required
+steps:
+  - click: { role: button, name: Add note }
+  - expectText: Give your note a title.

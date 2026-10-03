@@ -1,7 +1,10 @@
-import { SITES } from '../example/examples.js';
+import { SITES } from '../examples/examples.js';
 import { ACTIONS } from './actions.js';
 
 /* ---------- Parsing: vars, flows and one or more tests ---------- */
+// What a step may carry besides its action. "value" belongs inside the target;
+// "timeout" can also sit on its own line, for steps that have no target.
+export const STEP_OPTS = new Set(['value', 'timeout']);
 export const stripFences = t => t.replace(/^\s*```[\w-]*[ \t]*\n/, '').replace(/\n```\s*$/, '\n');   // LLMs love code fences
 export const isMap = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 
@@ -9,23 +12,43 @@ export function normalizeStep(raw, n){
   if (!isMap(raw)) throw `${n}: each step must be "- action: ...".`;
   const keys = Object.keys(raw).filter(k => k !== 'value' && k !== 'timeout');
   if (keys.length !== 1) throw `${n}: use exactly one action per step (found: ${keys.join(', ') || 'none'}).`;
-  const action = keys[0], arg = raw[action];
+  const action = keys[0];
   if (!ACTIONS[action]) throw `${n}: unknown action "${action}". Allowed: ${Object.keys(ACTIONS).join(', ')}, use.`;
+  let arg = raw[action];
+  // The value goes with the target it fills: "- fill: { label: Email, value: ana@example.test }"
+  const opt = { timeout: raw.timeout };
+  const takesTarget = !['goto', 'wait', 'expectText', 'expectNoText'].includes(action);
+  if (raw.value !== undefined) throw `${n}: put the value inside the target, e.g. - ${takesTarget ? action : 'fill'}: { label: Email, value: ana@example.test }.`;
+  if (takesTarget && isMap(arg)){
+    const target = {};
+    for (const [k, v] of Object.entries(arg)){
+      if (!STEP_OPTS.has(k)){ target[k] = v; continue; }
+      if (opt[k] !== undefined) throw `${n}: "${k}" is set twice.`;
+      opt[k] = v;
+    }
+    arg = target;
+  }
   const s = { action };
-  if (raw.value !== undefined) s.value = String(raw.value);
-  if (raw.timeout !== undefined){
-    const ms = Number(raw.timeout);
+  if (opt.value !== undefined) s.value = String(opt.value);
+  if (opt.timeout !== undefined){
+    const ms = Number(opt.timeout);
     if (!(ms > 0)) throw `${n}: "timeout" must be a number of milliseconds, e.g. 8000.`;
     s.timeout = ms;
   }
   if (action === 'goto') s.url = String(arg ?? '/');
   else if (action === 'wait') s.ms = Number(arg) || 500;
-  else if (action === 'expectText' || action === 'expectNoText'){ if (arg == null || arg === '') throw `${n}: "${action}" needs the text to look for.`; s.text = String(arg); }
+  else if (action === 'expectText' || action === 'expectNoText'){
+    if (arg == null || arg === '' || isMap(arg)) throw `${n}: "${action}" needs the text to look for, e.g. - ${action}: Welcome back.`;
+    s.text = String(arg);
+  }
   else {
     if (typeof arg === 'string' || typeof arg === 'number') s.target = { text: String(arg) };   // "- click: Send" shorthand
-    else if (isMap(arg)) s.target = Object.fromEntries(Object.entries(arg).map(([k, v]) => [k, String(v)]));
+    else if (isMap(arg)){
+      if (!Object.keys(arg).length) throw `${n}: "${action}" needs something to find the element by, e.g. { role: button, name: Send }.`;
+      s.target = Object.fromEntries(Object.entries(arg).map(([k, v]) => [k, String(v)]));
+    }
     else throw `${n}: "${action}" needs a target, e.g. { role: button, name: Send }.`;
-    if (['fill','select'].includes(action) && s.value === undefined) throw `${n}: "${action}" needs a "value:" line.`;
+    if (['fill','select'].includes(action) && s.value === undefined) throw `${n}: "${action}" needs a value, e.g. - ${action}: { label: Email, value: ana@example.test }.`;
   }
   return s;
 }

@@ -1,0 +1,23 @@
+site: address-form
+
+test: Saves a US address
+steps:
+  - fill: { label: Street, value: 1 Main Street }
+  - fill: { label: ZIP code, value: 94105 }
+  - click: { role: button, name: Save address }
+  - expectText: Address saved for United States.
+
+test: The postal field follows the country
+steps:
+  - select: { label: Country, value: United Kingdom }
+  - fill: { label: Street, value: 10 Downing Street }
+  - fill: { label: Postcode, value: SW1A 2AA }
+  - click: { role: button, name: Save address }
+  - expectText: Address saved for United Kingdom.
+
+test: Rejects a short ZIP code
+steps:
+  - fill: { label: Street, value: 1 Main Street }
+  - fill: { label: ZIP code, value: 941 }
+  - click: { role: button, name: Save address }
+  - expectText: Enter a valid ZIP code.

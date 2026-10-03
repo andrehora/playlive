@@ -1,0 +1,23 @@
+site: two-factor
+
+test: The right code signs you in
+steps:
+  - fill: { label: Verification code, value: 246810 }
+  - click: { role: button, name: Verify }
+  - expectText: "You're signed in."
+
+test: A wrong code shows the attempts left
+steps:
+  - fill: { label: Verification code, value: 111111 }
+  - click: { role: button, name: Verify }
+  - expectText: "That code isn't right. 2 attempts left."
+
+test: Three wrong codes lock it, a new code unlocks it
+steps:
+  - fill: { label: Verification code, value: 111111 }
+  - click: { role: button, name: Verify }
+  - click: { role: button, name: Verify }
+  - click: { role: button, name: Verify }
+  - expectText: Too many attempts. Request a new code.
+  - click: { role: button, name: Resend code }
+  - expectText: New code sent.

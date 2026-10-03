@@ -1,0 +1,22 @@
+site: contact-form
+beforeEach:
+  - click: { role: button, name: Open form }
+
+test: Contact form sends a message
+steps:
+  - fill: { label: Your name, value: Ana }
+  - fill: { label: Message, value: hello }
+  - select: { label: Topic, value: Billing }
+  - click: { role: button, name: Send }
+  - expectText: "Thanks for your message, Ana!"
+
+test: Empty message shows an error
+steps:
+  - click: { role: button, name: Send }
+  - expectText: Please write a message.
+
+test: Name is optional
+steps:
+  - fill: { label: Message, value: Where is my order? }
+  - click: { role: button, name: Send }
+  - expectText: "Thanks for your message, friend!"

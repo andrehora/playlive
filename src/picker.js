@@ -1,4 +1,4 @@
-import { SITES, SITE_IDS } from '../example/examples.js';
+import { SITES, SITE_IDS } from '../examples/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
 import { preview } from './run.js';
 import { loadApp, persist, savedTests, testsFor } from './sites.js';

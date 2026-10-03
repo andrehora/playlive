@@ -10,8 +10,8 @@ export const RUN_TIMEOUT = 180_000;   // a whole site's example tests, at Fast s
 
 // The site ids come from the example manifest, so adding an example adds a test.
 export async function siteIds(){
-  const { SITE_IDS } = await import(pathToFileURL(resolve(ROOT, 'example/examples.js')).href);
-  if (!SITE_IDS?.length) throw new Error('No example sites found in example/examples.js.');
+  const { SITE_IDS } = await import(pathToFileURL(resolve(ROOT, 'examples/examples.js')).href);
+  if (!SITE_IDS?.length) throw new Error('No example sites found in examples/examples.js.');
   return SITE_IDS;
 }
 
