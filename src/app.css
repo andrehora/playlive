@@ -43,6 +43,9 @@ svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .brand-name{font-weight:600;font-size:15px;white-space:nowrap}
 .tagline{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appbar .spacer{flex:1}
+.repo-link{display:inline-flex;align-items:center;gap:7px;min-height:var(--tap);padding:0 10px;border-radius:var(--btn-r);color:var(--muted);text-decoration:none;font-size:var(--btn-font);white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.repo-link:hover{background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink)}
+.repo-link svg.i{width:20px;height:20px}
 
 /* ---------- Buttons and controls ---------- */
 button{font:inherit;font-size:var(--btn-font);line-height:1;border-radius:var(--btn-r);padding:var(--btn-pad);min-height:var(--tap);cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;-webkit-tap-highlight-color:transparent}

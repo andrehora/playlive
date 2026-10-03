@@ -401,6 +401,20 @@ test.describe('Layout and theming', () => {
     expect(['auto', 'scroll']).toContain(scrolls);
   });
 
+  test('the app bar links to the repository', async ({ page }) => {
+    await openApp(page);
+    const link = page.locator('.repo-link');
+    await expect(link).toHaveAttribute('href', 'https://github.com/andrehora/playlive');
+    await expect(link).toHaveAttribute('rel', /noopener/);
+    // The published page allows no remote images, so the mark has to be inline.
+    await expect(link.locator('svg')).toHaveCount(1);
+    await expect(link).toBeVisible();
+    // It stays visible, and tappable, on a phone.
+    await page.setViewportSize({ width: 360, height: 740 });
+    await expect(link).toBeVisible();
+    expect((await link.boundingBox()).height).toBeGreaterThanOrEqual(34);
+  });
+
   test('the screen size buttons resize the site panel', async ({ page }) => {
     await openApp(page);
     for (const vp of ['mobile', 'tablet', 'desktop']){
