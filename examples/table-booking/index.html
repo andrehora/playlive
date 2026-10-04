@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Table booking</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>Book a table</h1><p>Trattoria Verde, open Friday to Sunday</p>
+<label for="day">Day</label><select id="day"><option>Friday</option><option>Saturday</option><option>Sunday</option></select>
+<label for="time">Time</label><select id="time"><option>18:00</option><option>19:30</option><option>21:00</option></select>
+<label for="guests">Guests</label><input id="guests" type="number" min="1" value="2">
+<button id="book" type="button">Book table</button>
+<p id="err" role="alert"></p><p id="ok" class="ok" hidden></p>
+
+<script>
+$('book').onclick=()=>{const d=$('day').value,t=$('time').value,g=parseInt($('guests').value,10);$('ok').hidden=true;
+  if(!(g>=1)){$('err').textContent='Enter the number of guests.';return;}
+  if(g>8){$('err').textContent='For more than 8 guests, please call us.';return;}
+  if(d==='Saturday'&&t==='19:30'){$('err').textContent='Saturday at 19:30 is fully booked. Try another time.';return;}
+  $('err').textContent='';$('ok').hidden=false;$('ok').textContent='Table for '+g+' on '+d+' at '+t+' is booked.';};
+</script>
+</body>
+</html>

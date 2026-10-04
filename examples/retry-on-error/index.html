@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Retry on error</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4d7c0f}</style>
+</head>
+<body>
+<h1>Order history</h1>
+<button id="load" type="button">Load orders</button>
+<p id="status" role="status"></p><button id="retry" type="button" hidden>Try again</button>
+<ul id="list" class="clean"></ul>
+
+<script>
+let attempts=0;
+function load(){attempts++;$('load').hidden=true;$('retry').hidden=true;$('status').textContent='Loading orders…';$('list').innerHTML='';
+  setTimeout(()=>{if(attempts===1){$('status').textContent="We couldn't load your orders. Check your connection and try again.";$('retry').hidden=false;return;}
+    $('status').textContent='3 orders';
+    [['#5001','Delivered'],['#5002','Shipped'],['#5003','Processing']].forEach(o=>{const li=document.createElement('li');li.textContent='Order '+o[0]+' · '+o[1];$('list').appendChild(li);});},600);}
+$('load').onclick=load;$('retry').onclick=load;
+</script>
+</body>
+</html>

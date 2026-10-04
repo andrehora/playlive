@@ -1,6 +1,7 @@
 import { STEP_OPTS } from './parse.js';
 import { ACTIONS } from './actions.js';
 import { $id, errorEl, specEl } from './dom.js';
+import { completionOpen } from './state.js';
 
 /* ---------- Editor: syntax highlighting, line numbers, error lines ---------- */
 export const hlEl = $id('hl'), gutterEl = $id('gutter');
@@ -136,8 +137,23 @@ export function renderEditor(force){
 }
 export function syncEditorScroll(){ hlEl.scrollTop = specEl.scrollTop; hlEl.scrollLeft = specEl.scrollLeft; gutterEl.scrollTop = specEl.scrollTop; }
 specEl.addEventListener('scroll', syncEditorScroll);
+
+/* ---------- Folding: one button hides the code, leaving the panel's controls ---------- */
+// The textarea holds the whole file either way, so running, recording and exporting are untouched
+export const foldSpecBtn = $id('foldSpec'), editorEl = $id('editor');
+let specFolded = false;
+export function setSpecFolded(folded){
+  specFolded = folded;
+  editorEl.hidden = folded;
+  foldSpecBtn.setAttribute('aria-expanded', String(!folded));
+  foldSpecBtn.setAttribute('aria-label', folded ? 'Expand all' : 'Collapse all');
+  foldSpecBtn.title = folded ? 'Show the code of every test' : 'Hide the code of every test';
+  $id('foldSpecIcon').setAttribute('d', folded ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
+  if (!folded) renderEditor(true);   // the tick skips a hidden editor, so redraw on the way back
+}
+foldSpecBtn.addEventListener('click', () => setSpecFolded(!specFolded));
 // Programmatic edits (recorder, site switch, reset) are picked up here too
-(function tick(){ renderEditor(); requestAnimationFrame(tick); })();
+(function tick(){ if (!specFolded) renderEditor(); requestAnimationFrame(tick); })();
 // Whatever lands in the error box also marks the matching lines
 new MutationObserver(() => {
   errLines = errorEl.textContent ? errorLinesFor(errorEl.textContent, specEl.value) : new Set();
@@ -149,6 +165,7 @@ new MutationObserver(() => {
 // Clicking a problem jumps to its line
 errorEl.addEventListener('click', () => {
   if (!errLines.size) return;
+  setSpecFolded(false);   // there is no line to jump to while the code is hidden
   const line = Math.min(...errLines), lines = specEl.value.split('\n');
   const pos = lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0);
   specEl.focus({ preventScroll: true });
@@ -157,7 +174,7 @@ errorEl.addEventListener('click', () => {
 });
 // Tab inserts two spaces instead of leaving the editor
 specEl.addEventListener('keydown', e => {
-  if (e.key === 'Tab' && !e.shiftKey && !e.metaKey && !e.ctrlKey && !specEl.readOnly){
+  if (e.key === 'Tab' && !completionOpen && !e.shiftKey && !e.metaKey && !e.ctrlKey && !specEl.readOnly){
     e.preventDefault();
     const { selectionStart: a, selectionEnd: b } = specEl;
     specEl.setRangeText('  ', a, b, 'end');

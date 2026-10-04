@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Product search</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#b45309}</style>
+</head>
+<body>
+<h1>Kitchen store</h1>
+<label for="q">Search products</label><input id="q" type="search" placeholder="Try “mug”">
+<button id="clear" type="button" class="secondary">Clear search</button>
+<p id="count" aria-live="polite"></p><ul id="list" class="clean"></ul>
+
+<script>
+const P=['Coffee mug','Travel mug','Mug warmer','Tea kettle','French press','Coffee grinder','Water bottle','Espresso cups'];
+function upd(){const q=$('q').value.trim().toLowerCase();const r=P.filter(p=>p.toLowerCase().includes(q));
+  $('count').textContent=!q?'All '+P.length+' products':r.length?r.length+(r.length===1?' result':' results')+' for “'+q+'”':'No results for “'+q+'”. Try another word.';
+  $('list').innerHTML='';r.forEach(p=>{const li=document.createElement('li');li.textContent=p;$('list').appendChild(li);});}
+$('q').addEventListener('input',upd);$('clear').onclick=()=>{$('q').value='';upd();};upd();
+</script>
+</body>
+</html>

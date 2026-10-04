@@ -51,7 +51,7 @@ export function updateFoldAll(){
   const secs = [...resultsEl.querySelectorAll('.test')];
   const allFolded = secs.length > 0 && secs.every(x => x.classList.contains('collapsed'));
   foldAllBtn.disabled = !secs.length;
-  foldAllBtn.querySelector('.lbl').textContent = allFolded ? 'Expand all' : 'Collapse all';
+  foldAllBtn.setAttribute('aria-label', allFolded ? 'Expand all' : 'Collapse all');
   foldAllBtn.title = allFolded ? 'Show the steps of every test' : 'Hide the steps of every test';
   $id('foldIcon').setAttribute('d', allFolded ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
 }

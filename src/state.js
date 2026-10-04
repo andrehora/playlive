@@ -11,6 +11,7 @@ export let previewTimer;
 export let currentSite = 'contact-form';   // the site showing on the right
 export let editorSite = 'contact-form';    // the site whose tests are in the editor
 export let lastEl = null;                  // the element the current step acted on
+export let completionOpen = false;         // the autocomplete list is showing, so it owns Tab and Enter
 
 export const setStepTimeout = v => { stepTimeout = v; };
 export const setStopRequested = v => { stopRequested = v; };
@@ -20,3 +21,4 @@ export const setPreviewTimer = v => { previewTimer = v; };
 export const setCurrentSite = v => { currentSite = v; };
 export const setEditorSite = v => { editorSite = v; };
 export const setLastEl = v => { lastEl = v; };
+export const setCompletionOpen = v => { completionOpen = v; };

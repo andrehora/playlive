@@ -25,16 +25,17 @@
       <div class="panel-head">
         <h2>Tests <span id="fileStatus" class="file-status" aria-live="polite"></span></h2>
         <div class="head-actions">
-          <label class="switch head-switch" title="Highlight the line of the running step in the editor"><input type="checkbox" id="trackLine" checked> Highlight run</label>
           <button id="export" type="button" class="ghost small" title="Export these tests for Playwright or Cypress"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</button>
           <button id="reset" type="button" class="ghost small" title="Start this site over: example tests back, and its saved data, run history and last result cleared"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+          <label class="switch head-switch" title="Highlight the line of the running step in the editor"><input type="checkbox" id="trackLine" checked> Follow</label>
+          <button id="foldSpec" type="button" class="ghost icon-btn" aria-label="Collapse all" aria-expanded="true" aria-controls="editor" title="Hide the code of every test"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="foldSpecIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5"/></svg></button>
         </div>
       </div>
       <div class="editor" id="editor">
         <div class="gutter" id="gutter" aria-hidden="true"></div>
         <div class="code">
           <pre class="hl" id="hl" aria-hidden="true"></pre>
-          <textarea id="spec" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" aria-label="Tests in YAML"></textarea>
+          <textarea id="spec" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" aria-label="Tests in YAML" title="Suggestions appear as you type. Ctrl+Space asks for them." aria-autocomplete="list" aria-controls="acPop" aria-expanded="false"></textarea>
         </div>
       </div>
       <p id="error" role="alert"></p>
@@ -57,8 +58,8 @@
       <div class="panel-head">
         <h2>Results</h2>
         <div class="head-actions">
-          <button id="foldAll" type="button" class="ghost small"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="foldIcon" d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><span class="lbl">Collapse all</span></button>
           <label class="switch"><input type="checkbox" id="follow" checked> Follow</label>
+          <button id="foldAll" type="button" class="ghost icon-btn" aria-label="Collapse all"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="foldIcon" d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg></button>
         </div>
       </div>
       <div class="summary-bar"><div id="summary" aria-live="polite"></div><div class="progress" id="progress" hidden><span></span></div></div>
@@ -68,6 +69,7 @@
   <div class="resizer col-resizer" id="colResizer" role="separator" aria-orientation="vertical" aria-label="Resize the panels" tabindex="0" title="Drag to resize, double-click to reset"></div>
   <section class="panel browser">
     <div class="site-head">
+      <h2>Site</h2>
       <div class="picker">
         <button id="siteBtn" type="button" class="site-btn" aria-haspopup="true" aria-expanded="false" aria-controls="sitePop" title="Choose an example site"><span class="swatch" id="siteSwatch" aria-hidden="true"></span><span id="siteName" class="site-name"></span><span class="tres" aria-hidden="true"></span><svg class="i caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
         <div class="pop" id="sitePop" hidden>
@@ -82,6 +84,10 @@
         <button id="nextSite" type="button" class="ghost icon-btn" aria-label="Next example" title="Next example"><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       <div class="addr">
+        <div class="seg view-seg" role="group" aria-label="What to show">
+          <button type="button" data-view="site" title="Show the site">Site</button>
+          <button type="button" data-view="html" title="Show the site's HTML, following the running step">HTML</button>
+        </div>
         <button id="reload" type="button" class="ghost icon-btn" aria-label="Reload the site" title="Reload the site"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
         <div class="seg" role="group" aria-label="Screen size">
           <button type="button" data-vp="desktop" aria-label="Desktop" title="Desktop"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>
@@ -92,7 +98,13 @@
     </div>
     <div id="snapbar" class="bar snapbar" hidden><span id="snapText"></span><button id="snapBack" type="button" class="small">Back to live site</button></div>
     <div id="recbar" class="bar recbar" hidden>Recording. Use the site normally and each action becomes a step. Shift+click any text or button to add a check.</div>
-    <div class="stage" id="stage"><div class="device" id="device" data-vp="desktop"><iframe id="app" title="Site under test"></iframe></div></div>
+    <div class="view" id="view">
+      <div class="stage" id="stage"><div class="device" id="device" data-vp="desktop"><iframe id="app" title="Site under test"></iframe></div></div>
+      <div class="htmlpane" id="htmlPane" hidden>
+        <div class="gutter" id="htmlGutter" aria-hidden="true"></div>
+        <pre class="code-view htmlcode" id="htmlCode" tabindex="0" aria-label="The site's HTML"></pre>
+      </div>
+    </div>
   </section>
 </main>
 <div class="toast" id="toast" role="status"></div>

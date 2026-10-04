@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Run end-to-end tests live in the browser",
   "scripts": {
+    "start": "node tests/server.mjs 4174",
     "serve": "node tests/server.mjs 4173",
     "test": "playwright test",
     "test:examples": "playwright test tests/examples.spec.js",

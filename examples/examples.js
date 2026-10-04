@@ -1,6 +1,6 @@
-// The example sites. Each one has a page in example/<id>.html and its tests
-// in example/<id>.yaml. Order matters: sites group by category in this order,
-// and the ports below run from 3001 upwards in the same order.
+// The example sites. Each one has a folder, examples/<id>/, holding its page in
+// index.html and its tests in tests.yaml. Order matters: sites group by category
+// in this order, and the ports below run from 3001 upwards in the same order.
 export const SITES = {
   "contact-form": { name: "Contact form", category: "Forms", host: "localhost:3001", accent: "#0f766e" },
   "signup-wizard": { name: "Signup wizard", category: "Forms", host: "localhost:3002", accent: "#0f766e" },

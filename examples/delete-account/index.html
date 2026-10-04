@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Delete account</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#1d4ed8}</style>
+</head>
+<body>
+<h1>Delete account</h1>
+<div id="form"><p>This permanently removes your projects and invoices.</p>
+<label for="confirm">Type DELETE to confirm</label><input id="confirm" autocomplete="off">
+<p id="hint" role="status"></p>
+<button id="del" type="button" disabled>Delete my account</button> <button id="cancel" type="button" class="secondary">Cancel</button></div>
+<p id="ok" class="ok" hidden></p>
+
+<script>
+$('confirm').addEventListener('input',()=>{const v=$('confirm').value;$('del').disabled=v!=='DELETE';
+  $('hint').textContent=v.toLowerCase()==='delete'&&v!=='DELETE'?'Type DELETE in capital letters.':'';});
+$('del').onclick=()=>{$('form').hidden=true;$('ok').hidden=false;$('ok').textContent='Your account has been deleted.';};
+$('cancel').onclick=()=>{$('confirm').value='';$('del').disabled=true;$('hint').textContent='';$('ok').hidden=false;$('ok').textContent='Nothing was deleted.';};
+</script>
+</body>
+</html>

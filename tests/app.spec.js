@@ -1,5 +1,5 @@
 // End-to-end tests of the app itself: picker, editor, running, stopping,
-// step by step, time travel, recorder, export, reset, persistence, layout.
+// step by step, time travel, the HTML view, recorder, export, reset, persistence, layout.
 import { test, expect } from '@playwright/test';
 import { describeFailures, openApp, readResults, runAll, selectSite, setSpeed, siteIds } from './app.mjs';
 
@@ -272,6 +272,39 @@ test.describe('Time travel', () => {
   });
 });
 
+test.describe('HTML view', () => {
+  test('shows the live markup and follows the running step', async ({ page }) => {
+    const { errors } = await openApp(page, { site: 'contact-form' });
+    await page.click('.view-seg [data-view="html"]');
+    await expect(page.locator('#htmlPane')).toBeVisible();
+    await expect(page.locator('#htmlCode')).toContainText('<button id="openBtn"');
+    // The site keeps its size underneath, or steps could not see its elements.
+    expect(await page.locator('#app').evaluate(el => el.getBoundingClientRect().width)).toBeGreaterThan(0);
+
+    await setSpeed(page, 'fast');
+    const res = await runAll(page);
+    expect(res.state, describeFailures(res)).toBe('ok');
+    // The line of the element the last step found is marked, and so is its number.
+    await expect(page.locator('#htmlCode .l.ok')).toHaveCount(1);
+    await expect(page.locator('#htmlGutter div.ok')).toHaveCount(1);
+    // What the user typed is in the markup, not only in the page.
+    await expect(page.locator('#htmlCode')).toContainText('Where is my order?');
+    expect(errors).toEqual([]);
+  });
+
+  test('remembers the view, and going back shows the site again', async ({ page }) => {
+    await openApp(page);
+    await page.click('.view-seg [data-view="html"]');
+    await page.reload();
+    await expect(page.locator('#htmlPane')).toBeVisible();
+    await expect(page.locator('.view-seg [data-view="html"]')).toHaveAttribute('aria-pressed', 'true');
+
+    await page.click('.view-seg [data-view="site"]');
+    await expect(page.locator('#htmlPane')).toBeHidden();
+    await expect(page.frameLocator('#app').locator('h1')).toBeVisible();
+  });
+});
+
 test.describe('Recorder', () => {
   test('turns clicks and typing in the site into steps', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
@@ -339,17 +372,12 @@ test.describe('Export', () => {
 });
 
 test.describe('Reset', () => {
-  test('asks for a second click, then brings the example tests back', async ({ page }) => {
+  test('brings the example tests back in one click', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     const example = await page.inputValue('#spec');
     await page.fill('#spec', 'site: contact-form\n\ntest: Mine\nsteps:\n  - expectText: Contact\n');
 
     await page.click('#reset');
-    await expect(page.locator('#reset')).toContainText('Click again to reset');
-    expect(await page.inputValue('#spec')).toContain('test: Mine');
-
-    await page.click('#reset');
-    await expect(page.locator('#reset')).toContainText('Reset');
     expect(await page.inputValue('#spec')).toBe(example);
     await expect(page.locator('#toast')).toContainText('reset');
   });
@@ -490,6 +518,42 @@ test.describe('Layout and theming', () => {
   });
 });
 
+test.describe('Folding the editor', () => {
+  test('Collapse all hides the code and leaves the panel working', async ({ page }) => {
+    await openApp(page, { site: 'login' });
+    const status = await page.locator('#fileStatus').textContent();
+
+    await page.click('#foldSpec');
+    await expect(page.locator('#editor')).toBeHidden();
+    await expect(page.locator('#foldSpec')).toHaveAttribute('aria-label', 'Expand all');
+    await expect(page.locator('#foldSpec')).toHaveAttribute('aria-expanded', 'false');
+    // Folding only hides the code: the file itself, and so the run, is untouched
+    await expect(page.locator('#fileStatus')).toHaveText(status);
+    await expect(page.locator('#run')).toBeEnabled();
+
+    await setSpeed(page, 'fast');
+    const res = await runAll(page);
+    expect(res.state, describeFailures(res)).toBe('ok');
+
+    await page.click('#foldSpec');
+    await expect(page.locator('#editor')).toBeVisible();
+    await expect(page.locator('#foldSpec')).toHaveAttribute('aria-label', 'Collapse all');
+    await expect(page.locator('#hl .l')).not.toHaveCount(0);
+  });
+
+  test('an edit made while folded is still there when the code comes back', async ({ page }) => {
+    await openApp(page);
+    await page.click('#foldSpec');
+    await page.evaluate(() => {
+      const el = document.getElementById('spec');
+      el.value += '\ntest: Added while folded\nsteps:\n  - expectText: Contact\n';
+      el.dispatchEvent(new Event('input'));
+    });
+    await page.click('#foldSpec');
+    await expect(page.locator('#hl')).toContainText('Added while folded');
+  });
+});
+
 test.describe('Accessibility basics', () => {
   test('controls carry the state they claim', async ({ page }) => {
     await openApp(page);
@@ -508,9 +572,9 @@ test.describe('Accessibility basics', () => {
 
     // Collapse all / Expand all follows the folds.
     await page.click('#foldAll');
-    await expect(page.locator('#foldAll .lbl')).toHaveText('Expand all');
+    await expect(page.locator('#foldAll')).toHaveAttribute('aria-label', 'Expand all');
     await page.click('#foldAll');
-    await expect(page.locator('#foldAll .lbl')).toHaveText('Collapse all');
+    await expect(page.locator('#foldAll')).toHaveAttribute('aria-label', 'Collapse all');
   });
 
   test('every toolbar button has an accessible name', async ({ page }) => {

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Help center</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Help center</h1>
+<nav aria-label="Topics"><a href="#start" data-p="start">Getting started</a><a href="#install" data-p="install">Installation</a><a href="#trouble" data-p="trouble">Troubleshooting</a></nav>
+<p id="crumb" class="muted"></p><h2 id="title"></h2><p id="text"></p>
+<p>Was this page helpful? <button id="yes" type="button" class="secondary">Yes</button> <button id="no" type="button" class="secondary">No</button></p>
+<p id="fb" role="status"></p>
+
+<script>
+const P={start:['Getting started','Create an account, then invite your team from Settings.'],install:['Installation','Run npm install our-sdk, then add your API key.'],trouble:['Troubleshooting','If the app won’t load, clear your cache and try again.']};
+function show(k){$('crumb').textContent='Help center / '+P[k][0];$('title').textContent=P[k][0];$('text').textContent=P[k][1];$('fb').textContent='';
+  document.querySelectorAll('nav a').forEach(a=>{a.style.fontWeight=a.dataset.p===k?'700':'400';});}
+document.querySelectorAll('nav a').forEach(a=>{a.onclick=e=>{e.preventDefault();show(a.dataset.p);};});
+$('yes').onclick=()=>{$('fb').textContent='Thanks for your feedback!';};
+$('no').onclick=()=>{$('fb').textContent='Sorry about that. We will improve this page.';};
+show('start');
+</script>
+</body>
+</html>

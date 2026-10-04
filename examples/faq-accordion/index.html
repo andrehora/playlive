@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FAQ accordion</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Frequently asked questions</h1>
+<h2><button class="q" type="button" aria-expanded="false" aria-controls="a1">How long does shipping take?</button></h2><p id="a1" hidden>Orders arrive in 3 to 5 business days.</p>
+<h2><button class="q" type="button" aria-expanded="false" aria-controls="a2">Can I return an item?</button></h2><p id="a2" hidden>Yes, within 30 days of delivery.</p>
+<h2><button class="q" type="button" aria-expanded="false" aria-controls="a3">Do you ship abroad?</button></h2><p id="a3" hidden>We ship to 40 countries.</p>
+
+<script>
+const qs=[...document.querySelectorAll('.q')];
+qs.forEach(b=>{b.onclick=()=>{const open=b.getAttribute('aria-expanded')==='true';
+  qs.forEach(x=>{x.setAttribute('aria-expanded','false');$(x.getAttribute('aria-controls')).hidden=true;});
+  if(!open){b.setAttribute('aria-expanded','true');$(b.getAttribute('aria-controls')).hidden=false;}};});
+</script>
+</body>
+</html>

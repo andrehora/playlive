@@ -54,7 +54,6 @@ button.primary{background:var(--run);border-color:var(--run);color:var(--on-run)
 button.primary:hover:not(:disabled){filter:brightness(1.06);border-color:var(--run)}
 button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
 button.ghost:hover:not(:disabled){background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);border-color:transparent}
-button.ghost.danger,button.ghost.danger:hover:not(:disabled){color:#fff;background:var(--fail);border-color:var(--fail)}
 button.small{font-size:var(--small-font);padding:var(--small-pad);min-height:var(--small-tap);border-radius:var(--small-r)}
 button:disabled{opacity:.45;cursor:not-allowed}
 button:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--run);outline-offset:2px}
@@ -76,9 +75,9 @@ main{display:grid;grid-template-columns:var(--left-w) 12px minmax(0,1fr);padding
 .left{display:flex;flex-direction:column;min-width:0}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0;box-shadow:var(--shadow)}
 .panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--line);min-height:46px}
-.panel-head h2{font-size:13.5px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
+.panel-head h2,.site-head h2{font-size:13.5px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
 .head-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.head-switch{margin-right:4px;white-space:nowrap}
+.head-switch{margin-left:4px;white-space:nowrap}
 .tests-panel .head-actions{flex-wrap:nowrap}
 .file-status{font-weight:400;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .file-status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pass)}
@@ -98,6 +97,7 @@ body.resizing iframe{pointer-events:none}
 
 /* ---------- Editor with highlighting ---------- */
 .editor{display:grid;grid-template-columns:auto minmax(0,1fr);height:var(--editor-h);min-height:110px;background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;position:relative}
+.editor[hidden]{display:none}
 .editor:focus-within{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
 .gutter{padding:12px 10px 12px 12px;text-align:right;color:var(--muted);user-select:none;overflow:hidden;border-right:1px solid var(--line);min-width:42px}
 .gutter div{height:var(--code-line);opacity:.55}
@@ -120,6 +120,15 @@ body.resizing iframe{pointer-events:none}
 .hl .c{color:var(--syn-com);font-style:italic}
 #spec{resize:none;background:transparent;color:transparent;caret-color:var(--ink);overflow:auto;outline:none;scrollbar-width:thin}
 #spec::selection{background:color-mix(in srgb,var(--run) 28%,transparent);color:transparent}
+/* The editor's suggestion list. It sits on <body> in viewport coordinates,
+   because a panel clips what overflows it and the editor can be very short. */
+.ac{position:fixed;z-index:60;min-width:min(260px,90vw);max-width:min(460px,92vw);max-height:min(46vh,320px);overflow:auto;overscroll-behavior:contain;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 48px rgba(16,24,40,.22);padding:4px;scrollbar-width:thin}
+.ac[hidden]{display:none}
+.ac-item{display:flex;align-items:center;gap:10px;padding:6px 8px;min-height:var(--small-tap);border-radius:6px;cursor:pointer}
+.ac-item[aria-selected="true"]{background:color-mix(in srgb,var(--run) 15%,transparent)}
+.ac-item:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.ac-label{font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;color:var(--ink);white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.ac-detail{margin-left:auto;font-size:11.5px;color:var(--muted);white-space:nowrap;flex:none}
 #error{color:var(--fail);font-size:12.5px;padding:8px 14px;margin:0;white-space:pre-wrap;border-top:1px solid var(--line);background:color-mix(in srgb,var(--fail) 6%,transparent);max-height:96px;overflow:auto}
 #error:empty{display:none}
 #error.jump{cursor:pointer}
@@ -216,11 +225,25 @@ body.resizing iframe{pointer-events:none}
 .snapbar{background:color-mix(in srgb,var(--run) 10%,transparent);color:var(--run)}
 .recbar{background:color-mix(in srgb,var(--rec) 10%,transparent);color:var(--rec)}
 .recbar::before{content:"●";margin-right:6px;animation:pulse 1.2s ease-in-out infinite}
-.stage{flex:1;min-height:0;overflow:auto;display:flex;background-color:var(--panel-2);background-image:radial-gradient(color-mix(in srgb,var(--muted) 35%,transparent) 1px,transparent 1.2px);background-size:18px 18px}
+.view{position:relative;flex:1;min-height:0;display:flex}
+.stage{position:absolute;inset:0;overflow:auto;display:flex;background-color:var(--panel-2);background-image:radial-gradient(color-mix(in srgb,var(--muted) 35%,transparent) 1px,transparent 1.2px);background-size:18px 18px}
 .device{flex:1;display:flex;min-width:0;background:#fff}
 .device[data-vp="tablet"],.device[data-vp="mobile"]{flex:none;margin:18px auto;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(16,24,40,.14)}
 .device[data-vp="tablet"]{width:768px}
 .device[data-vp="mobile"]{width:390px}
+
+/* The HTML view: the site's markup instead of the site, on top of it rather
+   than in place of it, so the page keeps its size and steps can still see it */
+.htmlpane{position:absolute;inset:0;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+.htmlpane[hidden]{display:none}
+.htmlcode{margin:0;padding:12px 14px;border:0;background:transparent;color:var(--ink);font:inherit;white-space:pre;tab-size:2;overflow:auto;outline:none;scrollbar-width:thin}
+.htmlcode:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
+.htmlcode .l{display:block;min-height:var(--code-line)}
+.htmlcode .l.cur{background:color-mix(in srgb,var(--running) 24%,transparent);box-shadow:inset 3px 0 var(--running)}
+.htmlcode .l.ok{background:color-mix(in srgb,var(--pass) 16%,transparent);box-shadow:inset 3px 0 var(--pass)}
+.htmlcode .l.bad{background:color-mix(in srgb,var(--fail) 14%,transparent);box-shadow:inset 3px 0 var(--fail)}
+.htmlpane .gutter{padding:12px 10px 12px 12px}
+.gutter div.ok{opacity:1;color:var(--pass);font-weight:600}
 iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 
 /* ---------- Dialog and toast ---------- */
@@ -251,6 +274,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 
 /* ---------- Desktop: a fixed workspace, panels scroll inside ---------- */
 @media (min-width:901px){
+  .ac-item{min-height:0;padding:4px 8px}
+  .ac{max-height:min(40vh,300px)}
   /* A mouse does not need 44px targets, so the tokens shrink back here. */
   :root{
     --tap:32px; --btn-font:13.5px; --btn-pad:8px 12px; --btn-r:8px;
@@ -294,14 +319,16 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .site-head{gap:8px;padding:10px}
   .picker{flex:1} .site-btn{width:100%;min-width:0}
   .stepper{gap:4px}
-  .seg{display:none}
+  /* The screen-size toggle goes, but Site/HTML stays, at a size worth tapping */
+  .seg{display:none} .view-seg{display:inline-flex}
+  .view-seg button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
 
   /* The example list opens as a sheet, so it is reachable wherever the page sits */
   .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px)) 8px;width:auto;max-height:min(70dvh,560px);border-radius:14px}
   .pop-cat{padding:12px 8px 4px}
 
   /* Text that is comfortable at arm's length rather than at desk distance */
-  .panel-head h2{font-size:15px}
+  .panel-head h2,.site-head h2{font-size:15px}
   .file-status{font-size:13px}
   #summary,.empty,.pop-empty{font-size:14px}
   .desc{font-size:14.5px}

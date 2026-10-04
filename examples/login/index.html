@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Login</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#1d4ed8}</style>
+</head>
+<body>
+<h1>Customer portal</h1>
+<div id="login">
+  <p>Log in to see your invoices.</p>
+  <label for="email">Email</label><input id="email" type="email">
+  <label for="pw">Password</label><input id="pw" type="password">
+  <button id="loginBtn" type="button">Log in</button>
+  <p id="err" role="alert"></p>
+</div>
+<div id="dash" hidden>
+  <h2 id="welcome"></h2>
+  <p>You have 3 new invoices.</p>
+  <button id="logout" type="button">Log out</button>
+</div>
+
+<script>
+$('loginBtn').onclick=()=>{
+  const e=$('email').value.trim(),p=$('pw').value,b=$('loginBtn');
+  $('err').textContent='';b.disabled=true;b.textContent='Checking…';
+  setTimeout(()=>{b.disabled=false;b.textContent='Log in';
+    if(e.includes('@')&&p==='secret123'){$('login').hidden=true;$('dash').hidden=false;$('welcome').textContent='Welcome back, '+e.split('@')[0];}
+    else{$('err').textContent='Wrong email or password.';}
+  },600);
+};
+$('logout').onclick=()=>{$('dash').hidden=true;$('login').hidden=false;$('pw').value='';};
+</script>
+</body>
+</html>

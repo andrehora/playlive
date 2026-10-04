@@ -20,16 +20,23 @@ export function yq(s){
 }
 // The value a step types or picks goes inside its target
 export const withValue = (target, value) => target.replace(/\s*\}$/, `, value: ${yq(value)} }`);
-// The same target vocabulary the runner understands
-export function targetFor(el){
+// The same target vocabulary the runner understands, as its parts, so the
+// catalog can offer one slot at a time as well as the whole target
+export function targetParts(el){
   if (/^(input|textarea|select)$/i.test(el.tagName)){
     const label = clean(el.getAttribute('aria-label') || labelText(el));
-    if (label) return `{ label: ${yq(label)} }`;
-    const ph = el.getAttribute('placeholder'); if (ph) return `{ placeholder: ${yq(ph)} }`;
+    if (label) return { label };
+    const ph = el.getAttribute('placeholder'); if (ph) return { placeholder: ph };
   }
   const role = roleOf(el), name = rawName(el);
-  if (role) return name ? `{ role: ${role}, name: ${yq(name)} }` : `{ role: ${role} }`;
-  return name ? `{ text: ${yq(name)} }` : null;
+  if (role) return name ? { role, name } : { role };
+  return name ? { text: name } : null;
+}
+// A role is one of a fixed set of words, so it stays plain; the rest is text a person wrote
+export const renderTarget = parts => `{ ${Object.entries(parts).map(([k, v]) => `${k}: ${k === 'role' ? v : yq(v)}`).join(', ')} }`;
+export function targetFor(el){
+  const parts = targetParts(el);
+  return parts ? renderTarget(parts) : null;
 }
 export function addStep(yamlStep){
   const ind = '  ';

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Expense splitter</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#7c3aed}</style>
+</head>
+<body>
+<h1>Trip expenses</h1>
+<label for="desc">Description</label><input id="desc">
+<label for="amt">Amount</label><input id="amt" inputmode="decimal">
+<label for="by">Paid by</label><select id="by"><option>Ana</option><option>Ben</option><option>Cleo</option></select>
+<button id="add" type="button">Add expense</button><p id="err" role="alert"></p>
+<h2>Expenses</h2><ul id="list" class="clean"></ul><p id="total">Total: $0.00</p>
+<h2>Who owes whom</h2><div id="settle"><p>Everyone is even.</p></div>
+
+<script>
+const ex=[];const people=['Ana','Ben','Cleo'];
+function render(){$('list').innerHTML='';
+  ex.forEach(e=>{const li=document.createElement('li');li.textContent=e.desc+' · $'+e.amt.toFixed(2)+' · paid by '+e.by;$('list').appendChild(li);});
+  const total=ex.reduce((a,e)=>a+e.amt,0),share=total/3;
+  $('total').textContent='Total: $'+total.toFixed(2)+(ex.length?' · $'+share.toFixed(2)+' each':'');
+  const bal=people.map(p=>({p:p,v:ex.filter(e=>e.by===p).reduce((a,e)=>a+e.amt,0)-share}));
+  const debt=bal.filter(b=>b.v<-0.005).map(b=>({p:b.p,v:-b.v})),cred=bal.filter(b=>b.v>0.005);const lines=[];let i=0,j=0;
+  while(i<debt.length&&j<cred.length){const x=Math.min(debt[i].v,cred[j].v);lines.push(debt[i].p+' owes '+cred[j].p+' $'+x.toFixed(2));
+    debt[i].v-=x;cred[j].v-=x;if(debt[i].v<0.005)i++;if(cred[j].v<0.005)j++;}
+  $('settle').innerHTML='';(lines.length?lines:['Everyone is even.']).forEach(l=>{const p=document.createElement('p');p.textContent=l;$('settle').appendChild(p);});}
+$('add').onclick=()=>{const a=Number($('amt').value);
+  if(!$('desc').value.trim()){$('err').textContent='Add a description.';return;}
+  if(!(a>0)){$('err').textContent='Enter an amount above 0.';return;}
+  $('err').textContent='';ex.push({desc:$('desc').value.trim(),amt:a,by:$('by').value});$('desc').value='';$('amt').value='';render();};
+</script>
+</body>
+</html>

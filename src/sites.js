@@ -1,4 +1,5 @@
 import { SITES } from '../examples/examples.js';
+import { harvest } from './catalog.js';
 import { frame, specEl } from './dom.js';
 import { attachRecorder } from './recorder.js';
 import { hideSnapshot } from './snapshots.js';
@@ -12,7 +13,7 @@ export const exampleCache = {};
 export async function exampleTests(id){
   if (exampleCache[id] === undefined){
     try {
-      const res = await fetch(`examples/${id}.yaml`);
+      const res = await fetch(`examples/${id}/tests.yaml`);
       exampleCache[id] = res.ok ? await res.text() : '';
     } catch { exampleCache[id] = ''; }
   }
@@ -49,9 +50,15 @@ export const pageErrors = () => (frame.contentWindow && frame.contentWindow.__tr
 export let loadCount = 0;
 export function loadApp(path = '/'){
   hideSnapshot();
+  const site = currentSite;
   return new Promise(res => {
-    frame.onload = () => { attachRecorder(); res(); };
+    frame.onload = () => {
+      attachRecorder(); harvest(site);
+      // A page that fills itself in after load is read again a moment later
+      setTimeout(() => { if (currentSite === site) harvest(site); }, 250);
+      res();
+    };
     frame.removeAttribute('srcdoc');          // a snapshot may have been showing
-    frame.src = `examples/${currentSite}.html?load=${++loadCount}`;
+    frame.src = `examples/${currentSite}/index.html?load=${++loadCount}`;
   });
 }

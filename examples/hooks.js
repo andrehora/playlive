@@ -2,7 +2,8 @@
 // tells Playlive which site this is, and lets Playlive see what the page does:
 // uncaught errors and console.error calls become warnings in Results, and every
 // storage key the site writes is recorded so Reset can clear it.
-window.__trSite = location.pathname.split('/').pop().replace(/\.html$/, '');
+// Each site lives in examples/<id>/, so the folder name is the site id.
+window.__trSite = location.pathname.replace(/\/[^/]*$/, '').split('/').pop();
 window.$ = id => document.getElementById(id);
 
 window.__trErrors = [];

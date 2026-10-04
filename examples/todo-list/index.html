@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>To-do list</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#7c3aed}</style>
+</head>
+<body>
+<h1>To-do list</h1>
+<p>A tiny to-do list.</p>
+<label for="newTask">New task</label>
+<input id="newTask" placeholder="What needs doing?">
+<button id="addBtn" type="button">Add task</button>
+<p id="err" role="alert"></p>
+<ul id="list" class="clean"></ul>
+<p id="progress">0 of 0 done</p>
+
+<script>
+$('addBtn').onclick=()=>{
+  const v=$('newTask').value.trim();
+  if(!v){$('err').textContent='Write a task first.';return;}
+  $('err').textContent='';
+  const li=document.createElement('li'),lab=document.createElement('label'),cb=document.createElement('input');
+  lab.className='inline';cb.type='checkbox';cb.onchange=upd;lab.append(cb,' '+v);li.appendChild(lab);
+  $('list').appendChild(li);$('newTask').value='';upd();
+};
+function upd(){const all=[...document.querySelectorAll('#list input')];
+  $('progress').textContent=all.filter(c=>c.checked).length+' of '+all.length+' done';}
+</script>
+</body>
+</html>

@@ -1,7 +1,9 @@
 import { ACTIONS } from './actions.js';
+import { harvest } from './catalog.js';
 import { $id, KEY, errorEl, recBar, recordBtn, resetBtn, resultsEl, runBtn, specEl, speed, speedMode, stopBtn, summaryEl, tabsEl } from './dom.js';
 import { lineForStep, setCurrentLine, setFileStatus } from './editor.js';
 import { describeStep, followInResults } from './find.js';
+import { renderHtmlView } from './htmlview.js';
 import { paintHistory, recordHistory } from './history.js';
 import { trackLineEl } from './layout.js';
 import { validate } from './parse.js';
@@ -63,12 +65,16 @@ export async function runTest(t, sec, opts){
       const s0 = performance.now();
       await ACTIONS[t.steps[i].action](withUnique(t.steps[i], unique));
       collectErrors(i + 1);
+      harvest();                                // the step may have revealed a new screen
       markStep(li, 'passed'); dot.className = 'ok';
+      renderHtmlView('passed');                 // the HTML view follows the element the step touched
       li.querySelector('.ms').textContent = `${Math.round(performance.now() - s0)} ms`;
       await sleep(speed().step);
     } catch (e) {
       try { collectErrors(i + 1); } catch {}
+      harvest();
       markStep(li, 'failed'); dot.className = 'bad';
+      renderHtmlView('failed');
       const err = document.createElement('span'); err.className = 'err'; err.textContent = e.message;
       li.querySelector('.desc').appendChild(err);
       items.slice(i + 1).forEach(x => x.className = 'skipped');

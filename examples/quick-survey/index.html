@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quick survey</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>Quick survey</h1>
+<fieldset><legend>How often do you cook?</legend>
+<label class="inline"><input type="radio" name="freq" value="Every day"> Every day</label>
+<label class="inline"><input type="radio" name="freq" value="A few times a week"> A few times a week</label>
+<label class="inline"><input type="radio" name="freq" value="Rarely"> Rarely</label></fieldset>
+<label for="cuisine">Favorite cuisine</label><select id="cuisine"><option>Italian</option><option>Japanese</option><option>Mexican</option></select>
+<button id="submit" type="button">Submit answers</button>
+<p id="err" role="alert"></p><p id="ok" class="ok" hidden></p>
+
+<script>
+$('submit').onclick=()=>{const r=document.querySelector('input[name=freq]:checked');$('ok').hidden=true;
+  if(!r){$('err').textContent='Pick how often you cook.';return;}
+  $('err').textContent='';$('ok').hidden=false;
+  $('ok').textContent='Thanks! You cook '+r.value.toLowerCase()+' and love '+$('cuisine').value+' food.';};
+</script>
+</body>
+</html>

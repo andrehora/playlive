@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Notes</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#7c3aed}</style>
+</head>
+<body>
+<h1>Notes</h1>
+<label for="title">Title</label><input id="title">
+<label for="body">Note</label><textarea id="body"></textarea>
+<button id="add" type="button">Add note</button><p id="err" role="alert"></p>
+<p id="count">No notes yet.</p><div id="notes"></div>
+
+<script>
+const notes=[];
+function render(){$('notes').innerHTML='';
+  notes.forEach((n,i)=>{const d=document.createElement('div');d.className='card';const h=document.createElement('h2');h.textContent=n.t;
+    const p=document.createElement('p');p.textContent=n.b;const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent='Delete';
+    b.setAttribute('aria-label','Delete note: '+n.t);b.onclick=()=>{notes.splice(i,1);render();};d.append(h,p,b);$('notes').appendChild(d);});
+  $('count').textContent=notes.length?notes.length+(notes.length===1?' note':' notes'):'No notes yet.';}
+$('add').onclick=()=>{const t=$('title').value.trim();if(!t){$('err').textContent='Give your note a title.';return;}
+  $('err').textContent='';notes.unshift({t:t,b:$('body').value.trim()});$('title').value='';$('body').value='';render();};
+</script>
+</body>
+</html>

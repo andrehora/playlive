@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weather widget</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0e7490}</style>
+</head>
+<body>
+<h1>Weather</h1>
+<label for="city">City</label><select id="city"><option>Lisbon</option><option>Oslo</option><option>Tokyo</option></select>
+<div class="row"><button id="c" type="button" aria-pressed="true">Celsius</button><button id="f" type="button" class="secondary" aria-pressed="false">Fahrenheit</button></div>
+<p id="now" style="font-size:20px;font-weight:600;color:#111827"></p><ul id="fc" class="clean"></ul>
+
+<script>
+const W={Lisbon:[21,'sunny',[['Tue',22,'sunny'],['Wed',19,'cloudy'],['Thu',18,'rain']]],Oslo:[4,'snow',[['Tue',2,'snow'],['Wed',5,'cloudy'],['Thu',6,'rain']]],Tokyo:[16,'cloudy',[['Tue',18,'sunny'],['Wed',17,'rain'],['Thu',15,'cloudy']]]};
+let unit='C';const t=c=>unit==='C'?c+'°C':Math.round(c*9/5+32)+'°F';
+function render(){const city=$('city').value,w=W[city];$('now').textContent=city+' now: '+t(w[0])+', '+w[1];
+  $('fc').innerHTML='';w[2].forEach(d=>{const li=document.createElement('li');li.textContent=d[0]+' · '+t(d[1])+' · '+d[2];$('fc').appendChild(li);});
+  $('c').setAttribute('aria-pressed',String(unit==='C'));$('f').setAttribute('aria-pressed',String(unit==='F'));$('c').className=unit==='C'?'':'secondary';$('f').className=unit==='F'?'':'secondary';}
+$('city').onchange=render;$('c').onclick=()=>{unit='C';render();};$('f').onclick=()=>{unit='F';render();};render();
+</script>
+</body>
+</html>

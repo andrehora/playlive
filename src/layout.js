@@ -48,7 +48,7 @@ $id('reload').addEventListener('click', () => { if (!running && !recording) load
 // The shortcut is shown in the Run button's tooltip (set in syncUI)
 applyLayout();
 setViewport(layout.vp || 'desktop');
-// "Highlight line": follow the running step in the editor (on by default, remembered)
+// "Follow": highlight the line of the running step in the editor (on by default, remembered)
 export const trackLineEl = $id('trackLine');
 trackLineEl.checked = layout.trackLine !== false;
 trackLineEl.addEventListener('change', () => {

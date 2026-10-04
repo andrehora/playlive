@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pricing tabs</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Pricing</h1>
+<div role="tablist" aria-label="Billing period">
+  <button role="tab" id="t-m" aria-selected="true" aria-controls="p-m">Monthly</button>
+  <button role="tab" id="t-y" aria-selected="false" aria-controls="p-y" tabindex="-1">Yearly</button>
+  <button role="tab" id="t-l" aria-selected="false" aria-controls="p-l" tabindex="-1">Lifetime</button>
+</div>
+<div role="tabpanel" id="p-m"><h2>Pro, $9 per month</h2><p>Cancel anytime.</p></div>
+<div role="tabpanel" id="p-y" hidden><h2>Pro, $90 per year</h2><p>Two months free compared to monthly.</p></div>
+<div role="tabpanel" id="p-l" hidden><h2>Pro, $299 once</h2><p>Pay once, use it forever.</p></div>
+
+<script>
+const tabs=[...document.querySelectorAll('[role=tab]')];
+function sel(t){tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',String(on));x.tabIndex=on?0:-1;$(x.getAttribute('aria-controls')).hidden=!on;});t.focus({preventScroll:true});}
+tabs.forEach((t,i)=>{t.type='button';t.onclick=()=>sel(t);
+  t.onkeydown=e=>{if(e.key==='ArrowRight')sel(tabs[(i+1)%tabs.length]);if(e.key==='ArrowLeft')sel(tabs[(i+tabs.length-1)%tabs.length]);};});
+</script>
+</body>
+</html>

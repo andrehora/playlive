@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flaky app</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4d7c0f}</style>
+</head>
+<body>
+<h1>Flaky app</h1>
+<p>A small dashboard that misbehaves on purpose, to show what makes tests flaky.</p>
+<p id="tip"></p>
+<h2>Reports</h2>
+<button id="load" type="button">Load report</button>
+<p id="report" role="status"></p>
+<h2>Sync</h2>
+<button id="sync" type="button">Sync now</button>
+<p id="syncMsg" role="status"></p>
+<h2>Waitlist</h2>
+<label for="wlEmail">Email</label><input id="wlEmail" type="email">
+<button id="join" type="button">Join waitlist</button>
+<p id="joinMsg" role="status"></p>
+<button id="resetData" type="button" class="secondary">Reset demo data</button>
+
+<script>
+// 1. Random content: a different tip on every visit
+const tips=['Drink more coffee','Take a short walk','Stretch every hour','Back up your files'];
+$('tip').textContent='Tip of the day: '+tips[Math.floor(Math.random()*tips.length)];
+// 2. Slow server: the report takes 0.3 to 6 seconds
+$('load').onclick=()=>{const b=$('load');b.disabled=true;$('report').textContent='Loading report…';
+  setTimeout(()=>{b.disabled=false;$('report').textContent='Report ready: 42 orders';},300+Math.random()*5700);};
+// 3. Unreliable feature: sync fails about 1 time in 3, and logs an error
+$('sync').onclick=()=>{$('syncMsg').textContent='Syncing…';
+  setTimeout(()=>{if(Math.random()<0.35){$('syncMsg').textContent='Sync failed. Try again.';console.error('Sync: server returned 503');}
+    else{$('syncMsg').textContent='Synced just now';}},600);};
+// 4. Leftover data: emails are saved in the browser and survive page reloads
+const KEY='flaky-app-waitlist';
+const mem=()=>{const M=window.parent.__trMem||(window.parent.__trMem={});return M[window.__trSite]||(M[window.__trSite]={});};
+const list=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return mem().waitlist||[];}};
+const save=l=>{try{localStorage.setItem(KEY,JSON.stringify(l));}catch(e){mem().waitlist=l;}};
+$('join').onclick=()=>{const e=$('wlEmail').value.trim().toLowerCase();
+  if(!e.includes('@')){$('joinMsg').textContent='Enter a valid email.';return;}
+  const l=list();if(l.includes(e)){$('joinMsg').textContent='This email is already on the waitlist.';return;}
+  l.push(e);save(l);$('joinMsg').textContent="You're on the waitlist, "+e+'!';};
+$('resetData').onclick=()=>{save([]);$('joinMsg').textContent='Demo data cleared.';};
+</script>
+</body>
+</html>

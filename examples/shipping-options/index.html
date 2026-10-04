@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shipping options</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#b45309}</style>
+</head>
+<body>
+<h1>Shipping</h1><p>Subtotal: $40.00</p>
+<fieldset><legend>Delivery</legend>
+<div class="row"><label class="inline"><input type="radio" name="ship" value="Standard" checked> Standard</label><span class="muted">5–7 business days · $4.99</span></div>
+<div class="row"><label class="inline"><input type="radio" name="ship" value="Express"> Express</label><span class="muted">1–2 business days · $12.99</span></div>
+<div class="row"><label class="inline"><input type="radio" name="ship" value="Pickup in store"> Pickup in store</label><span class="muted">Ready tomorrow · Free</span></div></fieldset>
+<label class="inline"><input type="checkbox" id="gift"> Gift wrap</label><span class="muted">$3.00</span>
+<p id="sum"></p><p id="total" class="ok"></p>
+
+<script>
+const O={'Standard':[4.99,'5–7 business days'],'Express':[12.99,'1–2 business days'],'Pickup in store':[0,'ready tomorrow']};
+function upd(){const s=document.querySelector('input[name=ship]:checked').value,o=O[s],t=40+o[0]+($('gift').checked?3:0);
+  $('sum').textContent='Delivery: '+s+', '+o[1];$('total').textContent='Total: $'+t.toFixed(2);}
+document.querySelectorAll('input').forEach(i=>i.addEventListener('change',upd));upd();
+</script>
+</body>
+</html>

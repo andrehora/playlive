@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Theme settings</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Appearance</h1>
+<fieldset><legend>Theme</legend>
+<label class="inline"><input type="radio" name="theme" value="Light" checked> Light</label>
+<label class="inline"><input type="radio" name="theme" value="Dark"> Dark</label>
+<label class="inline"><input type="radio" name="theme" value="System"> System</label></fieldset>
+<label for="size">Text size</label><select id="size"><option>Small</option><option selected>Medium</option><option>Large</option></select>
+<div class="card" id="pv"><p id="pvText" style="color:inherit"></p></div>
+<button id="reset" type="button" class="secondary">Reset to defaults</button>
+
+<script>
+function upd(){const t=document.querySelector('input[name=theme]:checked').value,s=$('size').value;
+  $('pvText').textContent='Preview: '+t+' theme, '+s.toLowerCase()+' text';
+  $('pv').style.background=t==='Dark'?'#111827':'#fff';$('pv').style.color=t==='Dark'?'#f9fafb':'#111827';
+  $('pvText').style.fontSize={Small:'13px',Medium:'16px',Large:'20px'}[s];}
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('change',upd));
+$('reset').onclick=()=>{document.querySelector('input[value=Light]').checked=true;$('size').value='Medium';upd();};upd();
+</script>
+</body>
+</html>

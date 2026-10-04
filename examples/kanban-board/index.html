@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kanban board</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#7c3aed}</style>
+</head>
+<body>
+<h1>Sprint board</h1><div class="cols" id="board"></div><p id="done" role="status"></p>
+
+<script>
+const cols=['To do','Doing','Done'];const cards=[['Write tests',0],['Fix login bug',0],['Design review',1]];
+function btn(card,to,label){const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;
+  b.setAttribute('aria-label','Move '+card[0]+' to '+cols[to]);b.onclick=()=>{card[1]=to;render();};return b;}
+function render(){$('board').innerHTML='';
+  cols.forEach((c,ci)=>{const col=document.createElement('div');col.className='card';const h=document.createElement('h2');const mine=cards.filter(x=>x[1]===ci);
+    h.textContent=c+' ('+mine.length+')';col.appendChild(h);
+    mine.forEach(card=>{const d=document.createElement('div');d.className='card';const s=document.createElement('p');s.textContent=card[0];d.appendChild(s);
+      if(ci>0)d.appendChild(btn(card,ci-1,'←'));if(ci<2)d.appendChild(btn(card,ci+1,'→'));col.appendChild(d);});
+    $('board').appendChild(col);});
+  $('done').textContent=cards.every(c=>c[1]===2)?'Sprint complete!':'';}
+render();
+</script>
+</body>
+</html>

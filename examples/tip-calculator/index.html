@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tip calculator</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0e7490}</style>
+</head>
+<body>
+<h1>Tip calculator</h1>
+<label for="bill">Bill amount</label><input id="bill" inputmode="decimal">
+<label for="tip">Tip</label><select id="tip"><option>10%</option><option selected>15%</option><option>20%</option></select>
+<label for="people">People</label><input id="people" type="number" min="1" value="1">
+<div class="card"><p id="r1">Tip: $0.00</p><p id="r2">Total: $0.00</p><p id="r3">Each person pays: $0.00</p></div>
+<p id="err" role="alert"></p>
+
+<script>
+function upd(){const b=Number($('bill').value),pct=parseInt($('tip').value,10),n=parseInt($('people').value,10);
+  if($('bill').value&&!(b>0)){$('err').textContent='Enter the bill amount.';return;}
+  if(!(n>=1)){$('err').textContent='At least 1 person.';return;}
+  $('err').textContent='';const tip=(b||0)*pct/100,tot=(b||0)+tip;
+  $('r1').textContent='Tip: $'+tip.toFixed(2);$('r2').textContent='Total: $'+tot.toFixed(2);$('r3').textContent='Each person pays: $'+(tot/n).toFixed(2);}
+document.querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',upd);el.addEventListener('change',upd);});
+</script>
+</body>
+</html>
