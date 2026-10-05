@@ -13,7 +13,6 @@ export function toPlaywright(spec){
     const to = s.timeout ? `{ timeout: ${s.timeout} }` : '';
     const opt = s.timeout ? `, ${to}` : '';
     switch (s.action){
-      case 'goto': return `await page.goto(${q(s.url)});`;
       case 'click': return `await ${loc(s.target)}.click(${to});`;
       case 'fill': return `await ${loc(s.target)}.fill(${qv(s.value)}${opt});`;
       case 'select': return `await ${loc(s.target)}.selectOption({ label: ${q(s.value)} }${opt});`;
@@ -25,20 +24,17 @@ export function toPlaywright(spec){
       case 'expectVisible': return `await expect(${loc(s.target)}).toBeVisible(${to});`;
     }
   };
-  const groups = {};
-  spec.tests.forEach(t => { const s = t.site || spec.site || editorSite; (groups[s] ||= []).push(t); });
+  const site = editorSite;                      // every test belongs to the site the editor is on
   const out = [`import { test, expect } from '@playwright/test';`, ''];
-  for (const [s, tests] of Object.entries(groups)){
-    out.push(`test.describe(${q(SITES[s].name)}, () => {`, `  test.use({ baseURL: ${q('http://' + SITES[s].host)} });`, '');
-    tests.forEach(t => {
-      out.push(`  test(${q(t.title)}, async ({ page }) => {`);
-      if (JSON.stringify(t.steps).includes('${unique}')) out.push('    const unique = Date.now().toString(36);');
-      if (t.steps[0]?.action !== 'goto') out.push(`    await page.goto('/');`);
-      t.steps.forEach(st => out.push('    ' + line(st)));
-      out.push('  });', '');
-    });
-    out.push('});', '');
-  }
+  out.push(`test.describe(${q(SITES[site].name)}, () => {`, `  test.use({ baseURL: ${q('http://' + SITES[site].host)} });`, '');
+  spec.tests.forEach(t => {
+    out.push(`  test(${q(t.title)}, async ({ page }) => {`);
+    if (JSON.stringify(t.steps).includes('${unique}')) out.push('    const unique = Date.now().toString(36);');
+    out.push(`    await page.goto('/');`);          // every test starts from a fresh page
+    t.steps.forEach(st => out.push('    ' + line(st)));
+    out.push('  });', '');
+  });
+  out.push('});', '');
   return out.join('\n').trimEnd() + '\n';
 }
 
@@ -56,7 +52,6 @@ export function toCypress(spec){
   };
   const line = s => {
     switch (s.action){
-      case 'goto': return `cy.visit(BASE + ${q(s.url)});`;
       case 'click': return `${loc(s.target, s)}.click();`;
       case 'fill': {
         const v = String(s.value ?? '');
@@ -73,20 +68,17 @@ export function toCypress(spec){
       case 'expectVisible': return `${loc(s.target, s)}.should('be.visible');`;
     }
   };
-  const groups = {};
-  spec.tests.forEach(t => { const s = t.site || spec.site || editorSite; (groups[s] ||= []).push(t); });
+  const site = editorSite;                      // every test belongs to the site the editor is on
   // Importing the Testing Library commands here keeps the file self-contained (no setup comment needed)
   const out = [`import '@testing-library/cypress/add-commands';`, ''];
-  for (const [s, tests] of Object.entries(groups)){
-    out.push(`describe(${q(SITES[s].name)}, () => {`, `  const BASE = ${q('http://' + SITES[s].host)};`, '');
-    tests.forEach(t => {
-      out.push(`  it(${q(t.title)}, () => {`);
-      if (JSON.stringify(t.steps).includes('${unique}')) out.push('    const unique = Date.now().toString(36);');
-      if (t.steps[0]?.action !== 'goto') out.push(`    cy.visit(BASE + '/');`);
-      t.steps.forEach(st => out.push('    ' + line(st)));
-      out.push('  });', '');
-    });
-    out.push('});', '');
-  }
+  out.push(`describe(${q(SITES[site].name)}, () => {`, `  const BASE = ${q('http://' + SITES[site].host)};`, '');
+  spec.tests.forEach(t => {
+    out.push(`  it(${q(t.title)}, () => {`);
+    if (JSON.stringify(t.steps).includes('${unique}')) out.push('    const unique = Date.now().toString(36);');
+    out.push(`    cy.visit(BASE + '/');`);          // every test starts from a fresh page
+    t.steps.forEach(st => out.push('    ' + line(st)));
+    out.push('  });', '');
+  });
+  out.push('});', '');
   return out.join('\n').trimEnd() + '\n';
 }

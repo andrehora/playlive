@@ -1,5 +1,3 @@
-site: currency-switcher
-
 test: Shows dollars by default
 steps:
   - expectText: "Total: $57.00"

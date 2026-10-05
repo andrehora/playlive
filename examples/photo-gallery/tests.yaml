@@ -1,5 +1,3 @@
-site: photo-gallery
-
 test: Shows the next photo
 steps:
   - click: { role: button, name: Next photo }

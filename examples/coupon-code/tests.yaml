@@ -1,5 +1,3 @@
-site: coupon-code
-
 test: SAVE10 takes 10% off
 steps:
   - fill: { label: Coupon code, value: save10 }

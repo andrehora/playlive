@@ -43,7 +43,7 @@ export async function setSpeed(page, value){
   await page.selectOption('#speed', value);
 }
 
-// Presses Run all and waits for the run to finish (the button comes back).
+// Presses Run and waits for the run to finish (the button comes back).
 export async function runAll(page, { timeout = RUN_TIMEOUT } = {}){
   await page.click('#run');
   await expect(page.locator('#run')).toBeDisabled();

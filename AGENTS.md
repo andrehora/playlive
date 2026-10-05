@@ -1,6 +1,6 @@
 # AGENTS.md
 
-For AI coding agents working on **Playlive**: a browser-based end-to-end test runner. You write tests in a small YAML format, pick an example site, press **Run all**, and watch the steps happen in an iframe. Tests export to Playwright and Cypress.
+For AI coding agents working on **Playlive**: a browser-based end-to-end test runner. You write tests in a small YAML format, pick an example site, press **Run**, and watch the steps happen in an iframe. Tests export to Playwright and Cypress.
 
 Everything is client-side and buildless: the files are served exactly as they are. There is no bundler and no install step, but the app must be **served over http** rather than opened from disk, because it uses ES modules.
 
@@ -43,7 +43,6 @@ It already covers: every example site's tests passing with no page errors, light
 ## The YAML format
 
 ```yaml
-site: login                 # which example site the file belongs to
 vars:                       # used as ${name}; ${unique} is new on every run
   email: ana@example.test
 flows:                      # reusable step lists: "- use: login"
@@ -62,12 +61,12 @@ steps:
 
 - Tests are top-level `test:` blocks, titled with `test:` and never `name:`. A legacy `tests:` list still parses but is not written in new content.
 - Each test starts from a fresh page at `/` and must not depend on other tests.
-- Only `site`, `vars`, `flows`, `beforeEach` and `failOnPageErrors` may appear before the first test.
+- Only `vars`, `flows`, `beforeEach` and `failOnPageErrors` may appear before the first test. A file belongs to whichever site is selected, so it never names one; a legacy `site:` line still parses and is ignored.
 - Targets describe what a user sees: `{ role, name }`, `{ label }`, `{ placeholder }`, `{ text }`, or a bare string meaning `{ text }`.
 - **The value goes inside the target**, so a step is one line: `- select: { label: Country, value: United Kingdom }`. A `value:` on its own line is an error that says so. Inside the braces, quote any value holding `,` `:` `{` `}` or a `${var}`: `value: "${email}"`.
-- `timeout:` goes inside the target too, or on its own line for the steps that have no target (`expectText`, `expectNoText`, `wait`, `goto`).
+- `timeout:` goes inside the target too, or on its own line for the steps that have no target (`expectText`, `expectNoText`, `wait`).
 
-Actions: `goto`, `click`, `fill`, `select`, `check`, `uncheck`, `wait`, `expectText`, `expectNoText`, `expectVisible`, and `use` for flows. Steps wait up to 4s (`TIMEOUT`) unless they set `timeout:`.
+Actions: `click`, `fill`, `select`, `check`, `uncheck`, `wait`, `expectText`, `expectNoText`, `expectVisible`, and `use` for flows. There is no navigation step: a test starts on the site's page and stays there, and the exports open `/` for every test. Steps wait up to 4s (`TIMEOUT`) unless they set `timeout:`.
 
 Adding an action means updating **all** of: `ACTIONS`, `normalizeStep`, `describeStepBase`, `toPlaywright`, `toCypress`, `KINDS` in `complete.js` if it takes a target, and one example site that uses it.
 
@@ -114,7 +113,7 @@ Three things: a folder with a page and its tests, and a line in the manifest.
 - **Scrolling.** Never call `scrollIntoView` inside the iframe; it scrolls the outer page. Use `scrollWithinFrame` and `followInResults`.
 - **Results** are folded by default, and folds the user opens stay open across runs (`expandedTests`).
 - **The site panel has two views,** Site and HTML, remembered in the layout. The HTML view (`htmlview.js`) reads the markup back out of the live page after every load and every step, so typed values and revealed screens are really there, and marks the line of the element the step acted on green or red, following it the way Results follows a step. The page stays laid out underneath, covered rather than hidden: a step can only find an element the browser is still giving a size to.
-- **Toolbar order** is Run all, Stop, Record; in Step by step mode Run all becomes Next step, with no separate button.
+- **Toolbar order** is Run, Stop, Record; in Step by step mode Run becomes Next step, with no separate button. The per-test button in Results is also called Run, labelled “Run only <title>” for screen readers.
 - **Copy** is sentence case, with error messages that say how to fix the problem.
 - **Accessibility.** Visible focus rings, real labelled buttons, `aria-pressed`/`aria-expanded`, keyboard support in the picker and dialog, `prefers-reduced-motion`.
 - **Storage.** Wrap every access in `try/catch`, and bump a key's version suffix if its shape changes: `live-test-runner:v4` (tests per site), `:history:v1`, `:status:v1`, `:site-keys:v1`, `:layout:v1`.

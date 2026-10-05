@@ -1,5 +1,3 @@
-site: expense-splitter
-
 flows:
   ana_pays_dinner:
     - fill: { label: Description, value: Dinner }

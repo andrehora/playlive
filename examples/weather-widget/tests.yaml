@@ -1,5 +1,3 @@
-site: weather-widget
-
 test: Shows the default city
 steps:
   - expectText: "Lisbon now: 21°C, sunny"

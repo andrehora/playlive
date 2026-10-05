@@ -1,5 +1,3 @@
-site: address-form
-
 test: Saves a US address
 steps:
   - fill: { label: Street, value: 1 Main Street }

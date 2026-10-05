@@ -23,7 +23,7 @@ function audit(page){
     const withValue = (t, v) => t.replace(/\s*\}$/, `, value: ${JSON.stringify(v)} }`);
     const STEP = { click: 'click', toggle: 'check', other: 'expectVisible' };
     const check = (yaml, what) => {
-      const { error } = window.playlive.validate(`site: ${cat.site}\ntest: t\nsteps:\n  - ${yaml}\n`);
+      const { error } = window.playlive.validate(`test: t\nsteps:\n  - ${yaml}\n`);
       if (error) problems.push(`${what} does not parse: ${yaml} -> ${error}`);
     };
     for (const kind of ['click', 'field', 'select', 'toggle', 'other']){

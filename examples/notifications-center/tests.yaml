@@ -1,5 +1,3 @@
-site: notifications-center
-
 test: Marks one as read
 steps:
   - expectText: 3 unread

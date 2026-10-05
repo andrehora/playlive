@@ -1,5 +1,3 @@
-site: notes-app
-
 flows:
   groceries:
     - fill: { label: Title, value: Groceries }

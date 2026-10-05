@@ -1,5 +1,3 @@
-site: loan-calculator
-
 flows:
   calculate:
     - fill: { label: Loan amount, value: "${amount}" }

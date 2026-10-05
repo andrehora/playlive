@@ -1,5 +1,3 @@
-site: event-scheduler
-
 test: Adds an event
 steps:
   - fill: { label: Event title, value: Team standup }

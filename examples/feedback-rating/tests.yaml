@@ -1,5 +1,3 @@
-site: feedback-rating
-
 test: Sends a 4-star rating with a comment
 steps:
   - click: { role: button, name: Rate 4 stars }

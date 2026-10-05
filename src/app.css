@@ -155,7 +155,6 @@ body.resizing iframe{pointer-events:none}
 .test.collapsed .chev svg.i{transform:rotate(-90deg)}
 .test.collapsed .steps,.test.collapsed .warnings{display:none}
 .test-head h3{font-size:13.5px;font-weight:600;margin:0;min-width:0;overflow-wrap:anywhere}
-.site-tag{font-size:11.5px;font-weight:400;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:8px;white-space:nowrap}
 .tstate{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--line);justify-self:center}
 .test[data-state="running"] .tstate{border-color:var(--running);background:var(--running);animation:pulse 1s ease-in-out infinite}
 .test[data-state="passed"] .tstate{border-color:var(--pass);background:var(--pass)}
@@ -242,6 +241,11 @@ body.resizing iframe{pointer-events:none}
 .htmlcode .l.cur{background:color-mix(in srgb,var(--running) 24%,transparent);box-shadow:inset 3px 0 var(--running)}
 .htmlcode .l.ok{background:color-mix(in srgb,var(--pass) 16%,transparent);box-shadow:inset 3px 0 var(--pass)}
 .htmlcode .l.bad{background:color-mix(in srgb,var(--fail) 14%,transparent);box-shadow:inset 3px 0 var(--fail)}
+/* The action's name on the marked line, like the tag the site view draws */
+.htmlcode .l .tag{display:inline-block;margin-left:10px;padding:0 6px;border-radius:4px;font-style:normal;font-weight:600;font-size:.9em}
+.htmlcode .l.cur .tag{background:var(--running);color:#1f2937}
+.htmlcode .l.ok .tag{background:var(--pass);color:#fff}
+.htmlcode .l.bad .tag{background:var(--fail);color:#fff}
 .htmlpane .gutter{padding:12px 10px 12px 12px}
 .gutter div.ok{opacity:1;color:var(--pass);font-weight:600}
 iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
@@ -352,7 +356,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 }
 /* ---------- Phones: one control per row rather than a crowded line ---------- */
 @media (max-width:600px){
-  /* Run all is the primary target, so it takes whatever room the row has spare */
+  /* Run is the primary target, so it takes whatever room the row has spare */
   .toolbar #run{flex:1 1 auto}
   .toolbar .opts{width:100%;margin-left:0;gap:8px}
   .toolbar .opts .field{flex:1 1 150px;justify-content:space-between}

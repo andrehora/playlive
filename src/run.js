@@ -9,8 +9,8 @@ import { trackLineEl } from './layout.js';
 import { validate } from './parse.js';
 import { closePicker, setView, siteBtn } from './picker.js';
 import { markStep, renderResults } from './results.js';
-import { loadApp, pageErrors, persist, savedTests } from './sites.js';
-import { TIMEOUT, editorSite, lastEl, previewTimer, recording, running, setEditorSite, setLastEl, setRunning, setStepTimeout, setStopRequested, stepTimeout, stopRequested } from './state.js';
+import { loadApp, pageErrors, persist } from './sites.js';
+import { TIMEOUT, editorSite, lastEl, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stepTimeout, stopRequested } from './state.js';
 import { setProgress, setSiteStatus } from './ui.js';
 import { sleep } from './util.js';
 
@@ -23,14 +23,14 @@ export function withUnique(step, unique){
   return out;
 }
 export let nextResolve = null;
-// Step by step: the Run all button turns into Next step and waits for a click (or Ctrl/⌘+Enter)
+// Step by step: the Run button turns into Next step and waits for a click (or Ctrl/⌘+Enter)
 export function waitNext(){ return new Promise(res => { nextResolve = res; syncUI(); runBtn.focus({ preventScroll: true }); }); }
 export function releaseNext(){ const r = nextResolve; nextResolve = null; syncUI(); if (r) r(); }
 
 export async function runTest(t, sec, opts){
   sec.dataset.state = 'running';
   followInResults(sec);
-  setView(t.site || editorSite);
+  setView(editorSite);
   await loadApp('/');                         // every test starts from a fresh page
   const items = [...sec.querySelectorAll('li')];
   const sdots = sec.querySelector('.sdots'); sdots.innerHTML = '';   // one small circle per step, added as each step starts
@@ -67,14 +67,14 @@ export async function runTest(t, sec, opts){
       collectErrors(i + 1);
       harvest();                                // the step may have revealed a new screen
       markStep(li, 'passed'); dot.className = 'ok';
-      renderHtmlView('passed');                 // the HTML view follows the element the step touched
+      renderHtmlView('passed', t.steps[i].action);  // the HTML view follows the element the step touched
       li.querySelector('.ms').textContent = `${Math.round(performance.now() - s0)} ms`;
       await sleep(speed().step);
     } catch (e) {
       try { collectErrors(i + 1); } catch {}
       harvest();
       markStep(li, 'failed'); dot.className = 'bad';
-      renderHtmlView('failed');
+      renderHtmlView('failed', t.steps[i].action);
       const err = document.createElement('span'); err.className = 'err'; err.textContent = e.message;
       li.querySelector('.desc').appendChild(err);
       items.slice(i + 1).forEach(x => x.className = 'skipped');
@@ -94,12 +94,8 @@ export async function run(only){
   if (running || recording) return;
   clearTimeout(previewTimer);
   errorEl.textContent = ''; summaryEl.textContent = ''; summaryEl.className = '';
-  const yaml = specEl.value;
-  const { spec, error } = validate(yaml);
+  const { spec, error } = validate(specEl.value);
   if (error){ errorEl.textContent = error; return; }
-  if (spec.site && spec.site !== editorSite){      // the file says which site it belongs to
-    savedTests[spec.site] = yaml; setEditorSite(spec.site);
-  }
   persist();
   setStopRequested(false); setRunning(true);
   const reps = Number($id('repeat').value) || 1;
@@ -149,7 +145,7 @@ export function syncUI(){
   const busy = running || recording;
   const stepping = running && speedMode() === 'step';
   runBtn.disabled = busy && !nextResolve;
-  runBtn.querySelector('.lbl').textContent = stepping ? 'Next step' : 'Run all';
+  runBtn.querySelector('.lbl').textContent = stepping ? 'Next step' : 'Run';
   runBtn.querySelector('.ic-play').toggleAttribute('hidden', stepping);
   runBtn.querySelector('.ic-next').toggleAttribute('hidden', !stepping);
   runBtn.title = stepping ? `Run the next step (${KEY}+Enter)` : `Run all tests (${KEY}+Enter)`;

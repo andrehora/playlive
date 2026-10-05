@@ -1,10 +1,8 @@
-site: login
 vars:
   email: ana@northwind.test
   password: secret123
 flows:
   login:
-    - goto: /login
     - fill: { label: Email, value: "${email}" }
     - fill: { label: Password, value: "${password}" }
     - click: { role: button, name: Log in }

@@ -58,7 +58,6 @@ test.describe('Exports', () => {
   test('the exports keep what the runner means', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await page.fill('#spec', [
-      'site: contact-form',
       'vars:',
       '  email: ana+${unique}@example.test',
       '',

@@ -1,5 +1,3 @@
-site: delete-account
-
 test: Deletes after typing DELETE
 steps:
   - fill: { label: Type DELETE to confirm, value: DELETE }

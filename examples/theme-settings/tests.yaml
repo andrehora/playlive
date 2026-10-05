@@ -1,5 +1,3 @@
-site: theme-settings
-
 test: Switches to the dark theme
 steps:
   - check: { label: Dark }

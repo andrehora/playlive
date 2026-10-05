@@ -1,5 +1,3 @@
-site: quick-survey
-
 test: Submits the survey
 steps:
   - check: { label: Rarely }

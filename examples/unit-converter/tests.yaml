@@ -1,5 +1,3 @@
-site: unit-converter
-
 test: Converts kilometers to miles
 steps:
   - fill: { label: Value, value: 10 }

@@ -1,5 +1,3 @@
-site: help-center
-
 test: Opens a topic from the menu
 steps:
   - click: { role: link, name: Installation }

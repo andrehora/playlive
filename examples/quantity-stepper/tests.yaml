@@ -1,5 +1,3 @@
-site: quantity-stepper
-
 test: Increases the quantity
 steps:
   - click: { role: button, name: Increase quantity }

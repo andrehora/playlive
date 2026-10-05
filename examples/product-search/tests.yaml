@@ -1,5 +1,3 @@
-site: product-search
-
 test: Finds matching products
 steps:
   - fill: { label: Search products, value: mug }

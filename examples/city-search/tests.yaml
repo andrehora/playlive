@@ -1,5 +1,3 @@
-site: city-search
-
 test: Suggests matching cities
 steps:
   - fill: { label: Destination, value: par }

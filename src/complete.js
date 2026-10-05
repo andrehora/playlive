@@ -1,4 +1,3 @@
-import { SITES, SITE_IDS } from '../examples/examples.js';
 import { ACTIONS } from './actions.js';
 import { harvest, snapshot } from './catalog.js';
 import { specEl } from './dom.js';
@@ -113,9 +112,6 @@ export function context(text, caret){
   // an indented word with no dash yet, inside a list of steps
   if ((m = /^(\s+)([A-Za-z]*)$/.exec(before)) && inSteps(text, ls))
     return { what: 'action', dash: true, from: caret - m[2].length, to: wordEnd, bare: !after.trim() };
-  // "site: login"
-  if ((m = /^([A-Za-z]\w*)\s*:\s*(.*)$/.exec(before)) && m[1] === 'site')
-    return { what: 'site', from: caret - m[2].length, to: le };
   // a settings or test line at column 0
   if ((m = /^([A-Za-z]*)$/.exec(before)))
     return { what: 'top', line: ls, from: caret - m[1].length, to: wordEnd };
@@ -182,8 +178,6 @@ function itemsFor(ctx, cat, file){
   switch (ctx.what){
     case 'var':
       return [...file.vars, 'unique'].map(v => item(v + '}', v, v === 'unique' ? 'new on every run' : 'variable'));
-    case 'site':
-      return SITE_IDS.map(id => item(id, id, SITES[id].name));
     case 'action':
       return actions().map(a => item((ctx.dash ? '- ' : '') + a + (ctx.bare ? ': ' : ''), a, a === 'use' ? 'a flow' : 'action'));
     case 'top':
@@ -201,7 +195,6 @@ function itemsFor(ctx, cat, file){
     case 'arg': {
       const a = ctx.action;
       if (a === 'use') return file.flows.map(f => item(f, f, 'flow'));
-      if (a === 'goto') return [item('/', '/', 'the first page')];
       if (a === 'wait') return ['500', '1000', '2000'].map(v => item(v, v, 'ms'));
       if (a === 'expectText' || a === 'expectNoText') return textItems(cat);
       return targetItems(cat, a);

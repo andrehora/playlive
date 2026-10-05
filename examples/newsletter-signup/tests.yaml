@@ -1,5 +1,3 @@
-site: newsletter-signup
-
 test: Subscribes with consent
 steps:
   - fill: { label: Email address, value: ana@example.test }

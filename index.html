@@ -25,8 +25,8 @@
       <div class="panel-head">
         <h2>Tests <span id="fileStatus" class="file-status" aria-live="polite"></span></h2>
         <div class="head-actions">
-          <button id="export" type="button" class="ghost small" title="Export these tests for Playwright or Cypress"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</button>
           <button id="reset" type="button" class="ghost small" title="Start this site over: example tests back, and its saved data, run history and last result cleared"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+          <button id="export" type="button" class="ghost small" title="Export these tests for Playwright or Cypress"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</button>
           <label class="switch head-switch" title="Highlight the line of the running step in the editor"><input type="checkbox" id="trackLine" checked> Follow</label>
           <button id="foldSpec" type="button" class="ghost icon-btn" aria-label="Collapse all" aria-expanded="true" aria-controls="editor" title="Hide the code of every test"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="foldSpecIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5"/></svg></button>
         </div>
@@ -40,7 +40,7 @@
       </div>
       <p id="error" role="alert"></p>
       <div class="toolbar">
-        <button id="run" class="primary" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="ic-play" d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/><path class="ic-next" d="M5 4.5v15l10-7.5zM16.5 4.5h2.5v15h-2.5z" fill="currentColor" stroke="none" hidden/></svg><span class="lbl">Run all</span></button>
+        <button id="run" class="primary" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="ic-play" d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/><path class="ic-next" d="M5 4.5v15l10-7.5zM16.5 4.5h2.5v15h-2.5z" fill="currentColor" stroke="none" hidden/></svg><span class="lbl">Run</span></button>
         <button id="stop" type="button" disabled title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>Stop</button>
         <button id="record" type="button" title="Use the site and turn your actions into steps"><span class="rec-dot" aria-hidden="true"></span><span class="lbl">Record</span></button>
         <div class="opts">
@@ -84,11 +84,11 @@
         <button id="nextSite" type="button" class="ghost icon-btn" aria-label="Next example" title="Next example"><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       <div class="addr">
+        <button id="reload" type="button" class="ghost icon-btn" aria-label="Reload the site" title="Reload the site"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
         <div class="seg view-seg" role="group" aria-label="What to show">
           <button type="button" data-view="site" title="Show the site">Site</button>
           <button type="button" data-view="html" title="Show the site's HTML, following the running step">HTML</button>
         </div>
-        <button id="reload" type="button" class="ghost icon-btn" aria-label="Reload the site" title="Reload the site"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
         <div class="seg" role="group" aria-label="Screen size">
           <button type="button" data-vp="desktop" aria-label="Desktop" title="Desktop"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>
           <button type="button" data-vp="tablet" aria-label="Tablet, 768 pixels" title="Tablet (768px)"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M11 18h2"/></svg></button>

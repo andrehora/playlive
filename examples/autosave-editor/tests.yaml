@@ -1,5 +1,3 @@
-site: autosave-editor
-
 test: Stores the draft after you stop typing
 steps:
   - fill: { label: Message draft, value: See you at the station }

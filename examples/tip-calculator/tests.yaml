@@ -1,5 +1,3 @@
-site: tip-calculator
-
 test: Splits the bill
 steps:
   - fill: { label: Bill amount, value: 60 }

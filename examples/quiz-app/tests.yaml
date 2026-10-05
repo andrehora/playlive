@@ -1,5 +1,3 @@
-site: quiz-app
-
 test: All answers right
 steps:
   - check: { label: Jupiter }

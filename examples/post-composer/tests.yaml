@@ -1,5 +1,3 @@
-site: post-composer
-
 test: Counts characters as you type
 steps:
   - fill: { label: Your post, value: Hello }

@@ -1,4 +1,3 @@
-site: contact-form
 beforeEach:
   - click: { role: button, name: Open form }
 

@@ -1,10 +1,8 @@
-site: signup-wizard
 vars:
   name: Ana Souza
   email: ana@orbit.test
 flows:
   details:
-    - goto: /signup
     - fill: { label: Full name, value: "${name}" }
     - fill: { label: Email, value: "${email}" }
     - click: { role: button, name: Next }

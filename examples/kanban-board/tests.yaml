@@ -1,5 +1,3 @@
-site: kanban-board
-
 test: Moves a card forward
 steps:
   - click: { role: button, name: Move Write tests to Doing }

@@ -1,5 +1,3 @@
-site: poll-voting
-
 test: Voting shows the results
 steps:
   - check: { label: Dark mode }

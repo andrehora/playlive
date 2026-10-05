@@ -1,5 +1,3 @@
-site: two-factor
-
 test: The right code signs you in
 steps:
   - fill: { label: Verification code, value: 246810 }

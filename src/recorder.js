@@ -1,4 +1,3 @@
-import { SITES } from '../examples/examples.js';
 import { ACTIONS, highlight } from './actions.js';
 import { doc, errorEl, specEl } from './dom.js';
 import { labelText, rawName, roleOf } from './find.js';
@@ -78,19 +77,17 @@ export function startRecording(){
   errorEl.textContent = '';
   recOriginal = specEl.value;
   let text = specEl.value;
-  if (!text.trim()) text = `site: ${editorSite}\n`;
-  else {
+  if (text.trim()){
     const v = validate(text);
     if (v.error){ errorEl.textContent = 'Fix these problems before recording:\n' + v.error; return; }
     if (/^tests:/m.test(text)){ errorEl.textContent = 'This file uses an old "tests:" list. Write each test as "test: <title>" to record new tests into it.'; return; }
   }
-  text = text.replace(/\s*$/, '\n');
-  const site = (/^site:\s*([\w-]+)/m.exec(text) || [])[1];
+  text = text.trim() ? text.replace(/\s*$/, '\n\n') : '';   // an empty file starts straight at the test
   const n = (text.match(/Recorded test \d+/g) || []).length + 1;
-  specEl.value = text + `\ntest: Recorded test ${n}\nsteps:\n`;
+  specEl.value = text + `test: Recorded test ${n}\nsteps:\n`;
   specEl.scrollTop = specEl.scrollHeight;
   recCount = 0;
-  setView(SITES[site] ? site : editorSite);
+  setView(editorSite);
   prepareRecording(validate(recOriginal).spec);
 }
 // Record from where tests start: a fresh page with the file's beforeEach steps already done

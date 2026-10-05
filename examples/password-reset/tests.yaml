@@ -1,5 +1,3 @@
-site: password-reset
-
 flows:
   request:
     - fill: { label: Email, value: ana@example.test }

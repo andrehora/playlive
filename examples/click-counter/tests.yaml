@@ -1,5 +1,3 @@
-site: click-counter
-
 test: Counts up
 steps:
   - click: { role: button, name: Increment }

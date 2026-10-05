@@ -1,4 +1,3 @@
-site: flaky-app
 # Every test below is flaky on purpose. Set Repeat to 5x and run them.
 # The comments explain each cause and how to fix it.
 

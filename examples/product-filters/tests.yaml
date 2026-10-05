@@ -1,5 +1,3 @@
-site: product-filters
-
 test: Filters by category
 steps:
   - check: { label: Shoes }

@@ -1,5 +1,3 @@
-site: paged-list
-
 test: Goes to the next page
 steps:
   - click: { role: button, name: Next }

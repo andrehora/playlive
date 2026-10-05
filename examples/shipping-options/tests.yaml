@@ -1,5 +1,3 @@
-site: shipping-options
-
 test: Standard shipping is the default
 steps:
   - expectText: "Total: $44.99"

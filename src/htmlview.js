@@ -82,8 +82,9 @@ function toLines(d){
   return { lines, map };
 }
 // Reads the site again and redraws. state marks the line of the element the
-// current step acted on: 'running' while it runs, 'passed' or 'failed' after.
-export function renderHtmlView(state){
+// current step acted on: 'running' while it runs, 'passed' or 'failed' after,
+// tagged with the step's action the way the site view tags the element itself.
+export function renderHtmlView(state, action){
   if (viewMode !== 'html') return;
   const d = doc();
   if (!d || !d.documentElement){ htmlCode.textContent = ''; htmlGutter.innerHTML = ''; elLine = new Map(); return; }
@@ -91,7 +92,8 @@ export function renderHtmlView(state){
   elLine = map;
   const cur = state && lastEl && lastEl.ownerDocument === d ? elLine.get(lastEl) : undefined;
   const mark = state === 'failed' ? 'bad' : state === 'passed' ? 'ok' : 'cur';
-  htmlCode.innerHTML = lines.map((l, i) => `<span class="l${i === cur ? ' ' + mark : ''}">${l || ' '}</span>`).join('');
+  const tag = action ? `<i class="tag">${escH(action)}</i>` : '';
+  htmlCode.innerHTML = lines.map((l, i) => `<span class="l${i === cur ? ' ' + mark : ''}">${l || ' '}${i === cur ? tag : ''}</span>`).join('');
   htmlGutter.innerHTML = lines.map((_, i) => `<div${i === cur ? ` class="${mark}"` : ''}>${i + 1}</div>`).join('');
   syncHtmlScroll();
   if (cur !== undefined) followLine(cur);

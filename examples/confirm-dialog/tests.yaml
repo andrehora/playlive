@@ -1,5 +1,3 @@
-site: confirm-dialog
-
 beforeEach:
   - click: { role: button, name: Delete project }
 

@@ -66,7 +66,6 @@ export function describeStep(s){
 }
 export function describeStepBase(s){
   switch (s.action){
-    case 'goto': return `Open ${s.url || '/'}`;
     case 'click': return `Click ${describeTarget(s.target)}`;
     case 'fill': return `Type “${s.value}” into ${describeTarget(s.target)}`;
     case 'select': return `Choose “${s.value}” in ${describeTarget(s.target)}`;

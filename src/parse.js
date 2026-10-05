@@ -1,4 +1,3 @@
-import { SITES } from '../examples/examples.js';
 import { ACTIONS } from './actions.js';
 
 /* ---------- Parsing: vars, flows and one or more tests ---------- */
@@ -17,7 +16,7 @@ export function normalizeStep(raw, n){
   let arg = raw[action];
   // The value goes with the target it fills: "- fill: { label: Email, value: ana@example.test }"
   const opt = { timeout: raw.timeout };
-  const takesTarget = !['goto', 'wait', 'expectText', 'expectNoText'].includes(action);
+  const takesTarget = !['wait', 'expectText', 'expectNoText'].includes(action);
   if (raw.value !== undefined) throw `${n}: put the value inside the target, e.g. - ${takesTarget ? action : 'fill'}: { label: Email, value: ana@example.test }.`;
   if (takesTarget && isMap(arg)){
     const target = {};
@@ -35,8 +34,7 @@ export function normalizeStep(raw, n){
     if (!(ms > 0)) throw `${n}: "timeout" must be a number of milliseconds, e.g. 8000.`;
     s.timeout = ms;
   }
-  if (action === 'goto') s.url = String(arg ?? '/');
-  else if (action === 'wait') s.ms = Number(arg) || 500;
+  if (action === 'wait') s.ms = Number(arg) || 500;
   else if (action === 'expectText' || action === 'expectNoText'){
     if (arg == null || arg === '' || isMap(arg)) throw `${n}: "${action}" needs the text to look for, e.g. - ${action}: Welcome back.`;
     s.text = String(arg);
@@ -83,17 +81,18 @@ export function expandSteps(list, label, ctx, stack, problems, from){
 export function parseTest(raw, label, file){
   if (!isMap(raw)) throw [`${label}: write "test: <title>" with a "steps:" list below it.`];
   if (raw.name !== undefined && raw.test === undefined) throw [`${label}: use "test:" for the title instead of "name:".`];
-  const site = raw.site ?? file.site;
-  if (site !== undefined && !SITES[site]) throw [`${label}: unknown site "${site}". Available sites: ${Object.keys(SITES).join(', ')}.`];
   if (raw.vars !== undefined && !isMap(raw.vars)) throw [`${label}: "vars:" must be name: value pairs.`];
   if (!Array.isArray(raw.steps) || !raw.steps.length) throw [`${label}: needs a "steps:" list with at least one step.`];
   const ctx = { vars: { ...file.vars, ...(raw.vars || {}) }, flows: file.flows };
   const problems = [];
   const steps = [...expandSteps(file.beforeEach, 'beforeEach', ctx, [], problems, 'beforeEach'), ...expandSteps(raw.steps, label, ctx, [], problems)];
   if (problems.length) throw problems;
-  return { title: raw.test != null ? String(raw.test) : label, site, steps };
+  return { title: raw.test != null ? String(raw.test) : label, steps };
 }
-export const SETTINGS = ['site', 'vars', 'flows', 'beforeEach', 'failOnPageErrors'];
+export const SETTINGS = ['vars', 'flows', 'beforeEach', 'failOnPageErrors'];
+// "site:" used to name the site a file belonged to. The selected site says that
+// now, so older files still parse and the line is simply ignored.
+const LEGACY = ['site', 'tests'];
 // A file is: optional settings, then one block per test. Every block starts with
 // "test:" at the beginning of a line, so tests are written directly, with no list around them.
 export function validate(text){
@@ -107,19 +106,18 @@ export function validate(text){
   const head = load(0, starts.length ? starts[0] : lines.length);
   if (head.error) return head;
   const y = head.y;
-  if (!isMap(y)) return { error: 'Start with settings like "site:", then write each test as "test: <title>" followed by "steps:".' };
+  if (!isMap(y)) return { error: 'Start with settings like "vars:", then write each test as "test: <title>" followed by "steps:".' };
   let rawTests = [];
   if (Array.isArray(y.tests)) rawTests = y.tests;          // older files with a "tests:" list still work
   else {
     if (y.steps !== undefined) return { error: 'Every "steps:" list needs a "test: <title>" line right above it.' };
-    const unknown = Object.keys(y).filter(k => !SETTINGS.includes(k) && k !== 'tests');
+    const unknown = Object.keys(y).filter(k => !SETTINGS.includes(k) && !LEGACY.includes(k));
     if (unknown.length) return { error: `Unknown setting "${unknown[0]}" before the first test. Settings are: ${SETTINGS.join(', ')}. Each test starts with "test:".` };
   }
-  if (y.site !== undefined && !SITES[y.site]) return { error: `Unknown site "${y.site}". Available sites: ${Object.keys(SITES).join(', ')}.` };
   if (y.vars !== undefined && !isMap(y.vars)) return { error: '"vars:" must be name: value pairs, e.g. "email: ana@example.test".' };
   if (y.flows !== undefined && (!isMap(y.flows) || Object.values(y.flows).some(f => !Array.isArray(f)))) return { error: '"flows:" must map each flow name to a list of steps.' };
   if (y.beforeEach !== undefined && !Array.isArray(y.beforeEach)) return { error: '"beforeEach:" must be a list of steps that run at the start of every test.' };
-  const file = { site: y.site, vars: y.vars || {}, flows: y.flows || {}, beforeEach: y.beforeEach || [] };
+  const file = { vars: y.vars || {}, flows: y.flows || {}, beforeEach: y.beforeEach || [] };
   const problems = [];
   starts.forEach((from, k) => {
     const r = load(from, starts[k + 1] ?? lines.length);
@@ -129,5 +127,5 @@ export function validate(text){
   if (!rawTests.length) return { error: 'No tests yet. Add one: a line "test: <title>", then "steps:" with the steps below it.' };
   const tests = [];
   rawTests.forEach((raw, i) => { try { tests.push(parseTest(raw, `Test ${i + 1}`, file)); } catch (e) { problems.push(...e); } });
-  return problems.length ? { error: [...new Set(problems)].join('\n') } : { spec: { site: y.site, tests, failOnPageErrors: y.failOnPageErrors === true } };
+  return problems.length ? { error: [...new Set(problems)].join('\n') } : { spec: { tests, failOnPageErrors: y.failOnPageErrors === true } };
 }

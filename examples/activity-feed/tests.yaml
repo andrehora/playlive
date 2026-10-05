@@ -1,5 +1,3 @@
-site: activity-feed
-
 test: Loads ten more items
 steps:
   - expectText: Showing 10 of 30

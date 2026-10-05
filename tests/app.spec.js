@@ -10,7 +10,7 @@ test.describe('Boot', () => {
     const { errors } = await openApp(page);
     await expect(page.locator('#siteName')).toHaveText('Contact form');
     await expect(page.locator('#siteCount')).toHaveText(`1 of ${ids.length}`);
-    expect(await page.inputValue('#spec')).toContain('site: contact-form');
+    expect(await page.inputValue('#spec')).toContain('test:');
     await expect(page.locator('#error')).toHaveText('');
     await expect(page.locator('#summary')).toHaveText('');
 
@@ -45,11 +45,11 @@ test.describe('Site picker', () => {
     await expect(page.locator('#sitePop')).toBeHidden();
     await expect(page.locator('#siteName')).toHaveText('Coupon code');
     // A site's tests are fetched, so the editor fills a moment after its name.
-    await expect(page.locator('#spec')).toHaveValue(/site: coupon-code/);
+    await expect(page.locator('#spec')).toHaveValue(/test:/);
     await expect(page.locator('#tabs .tab[data-site="coupon-code"]')).toHaveAttribute('aria-pressed', 'true');
 
     // An edit on one site stays with that site when you come back to it.
-    await page.fill('#spec', 'site: coupon-code\n\ntest: Edited\nsteps:\n  - expectText: Coupon\n');
+    await page.fill('#spec', 'test: Edited\nsteps:\n  - expectText: Coupon\n');
     await selectSite(page, 'contact-form');
     await expect(page.locator('#spec')).not.toHaveValue(/test: Edited/);
     await selectSite(page, 'coupon-code');
@@ -93,7 +93,6 @@ test.describe('Running', () => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'fast');
     await page.fill('#spec', [
-      'site: contact-form',
       'beforeEach:',
       '  - click: { role: button, name: Open form }',
       '',
@@ -123,8 +122,6 @@ test.describe('Running', () => {
   test('a value on its own line says where it belongs', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await page.fill('#spec', [
-      'site: contact-form',
-      '',
       'test: Value on its own line',
       'steps:',
       '  - fill: { label: Message }',
@@ -139,8 +136,6 @@ test.describe('Running', () => {
   test('fill without a value is reported', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await page.fill('#spec', [
-      'site: contact-form',
-      '',
       'test: No value',
       'steps:',
       '  - fill: { label: Message }',
@@ -153,8 +148,6 @@ test.describe('Running', () => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'fast');
     await page.fill('#spec', [
-      'site: contact-form',
-      '',
       'test: Looks for text that is not there',
       'steps:',
       '  - expectText: Definitely not on this page',
@@ -176,8 +169,6 @@ test.describe('Running', () => {
     await setSpeed(page, 'fast');
     const label = await page.frameLocator('#app').locator('label').first().innerText();
     await page.fill('#spec', [
-      'site: contact-form',
-      '',
       'test: Mistyped label',
       'steps:',
       `  - fill: { label: ${label}XYZ, value: hello }`,
@@ -226,7 +217,7 @@ test.describe('Running', () => {
     await expect(page.locator('#summary')).toHaveClass('bad');
   });
 
-  test('Step by step turns Run all into Next step and advances one step at a time', async ({ page }) => {
+  test('Step by step turns Run into Next step and advances one step at a time', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'step');
     await page.click('#run');
@@ -239,7 +230,7 @@ test.describe('Running', () => {
 
     await page.click('#stop');
     await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
-    await expect(page.locator('#run .lbl')).toHaveText('Run all');
+    await expect(page.locator('#run .lbl')).toHaveText('Run');
   });
 
   test('Repeat runs the tests several times and reports every run', async ({ page }) => {
@@ -375,7 +366,7 @@ test.describe('Reset', () => {
   test('brings the example tests back in one click', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     const example = await page.inputValue('#spec');
-    await page.fill('#spec', 'site: contact-form\n\ntest: Mine\nsteps:\n  - expectText: Contact\n');
+    await page.fill('#spec', 'test: Mine\nsteps:\n  - expectText: Contact\n');
 
     await page.click('#reset');
     expect(await page.inputValue('#spec')).toBe(example);
@@ -386,7 +377,7 @@ test.describe('Reset', () => {
 test.describe('Persistence', () => {
   test('edits, the chosen site and layout settings survive a reload', async ({ page }) => {
     await openApp(page, { site: 'coupon-code' });
-    await page.fill('#spec', 'site: coupon-code\n\ntest: Kept\nsteps:\n  - expectText: Coupon\n');
+    await page.fill('#spec', 'test: Kept\nsteps:\n  - expectText: Coupon\n');
     await setSpeed(page, 'fast');
     await page.uncheck('#trackLine');
     // The editor saves shortly after the last keystroke.

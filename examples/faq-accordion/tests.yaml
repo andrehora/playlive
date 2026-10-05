@@ -1,5 +1,3 @@
-site: faq-accordion
-
 test: Opens an answer
 steps:
   - click: { role: button, name: How long does shipping take? }

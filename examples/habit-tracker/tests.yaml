@@ -1,5 +1,3 @@
-site: habit-tracker
-
 test: Counts completed days
 steps:
   - check: { label: Drink water on Monday }

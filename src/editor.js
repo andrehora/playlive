@@ -54,7 +54,6 @@ export function errorLinesFor(msg, text){
   const headLine = re => { const i = lines.findIndex((l, j) => (firstTest < 0 || j < firstTest) && re.test(l)); if (i >= 0) out.add(i); };
   for (const m of msg.matchAll(/Unknown setting "([\w-]+)"/g)) headLine(new RegExp(`^${m[1]}\\s*:`));
   if (/needs a "test: <title>" line/.test(msg)) headLine(/^steps\s*:/);
-  for (const m of msg.matchAll(/Unknown site "([\w-]+)"/g)) headLine(/^site\s*:/);
   const starts = [];
   lines.forEach((l, i) => { if (/^test\s*:/.test(l)) starts.push(i); });
   for (const m of msg.matchAll(/Test (\d+)(?:, step (\d+))?/g)){

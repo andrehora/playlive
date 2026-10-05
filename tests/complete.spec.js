@@ -77,7 +77,7 @@ test.describe('What autocomplete offers', () => {
     expect(values.map(v => v.replace(/^"|"$/g, ''))).toEqual(first.options);
   });
 
-  test('the text on the page, the file’s variables, its flows and the site list', async ({ page }) => {
+  test('the text on the page, the file’s variables and its flows', async ({ page }) => {
     await openApp(page, { site: 'login' });
     await ready(page, 'login');
     const texts = inserts(await at(page, `${head}  - expectText: `));
@@ -87,7 +87,6 @@ test.describe('What autocomplete offers', () => {
       .toEqual(['email}', 'unique}']);
     expect(inserts(await at(page, 'flows:\n  signIn:\n    - click: Log in\n' + head + '  - use: ')))
       .toEqual(['signIn']);
-    expect(inserts(await at(page, 'site: '))).toEqual(ids);
     expect(inserts(await at(page, 'fa'))[0]).toBe('failOnPageErrors: ');   // a loose match may follow it
   });
 
@@ -134,7 +133,7 @@ test.describe('In the editor', () => {
   const pop = page => page.locator('#acPop');
   const first = page => page.locator('#acPop .ac-item').first();
 
-  async function start(page, text = 'site: login\ntest: t\nsteps:\n'){
+  async function start(page, text = 'test: t\nsteps:\n'){
     await openApp(page, { site: 'login' });
     await ready(page, 'login');
     await page.fill('#spec', text);
@@ -191,7 +190,7 @@ test.describe('In the editor', () => {
   });
 
   test('a test written only with suggestions runs and passes', async ({ page }) => {
-    const spec = await start(page, 'site: login\ntest: Written by autocomplete\nsteps:\n');
+    const spec = await start(page, 'test: Written by autocomplete\nsteps:\n');
     await spec.pressSequentially('  - ex');
     await page.keyboard.press('Enter');
     await spec.pressSequentially('Customer');
@@ -205,7 +204,7 @@ test.describe('In the editor', () => {
   });
 
   test('stays out of the way while recording', async ({ page }) => {
-    await start(page, 'site: login\ntest: t\nsteps:\n  - expectText: Customer portal\n');
+    await start(page, 'test: t\nsteps:\n  - expectText: Customer portal\n');
     await page.click('#record');
     await expect(page.locator('#recbar')).toBeVisible();
     await page.frameLocator('#app').getByRole('button', { name: 'Log in' }).click();

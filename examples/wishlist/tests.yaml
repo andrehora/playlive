@@ -1,5 +1,3 @@
-site: wishlist
-
 test: Saves two items
 steps:
   - click: { role: button, name: Save Desk lamp to wishlist }

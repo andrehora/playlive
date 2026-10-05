@@ -1,5 +1,3 @@
-site: table-booking
-
 test: Books a table
 steps:
   - select: { label: Time, value: "19:30" }

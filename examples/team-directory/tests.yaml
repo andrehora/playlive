@@ -1,5 +1,3 @@
-site: team-directory
-
 test: Sorted by name by default
 steps:
   - expectText: Sorted by name, A to Z

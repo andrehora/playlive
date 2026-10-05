@@ -1,5 +1,3 @@
-site: pricing-tabs
-
 test: Monthly is shown first
 steps:
   - expectText: Cancel anytime.

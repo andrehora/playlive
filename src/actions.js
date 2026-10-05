@@ -1,6 +1,5 @@
 import { doc, speed } from './dom.js';
 import { closestText, describeTarget, find, query, scrollWithinFrame, slowHint, waitFor } from './find.js';
-import { loadApp } from './sites.js';
 import { lastEl, setLastEl, stepTimeout, stopRequested } from './state.js';
 import { clean, norm, sleep } from './util.js';
 
@@ -31,7 +30,6 @@ export function mouse(el, type){
 }
 
 export const ACTIONS = {
-  async goto(s){ await loadApp(s.url || '/'); },
   async click(s){
     const el = await find(s.target);
     await waitFor(() => !el.disabled, `${describeTarget(s.target)} to be enabled`);
@@ -40,7 +38,7 @@ export const ACTIONS = {
   },
   async fill(s){
     const el = await find(s.target);
-    await highlight(el, 'type');
+    await highlight(el, 'fill');
     el.focus({ preventScroll: true }); setNativeValue(el, '');
     const W = el.ownerDocument.defaultView;
     for (const ch of String(s.value ?? '')){
@@ -53,7 +51,7 @@ export const ACTIONS = {
   },
   async select(s){
     const el = await find(s.target);
-    await highlight(el, 'choose');
+    await highlight(el, 'select');
     const opt = [...el.options].find(o => norm(o.textContent) === norm(s.value) || o.value === s.value);
     if (!opt) throw new Error(`No option “${s.value}” in ${describeTarget(s.target)}. Options: ${[...el.options].map(o => clean(o.textContent)).join(', ')}`);
     el.value = opt.value;
@@ -67,7 +65,7 @@ export const ACTIONS = {
   async expectText(s){
     try { await waitFor(() => doc() && doc().body && norm(doc().body.innerText).includes(norm(s.text)), `the text “${s.text}”`); }
     catch (e) { if (stopRequested) throw e; throw new Error(e.message + (closestText(s.text) || slowHint())); }
-    const el = query({ text: s.text })[0]; if (el){ setLastEl(el); await highlight(el, 'found', '#1F8A55'); }
+    const el = query({ text: s.text })[0]; if (el){ setLastEl(el); await highlight(el, 'expectText', '#1F8A55'); }
   },
   async expectNoText(s){
     await sleep(150);
@@ -78,5 +76,5 @@ export const ACTIONS = {
       await sleep(50);
     }
   },
-  async expectVisible(s){ const el = await find(s.target); await highlight(el, 'visible', '#1F8A55'); }
+  async expectVisible(s){ const el = await find(s.target); await highlight(el, 'expectVisible', '#1F8A55'); }
 };

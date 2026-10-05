@@ -1,5 +1,3 @@
-site: retry-on-error
-
 # The first request always fails, like a dropped connection.
 # The tests check that the error is clear and that retrying works.
 

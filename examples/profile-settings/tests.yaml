@@ -1,5 +1,3 @@
-site: profile-settings
-
 test: Updates the name and bio
 steps:
   - fill: { label: Display name, value: Ana Souza }

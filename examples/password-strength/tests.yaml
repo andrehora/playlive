@@ -1,5 +1,3 @@
-site: password-strength
-
 test: A short password is weak
 steps:
   - fill: { label: New password, value: abc }

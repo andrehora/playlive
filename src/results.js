@@ -1,4 +1,3 @@
-import { SITES } from '../examples/examples.js';
 import { $id, resultsEl } from './dom.js';
 import { describeStep } from './find.js';
 import { paintHistory, testKey } from './history.js';
@@ -10,7 +9,7 @@ import { editorSite } from './state.js';
 export function renderResults(tests){
   resultsEl.innerHTML = '';
   tests.forEach((t, i) => {
-    const site = t.site || editorSite;
+    const site = editorSite;
     const sec = document.createElement('section');
     sec.className = 'test';
     sec.dataset.title = t.title;
@@ -23,10 +22,6 @@ export function renderResults(tests){
     const one = sec.querySelector('.run-one');
     one.setAttribute('aria-label', `Run only “${t.title}”`);
     one.addEventListener('click', () => run(i));
-    if (t.site && t.site !== editorSite){
-      const tag = document.createElement('span'); tag.className = 'site-tag'; tag.textContent = SITES[t.site].name;
-      sec.querySelector('h3').appendChild(tag);
-    }
     const ol = sec.querySelector('ol');
     t.steps.forEach(s => {
       const li = document.createElement('li');
