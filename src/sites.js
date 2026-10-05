@@ -59,7 +59,7 @@ export function loadApp(){
       res();
     };
     frame.removeAttribute('srcdoc');          // a snapshot may have been showing
-    // Markup applied in the HTML view is the page until Reload or Reset, so a
+    // Markup applied in the HTML view is the page until Reset, so a
     // run starts every test from the page as it was edited.
     if (editedHtml[currentSite]) frame.srcdoc = editedHtml[currentSite];
     else frame.src = `examples/${currentSite}/index.html?load=${++loadCount}`;

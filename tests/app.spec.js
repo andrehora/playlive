@@ -283,7 +283,7 @@ test.describe('HTML view', () => {
     expect(errors).toEqual([]);
   });
 
-  test('edits the markup, saves it to the page, and Reload brings the original back', async ({ page }) => {
+  test('edits the markup, saves it to the page, and Reset brings the original back', async ({ page }) => {
     const { errors } = await openApp(page, { site: 'login' });
     await page.click('.view-seg [data-view="html"]');
     const markup = await page.inputValue('#htmlEdit');
@@ -303,13 +303,13 @@ test.describe('HTML view', () => {
     await expect(page.frameLocator('#app').locator('#err')).toHaveText(/Wrong email or password/);
 
     await page.click('.view-seg [data-view="html"]');
-    await page.click('#reload');
+    await page.click('#reset');
     await expect(page.frameLocator('#app').locator('#loginBtn')).toHaveText('Log in');
     expect(await page.inputValue('#htmlEdit')).toContain('>Log in</button>');
     expect(errors).toEqual([]);
   });
 
-  test('saved markup is the page a run starts from, until Reload', async ({ page }) => {
+  test('saved markup is the page a run starts from, until Reset', async ({ page }) => {
     await openApp(page, { site: 'login' });
     await page.click('.view-seg [data-view="html"]');
     const markup = await page.inputValue('#htmlEdit');
@@ -324,7 +324,7 @@ test.describe('HTML view', () => {
     await expect(page.frameLocator('#app').locator('#note')).toHaveText('Edited page');
     expect(await page.inputValue('#htmlEdit')).toContain('Edited page');
 
-    await page.click('#reload');
+    await page.click('#reset');
     await expect(page.frameLocator('#app').locator('#note')).toHaveCount(0);
     expect(await page.inputValue('#htmlEdit')).not.toContain('Edited page');
   });
@@ -454,7 +454,7 @@ test.describe('Persistence', () => {
     await openApp(page, { site: 'coupon-code' });
     await page.fill('#spec', 'test: Kept\nsteps:\n  - expectText: Coupon\n');
     await setSpeed(page, 'fast');
-    await page.uncheck('#trackLine');
+    await page.click('.seg [data-vp="tablet"]');
     // The editor saves shortly after the last keystroke.
     await page.waitForFunction(() =>
       (localStorage.getItem('live-test-runner:v4') || '').includes('test: Kept'));
@@ -463,7 +463,7 @@ test.describe('Persistence', () => {
     await page.waitForFunction(() => typeof window.playlive?.selectSite === 'function');
     await expect(page.locator('#siteName')).toHaveText('Coupon code');
     expect(await page.inputValue('#spec')).toContain('test: Kept');
-    await expect(page.locator('#trackLine')).not.toBeChecked();
+    await expect(page.locator('.seg [data-vp="tablet"]')).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => localStorage.getItem('live-test-runner:v4'))).toContain('test: Kept');
   });
 

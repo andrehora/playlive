@@ -10,7 +10,6 @@
   --small-tap:38px; --small-font:14px; --small-pad:9px 12px; --small-r:9px;
   --ctl-font:16px; --ctl-pad:10px 12px;   /* 16px: anything smaller makes iOS zoom on focus */
   --icon-tap:42px; --chev:36px;
-  --sw-w:36px; --sw-h:20px; --sw-dot:16px;
   --code-font:16px; --code-line:26px;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
@@ -37,6 +36,8 @@ svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-widt
 
 /* ---------- App bar ---------- */
 .appbar{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+/* The example being worked on is chosen here, so it reads before the panels below */
+.appbar .picker{margin-left:4px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .mark{width:30px;height:30px;border-radius:8px;background:var(--run);color:var(--on-run);display:grid;place-items:center;flex:none}
 .mark svg.i{width:18px;height:18px}
@@ -60,11 +61,6 @@ button:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-v
 kbd{font:500 11px "IBM Plex Mono",ui-monospace,monospace;padding:2px 5px;border-radius:4px;background:color-mix(in srgb,var(--on-run) 18%,transparent)}
 select{font:inherit;font-size:var(--ctl-font);padding:var(--ctl-pad);min-height:var(--tap);border-radius:var(--small-r);border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 .field{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:var(--small-font)}
-.switch{display:inline-flex;align-items:center;gap:8px;min-height:var(--small-tap);color:var(--muted);font-size:var(--small-font);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
-.switch input{appearance:none;width:var(--sw-w);height:var(--sw-h);border-radius:999px;background:var(--line);position:relative;margin:0;flex:none;cursor:pointer;transition:background .15s}
-.switch input::after{content:"";position:absolute;top:2px;left:2px;width:var(--sw-dot);height:var(--sw-dot);border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
-.switch input:checked{background:var(--run)}
-.switch input:checked::after{transform:translateX(calc(var(--sw-w) - var(--sw-dot) - 4px))}
 #record .rec-dot{width:9px;height:9px;border-radius:50%;background:var(--rec)}
 #record.recording{background:var(--rec);border-color:var(--rec);color:#fff}
 #record.recording .rec-dot{background:#fff;animation:pulse 1.2s ease-in-out infinite}
@@ -77,7 +73,6 @@ main{display:grid;grid-template-columns:var(--left-w) 12px minmax(0,1fr);padding
 .panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--line);min-height:46px}
 .panel-head h2,.site-head h2{font-size:13.5px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
 .head-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.head-switch{margin-left:4px;white-space:nowrap}
 .tests-panel .head-actions{flex-wrap:nowrap}
 .file-status{font-weight:400;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .file-status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pass)}
@@ -293,7 +288,6 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
     --small-tap:28px; --small-font:12.5px; --small-pad:6px 9px; --small-r:7px;
     --ctl-font:13px; --ctl-pad:6px 8px;
     --icon-tap:30px; --chev:20px;
-    --sw-w:28px; --sw-h:16px; --sw-dot:12px;
     --code-font:12.5px; --code-line:20px;
   }
   html,body{height:100%}
@@ -310,7 +304,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .left{display:contents}
   .tests-panel{order:1} .browser{order:2} .results-panel{order:3}
   .resizer{display:none}
-  .appbar{padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
+  .appbar{flex-wrap:wrap;row-gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
   .tagline{display:none}
 
   /* Panel heads: the actions get a line of their own rather than being squeezed */
@@ -328,7 +322,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   /* Site panel */
   .browser{height:clamp(360px,70dvh,640px)}
   .site-head{gap:8px;padding:10px}
-  .picker{flex:1} .site-btn{width:100%;min-width:0}
+  .site-btn{width:100%;min-width:0}
   .stepper{gap:4px}
   /* The screen-size toggle goes, but Site/HTML stays, at a size worth tapping */
   .seg{display:none} .view-seg{display:inline-flex}
@@ -363,13 +357,14 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 }
 /* ---------- Phones: one control per row rather than a crowded line ---------- */
 @media (max-width:600px){
+  /* Too narrow for one row: the example and its stepper take the second one */
+  .appbar .picker{order:3;flex:1 1 180px;margin-left:0}
+  .appbar .stepper{order:4}
   /* Run is the primary target, so it takes whatever room the row has spare */
   .toolbar #run{flex:1 1 auto}
   .toolbar .opts{width:100%;margin-left:0;gap:8px}
   .toolbar .opts .field{flex:1 1 150px;justify-content:space-between}
   .toolbar .opts select{flex:1 1 auto;min-width:0}
-  /* The example name gets a full row, the stepper and reload the next one */
-  .picker{flex:1 1 100%}
   .results-panel .head-actions{flex-wrap:wrap}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}

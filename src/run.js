@@ -5,7 +5,6 @@ import { lineForStep, setCurrentLine, setFileStatus } from './editor.js';
 import { describeStep, followInResults } from './find.js';
 import { renderHtmlView } from './htmlview.js';
 import { paintHistory, recordHistory } from './history.js';
-import { trackLineEl } from './layout.js';
 import { validate } from './parse.js';
 import { closePicker, setView, siteBtn } from './picker.js';
 import { markStep, renderResults } from './results.js';
@@ -54,7 +53,7 @@ export async function runTest(t, sec, opts){
   };
   for (let i = 0; i < t.steps.length; i++){
     const li = items[i]; li.className = 'running';
-    setCurrentLine(trackLineEl.checked ? lineForStep(specEl.value, t.steps[i].src) : -1);
+    setCurrentLine(lineForStep(specEl.value, t.steps[i].src));   // the editor always follows the step
     const dot = document.createElement('i'); dot.className = 'run'; sdots.appendChild(dot);
     sdots.title = `Step ${i + 1} of ${t.steps.length}`;
     followInResults(li);

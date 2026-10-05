@@ -1,7 +1,4 @@
 import { $id } from './dom.js';
-import { setCurrentLine } from './editor.js';
-import { loadApp } from './sites.js';
-import { clearEditedHtml, currentSite, recording, running } from './state.js';
 
 /* ---------- Layout: resizable panels and screen sizes, remembered ---------- */
 export const LAYOUT = 'live-test-runner:layout:v1';
@@ -43,20 +40,7 @@ export function setViewport(vp){
   layout.vp = vp; saveLayout();
 }
 document.querySelectorAll('.seg [data-vp]').forEach(b => b.addEventListener('click', () => setViewport(b.dataset.vp)));
-// Reload is the way back to the page as its file writes it, applied HTML and all
-$id('reload').addEventListener('click', () => {
-  if (running || recording) return;
-  clearEditedHtml(currentSite);
-  loadApp();
-});
 // The shortcut still works; it's mentioned in the button's tooltip instead
 // The shortcut is shown in the Run button's tooltip (set in syncUI)
 applyLayout();
 setViewport(layout.vp || 'desktop');
-// "Follow": highlight the line of the running step in the editor (on by default, remembered)
-export const trackLineEl = $id('trackLine');
-trackLineEl.checked = layout.trackLine !== false;
-trackLineEl.addEventListener('change', () => {
-  layout.trackLine = trackLineEl.checked; saveLayout();
-  if (!trackLineEl.checked) setCurrentLine(-1);
-});

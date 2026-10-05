@@ -17,7 +17,7 @@ import { currentSite, lastEl, setEditedHtml } from './state.js';
    copy of itself. Edits sit in the textarea until Save writes them back into
    the frame, which re-parses the page so its own scripts run again. While
    there are unsaved edits the view stops reading the page, so a running step
-   cannot overwrite what is being typed. Reload brings the original page back. */
+   cannot overwrite what is being typed. Reset brings the original page back. */
 export const htmlPane = $id('htmlPane'), htmlCode = $id('htmlCode'), htmlGutter = $id('htmlGutter');
 export const htmlEdit = $id('htmlEdit');
 const applyBtn = $id('htmlApply'), revertBtn = $id('htmlRevert');
@@ -168,7 +168,7 @@ export function setHtmlDirty(on){
 // The markup goes back through the parser, so the page's own scripts run again
 // and its buttons keep working. What the page kept in its variables starts over.
 // It stays the site's page from here on, so a run starts every test from it;
-// Reload and Reset bring the file on disk back.
+// Reset brings the file on disk back.
 export function applyHtml(){
   if (!dirty) return;
   const d = doc(); if (!d) return;

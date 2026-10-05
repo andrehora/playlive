@@ -1,4 +1,4 @@
-import { $id, doc, resultsEl } from './dom.js';
+import { doc, resultsEl } from './dom.js';
 import { targetFor } from './recorder.js';
 import { setLastEl, stepTimeout, stopRequested } from './state.js';
 import { clean, norm, sleep } from './util.js';
@@ -152,7 +152,6 @@ export function scrollWithinFrame(el){
 // Keep the running step in view inside the Results panel (never scrolls the page)
 export const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 export function followInResults(el){
-  if (!$id('follow').checked) return;
   if (el.tagName === 'LI' && el.closest('.test.collapsed')) el = el.closest('.test');   // follow the folded test, not its hidden steps
   const br = resultsEl.getBoundingClientRect(), er = el.getBoundingClientRect();
   if (er.top >= br.top + 4 && er.bottom <= br.bottom - 4) return;
