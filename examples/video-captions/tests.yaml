@@ -1,0 +1,24 @@
+test: Captions start off
+steps:
+  - expectText: Captions off
+  - expectNoText: The tide pulls back twice a day.
+
+test: Turning captions on shows the text
+steps:
+  - check: { label: Captions }
+  - expectText: The tide pulls back twice a day.
+  - expectText: "Captions on · English · medium"
+
+test: Another language swaps the caption
+steps:
+  - check: { label: Captions }
+  - select: { label: Caption language, value: Portuguese }
+  - expectText: A maré recua duas vezes por dia.
+  - expectNoText: The tide pulls back twice a day.
+
+test: Turning them off hides the text again
+steps:
+  - check: { label: Captions }
+  - uncheck: { label: Captions }
+  - expectText: Captions off
+  - expectNoText: The tide pulls back twice a day.

@@ -1,0 +1,22 @@
+test: The nearest store shows first
+steps:
+  - expectText: 1 store within 2 km of Lisbon
+  - expectText: "Baixa · 0.8 km · open now"
+
+test: A wider radius finds more
+steps:
+  - select: { label: Within, value: 10 km }
+  - expectText: 2 stores within 10 km of Lisbon
+  - expectText: "Alvalade · 6.2 km · closed"
+
+test: Open now hides the closed one
+steps:
+  - select: { label: Within, value: 10 km }
+  - check: { label: Open now }
+  - expectText: 1 store within 10 km of Lisbon
+  - expectNoText: Alvalade
+
+test: A city with no store says so
+steps:
+  - select: { label: City, value: Faro }
+  - expectText: No stores here yet.

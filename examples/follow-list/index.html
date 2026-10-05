@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Follow list</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Who to follow</h1>
+<p id="count">Following 1 person</p>
+<ul id="list" class="clean"></ul>
+
+<script>
+const people=[['Ana Reis','Designer'],['Bruno Lima','Illustrator'],['Chen Wei','Photographer']];
+const following=new Set(['Ana Reis']);
+function upd(){
+  const n=following.size;
+  $('count').textContent='Following '+n+(n===1?' person':' people');
+  $('list').textContent='';
+  people.forEach(([n2,role])=>{
+    const li=document.createElement('li');
+    const s=document.createElement('span');s.textContent=n2+' · '+role;
+    const b=document.createElement('button');b.type='button';
+    const on=following.has(n2);
+    b.textContent=on?'Unfollow':'Follow';
+    b.setAttribute('aria-label',(on?'Unfollow ':'Follow ')+n2);
+    if(on) b.className='secondary';
+    b.onclick=()=>{on?following.delete(n2):following.add(n2);upd();};
+    li.append(s,b);$('list').appendChild(li);
+  });
+}
+upd();
+</script>
+</body>
+</html>

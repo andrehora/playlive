@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bulk archive</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4338ca}</style>
+</head>
+<body>
+<h1>Triage</h1>
+<p id="count">Inbox: 3 · Archived: 0</p>
+<label class="inline"><input type="checkbox" id="all"> Select all</label>
+<ul id="list" class="clean"></ul>
+<button id="arch" type="button">Archive selected</button>
+<p id="msg" hidden></p>
+
+<script>
+let msgs=['Invoice #4821','Standup notes','Welcome aboard'];let archived=0;
+function upd(){
+  $('count').textContent='Inbox: '+msgs.length+' · Archived: '+archived;
+  $('list').textContent='';
+  msgs.forEach((s,i)=>{
+    const li=document.createElement('li');
+    const lab=document.createElement('label');lab.className='inline';lab.htmlFor='m'+i;
+    const cb=document.createElement('input');cb.type='checkbox';cb.id='m'+i;
+    lab.append(cb,document.createTextNode(' '+s));
+    li.appendChild(lab);$('list').appendChild(li);
+  });
+  $('all').checked=false;
+}
+$('all').onchange=()=>{document.querySelectorAll('#list input').forEach(c=>{c.checked=$('all').checked;});};
+$('arch').onclick=()=>{
+  const keep=[],gone=[];
+  msgs.forEach((s,i)=>($('m'+i).checked?gone:keep).push(s));
+  const p=$('msg');p.hidden=false;
+  if(!gone.length){p.className='';p.textContent='Select at least one message to archive.';return;}
+  msgs=keep;archived+=gone.length;
+  p.className='ok';p.textContent='Archived '+gone.length+(gone.length===1?' message':' messages')+'.';
+  upd();
+};
+upd();
+</script>
+</body>
+</html>

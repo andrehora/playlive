@@ -3,7 +3,7 @@ export const $id = id => document.getElementById(id);
 
 export const frame = $id('app'), specEl = $id('spec'), resultsEl = $id('results'),
   errorEl = $id('error'), summaryEl = $id('summary');
-export const runBtn = $id('run'), stopBtn = $id('stop'), recordBtn = $id('record'), resetBtn = $id('reset');
+export const runBtn = $id('run'), stopBtn = $id('stop'), recordBtn = $id('record'), resetBtn = $id('reset'), reloadBtn = $id('reload');
 export const tabsEl = $id('tabs'), recBar = $id('recbar');
 
 export const doc = () => frame.contentDocument;

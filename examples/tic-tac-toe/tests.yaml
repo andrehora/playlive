@@ -1,0 +1,23 @@
+test: X plays first and the turn passes
+steps:
+  - expectText: X to play
+  - click: { role: button, name: "centre, empty" }
+  - expectText: O to play
+  - expectVisible: { role: button, name: "centre, X" }
+
+test: Three in a row wins
+steps:
+  - click: { role: button, name: "top left, empty" }
+  - click: { role: button, name: "middle left, empty" }
+  - click: { role: button, name: "top middle, empty" }
+  - click: { role: button, name: "middle right, empty" }
+  - click: { role: button, name: "top right, empty" }
+  - expectText: X wins!
+  - expectText: Game over
+
+test: New game clears the board
+steps:
+  - click: { role: button, name: "centre, empty" }
+  - click: { role: button, name: New game }
+  - expectText: X to play
+  - expectVisible: { role: button, name: "centre, empty" }

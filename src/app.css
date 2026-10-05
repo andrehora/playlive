@@ -38,7 +38,8 @@ svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .appbar{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
 /* The example being worked on is chosen here, so it reads before the panels below */
 .appbar .picker{margin-left:4px}
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.brand:hover .brand-name{text-decoration:underline}
 .mark{width:30px;height:30px;border-radius:8px;background:var(--run);color:var(--on-run);display:grid;place-items:center;flex:none}
 .mark svg.i{width:18px;height:18px}
 .brand-name{font-weight:600;font-size:15px;white-space:nowrap}
@@ -57,7 +58,7 @@ button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
 button.ghost:hover:not(:disabled){background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);border-color:transparent}
 button.small{font-size:var(--small-font);padding:var(--small-pad);min-height:var(--small-tap);border-radius:var(--small-r)}
 button:disabled{opacity:.45;cursor:not-allowed}
-button:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--run);outline-offset:2px}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--run);outline-offset:2px}
 kbd{font:500 11px "IBM Plex Mono",ui-monospace,monospace;padding:2px 5px;border-radius:4px;background:color-mix(in srgb,var(--on-run) 18%,transparent)}
 select{font:inherit;font-size:var(--ctl-font);padding:var(--ctl-pad);min-height:var(--tap);border-radius:var(--small-r);border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 .field{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:var(--small-font)}
@@ -70,8 +71,8 @@ select{font:inherit;font-size:var(--ctl-font);padding:var(--ctl-pad);min-height:
 main{display:grid;grid-template-columns:var(--left-w) 12px minmax(0,1fr);padding:14px 16px 16px;max-width:1800px;margin:0 auto;width:100%}
 .left{display:flex;flex-direction:column;min-width:0}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0;box-shadow:var(--shadow)}
-.panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--line);min-height:46px}
-.panel-head h2,.site-head h2{font-size:13.5px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
+.panel-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--line);min-height:46px}
+.panel-head h2,.site-head h2{font-size:13.5px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px;min-width:0}
 .head-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .tests-panel .head-actions{flex-wrap:nowrap}
 .file-status{font-weight:400;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
@@ -133,11 +134,13 @@ body.resizing iframe{pointer-events:none}
 
 /* ---------- Results ---------- */
 .results-panel{flex:1;min-height:200px}
-.summary-bar{position:relative;border-bottom:1px solid var(--line)}
-#summary{padding:8px 14px;font-size:13px;font-weight:500;color:var(--muted)}
+#summary{flex:0 1 auto;font-weight:400;font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* The summary is the only head text long enough to wrap the fold button onto its own row,
+   so this head keeps one line and the summary gives up its tail instead. */
+.results-panel .panel-head{flex-wrap:nowrap}
+.results-panel .panel-head h2{flex:0 1 auto;min-width:0}
 #summary:empty{display:none}
 #summary.ok{color:var(--pass)} #summary.bad{color:var(--fail)}
-.summary-bar:has(#summary:empty){border-bottom:0}
 .progress{position:absolute;left:0;right:0;bottom:-1px;height:2px}
 .progress span{display:block;height:100%;width:0;background:var(--running);transition:width .25s ease}
 .progress.ok span{background:var(--pass)} .progress.bad span{background:var(--fail)}
@@ -190,11 +193,19 @@ body.resizing iframe{pointer-events:none}
 
 /* ---------- Site panel ---------- */
 .browser{min-height:0}
+.head-sub{color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:22ch}
+/* The category, in its own accent, so the panel head says which kind of app this is */
+.cat-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;line-height:1;padding:4px 7px;border-radius:999px;white-space:nowrap;color:color-mix(in srgb,var(--cat,var(--muted)) 62%,var(--ink));background:color-mix(in srgb,var(--cat,var(--muted)) 16%,transparent);border:1px solid color-mix(in srgb,var(--cat,var(--muted)) 38%,transparent)}
+.cat-badge svg.i{width:12px;height:12px}
+.cat-badge:empty{display:none}
 .site-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .picker{position:relative}
 .site-btn{font-weight:600;gap:8px;justify-content:flex-start;min-width:230px}
 .site-btn .caret{margin-left:auto;color:var(--muted)}
-.swatch{width:9px;height:9px;border-radius:50%;flex:none}
+/* The app bar and the picker's category heads both show the category's icon,
+   tinted with its accent, so the colour still groups and the icon names. */
+.swatch{display:inline-flex;flex:none;color:var(--cat,var(--muted))}
+.swatch svg.i{width:15px;height:15px}
 .tres{font-size:11px;font-weight:700;line-height:1}
 [data-status="pass"] .tres{color:var(--pass)} [data-status="pass"] .tres::before{content:"✓"}
 [data-status="fail"] .tres{color:var(--fail)} [data-status="fail"] .tres::before{content:"✕"}
@@ -203,6 +214,7 @@ body.resizing iframe{pointer-events:none}
 #siteSearch:focus{border-color:var(--run)}
 .pop-list{overflow:auto;padding:0 6px 8px;overscroll-behavior:contain}
 .pop-cat{font-size:11.5px;font-weight:600;color:var(--muted);padding:10px 8px 4px;display:flex;align-items:center;gap:7px}
+.pop-cat svg.i{width:14px;height:14px;color:var(--cat,var(--muted))}
 .pop-list .tab{width:100%;justify-content:flex-start;gap:9px;border:0;border-radius:7px;padding:7px 8px;min-height:var(--tap);background:transparent;font-size:var(--btn-font)}
 .pop-list .tab:hover,.pop-list .tab:focus-visible{background:color-mix(in srgb,var(--ink) 6%,transparent);outline:none}
 .pop-list .tab[aria-pressed="true"]{background:color-mix(in srgb,var(--run) 13%,transparent);font-weight:600}
@@ -335,7 +347,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   /* Text that is comfortable at arm's length rather than at desk distance */
   .panel-head h2,.site-head h2{font-size:15px}
   .file-status{font-size:13px}
-  #summary,.empty,.pop-empty{font-size:14px}
+  #summary{font-size:13px}
+  .empty,.pop-empty{font-size:14px}
   .desc{font-size:14.5px}
   .err,.warn,#error{font-size:13.5px}
   .ms{font-size:12px}

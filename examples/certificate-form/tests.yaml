@@ -1,0 +1,31 @@
+test: A completed form prints the certificate
+steps:
+  - fill: { label: Full name, value: Ana Reis }
+  - check: { label: I completed this course myself }
+  - click: { role: button, name: Generate certificate }
+  - expectText: Certificate ready as PDF.
+  - expectText: Awarded to Ana Reis
+  - expectText: "Intro to testing · 2026"
+
+test: Another course and format
+steps:
+  - fill: { label: Full name, value: Bruno Lima }
+  - select: { label: Course, value: Advanced selectors }
+  - select: { label: Format, value: Print }
+  - check: { label: I completed this course myself }
+  - click: { role: button, name: Generate certificate }
+  - expectText: Certificate ready as Print.
+  - expectText: "Advanced selectors · 2026"
+
+test: A missing name is refused
+steps:
+  - check: { label: I completed this course myself }
+  - click: { role: button, name: Generate certificate }
+  - expectText: Enter the name to print on the certificate.
+  - expectNoText: Awarded to
+
+test: The confirmation is required
+steps:
+  - fill: { label: Full name, value: Ana Reis }
+  - click: { role: button, name: Generate certificate }
+  - expectText: Confirm you completed the course.

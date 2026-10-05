@@ -1,0 +1,27 @@
+test: A healthy metric reading
+steps:
+  - fill: { label: Height in cm, value: "170" }
+  - fill: { label: Weight in kg, value: "65" }
+  - click: { role: button, name: Work it out }
+  - expectText: "BMI 22.5 · in the healthy range"
+
+test: Imperial units relabel the fields
+steps:
+  - select: { label: Units, value: Imperial }
+  - expectText: Height in inches
+  - fill: { label: Height in inches, value: "67" }
+  - fill: { label: Weight in pounds, value: "200" }
+  - click: { role: button, name: Work it out }
+  - expectText: "BMI 31.3 · well over the healthy range"
+
+test: A low reading is called out too
+steps:
+  - fill: { label: Height in cm, value: "180" }
+  - fill: { label: Weight in kg, value: "55" }
+  - click: { role: button, name: Work it out }
+  - expectText: "BMI 17.0 · under the healthy range"
+
+test: Missing numbers are refused
+steps:
+  - click: { role: button, name: Work it out }
+  - expectText: Enter a height and a weight above zero.

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Medication reminders</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4d7c0f}</style>
+</head>
+<body>
+<h1>Reminders</h1>
+<label for="med">Medicine</label>
+<input id="med" type="text" placeholder="Name">
+<label for="time">Time</label>
+<select id="time"><option>Morning</option><option>Midday</option><option>Evening</option></select>
+<label class="inline"><input type="checkbox" id="food"> Take with food</label>
+<button id="add" type="button">Add reminder</button>
+<p id="msg" hidden></p>
+<p id="count">No reminders yet.</p>
+<ul id="list" class="clean"></ul>
+
+<script>
+let R=[];
+function upd(){
+  $('count').textContent=R.length?R.length+(R.length===1?' reminder':' reminders'):'No reminders yet.';
+  $('list').textContent='';
+  R.forEach(r=>{
+    const li=document.createElement('li');
+    const s=document.createElement('span');s.textContent=r.name+' · '+r.time+(r.food?' · with food':'');
+    const b=document.createElement('button');b.type='button';b.textContent='Delete';
+    b.setAttribute('aria-label','Delete '+r.name);
+    b.onclick=()=>{R=R.filter(x=>x!==r);upd();};
+    li.append(s,b);$('list').appendChild(li);
+  });
+}
+$('add').onclick=()=>{
+  const n=$('med').value.trim(),p=$('msg');p.hidden=false;
+  if(!n){p.className='';p.textContent='Name the medicine first.';return;}
+  if(R.some(r=>r.name===n&&r.time===$('time').value)){
+    p.className='';p.textContent=n+' already has a '+$('time').value.toLowerCase()+' reminder.';return;}
+  R.push({name:n,time:$('time').value,food:$('food').checked});
+  $('med').value='';p.className='ok';p.textContent='Reminder added.';upd();
+};
+upd();
+</script>
+</body>
+</html>

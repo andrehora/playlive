@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rock paper scissors</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#9f1239}</style>
+</head>
+<body>
+<h1>Rock paper scissors</h1>
+<p id="score">You 0 · Computer 0 · Draws 0</p>
+<p id="last">Pick a move to start.</p>
+<button id="rock" type="button">Rock</button>
+<button id="paper" type="button">Paper</button>
+<button id="scissors" type="button">Scissors</button>
+<button id="reset" type="button" class="secondary">Reset score</button>
+
+<script>
+// The computer plays a fixed cycle, so a test can rely on the result.
+const PLAN=['Scissors','Rock','Paper'],BEATS={Rock:'Scissors',Paper:'Rock',Scissors:'Paper'};
+let i=0,you=0,them=0,draws=0;
+function play(mine){
+  const theirs=PLAN[i%PLAN.length];i++;
+  let verdict;
+  if(mine===theirs){draws++;verdict='a draw';}
+  else if(BEATS[mine]===theirs){you++;verdict='you win';}
+  else{them++;verdict='you lose';}
+  $('last').textContent=mine+' against '+theirs+' · '+verdict;
+  $('score').textContent='You '+you+' · Computer '+them+' · Draws '+draws;
+}
+['rock','paper','scissors'].forEach(id=>{$(id).onclick=()=>play($(id).textContent);});
+$('reset').onclick=()=>{i=0;you=them=draws=0;$('score').textContent='You 0 · Computer 0 · Draws 0';
+  $('last').textContent='Pick a move to start.';};
+</script>
+</body>
+</html>

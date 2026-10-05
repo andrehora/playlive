@@ -1,0 +1,34 @@
+test: A complete message is sent
+steps:
+  - fill: { label: To, value: dana@example.test }
+  - fill: { label: Subject, value: Lunch on Thursday }
+  - fill: { label: Message, value: Does one o'clock work for you? }
+  - click: { role: button, name: Send }
+  - expectText: Sent to dana@example.test
+
+test: A read receipt is mentioned
+steps:
+  - fill: { label: To, value: dana@example.test }
+  - fill: { label: Subject, value: Invoice }
+  - check: { label: Ask for a read receipt }
+  - click: { role: button, name: Send }
+  - expectText: you will be told when it is read
+
+test: A bad address is refused
+steps:
+  - fill: { label: To, value: dana-at-example }
+  - fill: { label: Subject, value: Hello }
+  - click: { role: button, name: Send }
+  - expectText: dana-at-example is not an email address.
+
+test: A missing subject is refused
+steps:
+  - fill: { label: To, value: dana@example.test }
+  - click: { role: button, name: Send }
+  - expectText: Add a subject, or it will look like spam.
+
+test: A draft keeps its subject
+steps:
+  - fill: { label: Subject, value: Half-written }
+  - click: { role: button, name: Save draft }
+  - expectText: Draft saved as “Half-written”.

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Report builder</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#5b21b6}</style>
+</head>
+<body>
+<h1>Build a report</h1>
+<fieldset><legend>Columns</legend>
+<label class="inline"><input type="checkbox" id="region" checked> Region</label>
+<label class="inline"><input type="checkbox" id="orders" checked> Orders</label>
+<label class="inline"><input type="checkbox" id="revenue"> Revenue</label>
+</fieldset>
+<label for="group">Group by</label>
+<select id="group"><option>Region</option><option>Month</option></select>
+<label for="fmt">Rows</label>
+<select id="fmt"><option>Top 2</option><option>All</option></select>
+<button id="build" type="button">Build report</button>
+<p id="msg" hidden></p>
+<ul id="out" class="clean"></ul>
+
+<script>
+const D=[['North','Jan',120,24000],['South','Jan',90,18000],['North','Feb',150,31000]];
+$('build').onclick=()=>{
+  const cols=[['region','Region'],['orders','Orders'],['revenue','Revenue']].filter(([id])=>$(id).checked);
+  const p=$('msg');p.hidden=false;$('out').textContent='';
+  if(!cols.length){p.className='';p.textContent='Choose at least one column.';return;}
+  const by=$('group').value==='Region'?0:1;
+  const groups={};
+  D.forEach(r=>{const k=r[by];groups[k]=groups[k]||[0,0];groups[k][0]+=r[2];groups[k][1]+=r[3];});
+  let keys=Object.keys(groups);
+  if($('fmt').value==='Top 2') keys=keys.sort((a,b)=>groups[b][0]-groups[a][0]).slice(0,2);
+  p.className='ok';p.textContent='Report of '+keys.length+' rows by '+$('group').value+' · '+cols.map(c=>c[1]).join(', ');
+  keys.forEach(k=>{
+    const bits=[];
+    if($('region').checked) bits.push(k);
+    if($('orders').checked) bits.push(groups[k][0]+' orders');
+    if($('revenue').checked) bits.push('$'+groups[k][1].toLocaleString('en-US'));
+    const li=document.createElement('li');li.textContent=bits.join(' · ');$('out').appendChild(li);
+  });
+};
+</script>
+</body>
+</html>

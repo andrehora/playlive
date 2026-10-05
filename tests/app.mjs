@@ -15,13 +15,19 @@ export async function siteIds(){
   return SITE_IDS;
 }
 
+// The display name of a site, read from the manifest.
+export async function siteName(id){
+  const { SITES } = await import(pathToFileURL(resolve(ROOT, 'examples/examples.js')).href);
+  return SITES[id].name;
+}
+
 // Loads the app and starts collecting errors from the page that hosts it.
 // The iframe's own errors are collected by the app and surfaced as warnings.
-export async function openApp(page, { site } = {}){
+export async function openApp(page, { site, hash = '' } = {}){
   const errors = [];
   page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
   page.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text()}`); });
-  await page.goto('/index.html');
+  await page.goto('/index.html' + hash);
   // js-yaml comes from cdnjs: without it nothing parses, so say so plainly.
   await page.waitForFunction(() => typeof window.jsyaml !== 'undefined', null, { timeout: 30_000 })
     .catch(() => { throw new Error('js-yaml did not load from cdnjs. These tests need network access.'); });

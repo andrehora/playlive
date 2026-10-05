@@ -1,0 +1,24 @@
+test: Nothing is done at the start
+steps:
+  - expectText: "0 of 3 lessons done · 0%"
+  - expectNoText: Course complete.
+
+test: Marking one lesson moves the progress
+steps:
+  - click: { role: button, name: Mark done Finding elements }
+  - expectText: "1 of 3 lessons done · 33%"
+  - expectText: "Finding elements · done"
+
+test: Finishing every lesson offers the certificate
+steps:
+  - click: { role: button, name: Mark done What a test is }
+  - click: { role: button, name: Mark done Finding elements }
+  - click: { role: button, name: Mark done Waiting well }
+  - expectText: "3 of 3 lessons done · 100%"
+  - expectText: Course complete. Your certificate is ready.
+
+test: Undoing a lesson lowers the progress again
+steps:
+  - click: { role: button, name: Mark done Waiting well }
+  - click: { role: button, name: Undo Waiting well }
+  - expectText: "0 of 3 lessons done · 0%"

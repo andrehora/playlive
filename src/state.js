@@ -1,3 +1,5 @@
+import { SITE_IDS } from '../examples/examples.js';
+
 // State that more than one module reads. Reading an imported binding always
 // gives the current value, but only this module may assign to one, so each of
 // these comes with a setter.
@@ -8,8 +10,8 @@ export let stopRequested = false;
 export let running = false;
 export let recording = false;
 export let previewTimer;
-export let currentSite = 'contact-form';   // the site showing on the right
-export let editorSite = 'contact-form';    // the site whose tests are in the editor
+export let currentSite = SITE_IDS[0];      // the site showing on the right
+export let editorSite = SITE_IDS[0];       // the site whose tests are in the editor, the first example unless a link names another
 export let lastEl = null;                  // the element the current step acted on
 export let completionOpen = false;         // the autocomplete list is showing, so it owns Tab and Enter
 export const editedHtml = {};              // site -> markup applied in the HTML view, until Reset

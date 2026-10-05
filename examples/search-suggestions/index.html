@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Search suggestions</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0369a1}</style>
+</head>
+<body>
+<h1>Find a recipe</h1>
+<label for="q">Search recipes</label>
+<input id="q" type="text" placeholder="Start typing" autocomplete="off">
+<ul id="sug" class="clean"></ul>
+<p id="chosen">Nothing chosen yet.</p>
+
+<script>
+const R=['Lemon risotto','Lentil soup','Leek tart','Mushroom pie','Mango sorbet'];
+function upd(){
+  const q=$('q').value.trim().toLowerCase();
+  $('sug').textContent='';
+  if(!q) return;
+  const hits=R.filter(r=>r.toLowerCase().includes(q));
+  if(!hits.length){const li=document.createElement('li');li.textContent='No recipe matches '+$('q').value.trim()+'.';$('sug').appendChild(li);return;}
+  hits.forEach(r=>{
+    const li=document.createElement('li');
+    const b=document.createElement('button');b.type='button';b.textContent=r;
+    b.setAttribute('aria-label','Choose '+r);
+    b.onclick=()=>{$('chosen').textContent='Chosen: '+r;$('q').value=r;upd();};
+    li.appendChild(b);$('sug').appendChild(li);
+  });
+}
+$('q').addEventListener('input',upd);
+</script>
+</body>
+</html>

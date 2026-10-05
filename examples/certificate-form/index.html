@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Certificate form</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#78350f}</style>
+</head>
+<body>
+<h1>Claim your certificate</h1>
+<label for="name">Full name</label>
+<input id="name" type="text" placeholder="As it should be printed">
+<label for="course">Course</label>
+<select id="course"><option>Intro to testing</option><option>Advanced selectors</option></select>
+<label for="fmt">Format</label>
+<select id="fmt"><option>PDF</option><option>Print</option></select>
+<label class="inline"><input type="checkbox" id="agree"> I completed this course myself</label>
+<button id="go" type="button">Generate certificate</button>
+<p id="msg" hidden></p>
+<div class="card" id="cert" hidden><p id="line1"></p><p id="line2"></p></div>
+
+<script>
+$('go').onclick=()=>{
+  const n=$('name').value.trim(),p=$('msg');p.hidden=false;$('cert').hidden=true;
+  if(!n){p.className='';p.textContent='Enter the name to print on the certificate.';return;}
+  if(!$('agree').checked){p.className='';p.textContent='Confirm you completed the course.';return;}
+  p.className='ok';p.textContent='Certificate ready as '+$('fmt').value+'.';
+  $('cert').hidden=false;
+  $('line1').textContent='Awarded to '+n;
+  $('line2').textContent=$('course').value+' · 2026';
+};
+</script>
+</body>
+</html>

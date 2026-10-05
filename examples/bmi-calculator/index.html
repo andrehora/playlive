@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BMI calculator</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4d7c0f}</style>
+</head>
+<body>
+<h1>Body mass index</h1>
+<label for="units">Units</label>
+<select id="units"><option>Metric</option><option>Imperial</option></select>
+<label for="h" id="hl">Height in cm</label>
+<input id="h" type="text" placeholder="170">
+<label for="w" id="wl">Weight in kg</label>
+<input id="w" type="text" placeholder="65">
+<button id="go" type="button">Work it out</button>
+<p id="msg" hidden></p>
+<p class="muted">This is a rough guide, not medical advice.</p>
+
+<script>
+function labels(){
+  const m=$('units').value==='Metric';
+  $('hl').textContent=m?'Height in cm':'Height in inches';
+  $('wl').textContent=m?'Weight in kg':'Weight in pounds';
+}
+$('go').onclick=()=>{
+  const h=Number($('h').value.trim()),w=Number($('w').value.trim()),p=$('msg');
+  p.hidden=false;p.className='';
+  if(!h||!w||isNaN(h)||isNaN(w)||h<=0||w<=0){p.textContent='Enter a height and a weight above zero.';return;}
+  const bmi=$('units').value==='Metric'?w/((h/100)**2):703*w/(h*h);
+  const band=bmi<18.5?'under the healthy range':bmi<25?'in the healthy range':bmi<30?'over the healthy range':'well over the healthy range';
+  p.className='ok';p.textContent='BMI '+bmi.toFixed(1)+' · '+band;
+};
+$('units').onchange=labels;labels();
+</script>
+</body>
+</html>

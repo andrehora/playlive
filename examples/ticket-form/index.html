@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Support ticket</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>Open a ticket</h1>
+<label for="subj">Subject</label>
+<input id="subj" type="text" placeholder="Short summary">
+<label for="area">Area</label>
+<select id="area"><option>Billing</option><option>Account</option><option>Something broken</option></select>
+<label for="pri">Priority</label>
+<select id="pri"><option>Low</option><option selected>Normal</option><option>Urgent</option></select>
+<label for="body">What happened</label>
+<textarea id="body" rows="3" placeholder="Tell us what you expected"></textarea>
+<label class="inline"><input type="checkbox" id="copy"> Email me a copy</label>
+<button id="send" type="button">Open ticket</button>
+<p id="msg" hidden></p>
+
+<script>
+let n=4100;
+$('send').onclick=()=>{
+  const s=$('subj').value.trim(),b=$('body').value.trim(),p=$('msg');p.hidden=false;p.className='';
+  if(!s){p.textContent='Give the ticket a subject.';return;}
+  if(b.length<10){p.textContent='Describe what happened in at least 10 characters.';return;}
+  p.className='ok';
+  p.textContent='Ticket #'+(++n)+' opened · '+$('area').value+' · '+$('pri').value.toLowerCase()
+    +($('pri').value==='Urgent'?' · we answer urgent tickets within an hour':'')
+    +($('copy').checked?' · a copy is on its way to your inbox':'');
+};
+</script>
+</body>
+</html>

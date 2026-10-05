@@ -1,0 +1,22 @@
+test: The video starts paused on automatic quality
+steps:
+  - expectText: "Paused · Auto · 1x"
+
+test: Playing at 1080p warns about the data
+steps:
+  - click: { role: button, name: Play }
+  - select: { label: Quality, value: 1080p }
+  - expectText: "Playing · 1080p · 1x"
+  - expectText: 1080p uses about 3 GB an hour.
+
+test: Save data pins the quality
+steps:
+  - select: { label: Quality, value: 1080p }
+  - check: { label: Save data }
+  - expectText: Save data caps quality at 480p.
+  - expectText: "Paused · 480p · 1x"
+
+test: Speed shows alongside the quality
+steps:
+  - select: { label: Speed, value: 2x }
+  - expectText: "Paused · Auto · 2x"

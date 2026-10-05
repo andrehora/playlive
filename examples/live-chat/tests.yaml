@@ -1,0 +1,28 @@
+test: The agent answers a question it knows
+steps:
+  - fill: { label: Message, value: What are your hours? }
+  - click: { role: button, name: Send }
+  - expectText: "You: What are your hours?"
+  - expectText: "Dana: We answer from 9 to 6, Monday to Friday."
+
+test: Anything else gets the standing answer
+steps:
+  - fill: { label: Message, value: My order is late }
+  - click: { role: button, name: Send }
+  - expectText: "Dana: Thanks — let me look that up for you."
+
+test: An empty message is refused
+steps:
+  - click: { role: button, name: Send }
+  - expectText: Type a message before sending.
+
+test: Ending the chat closes it
+steps:
+  - fill: { label: Message, value: refund please }
+  - click: { role: button, name: Send }
+  - expectText: Refunds land back on your card within five days.
+  - click: { role: button, name: End chat }
+  - expectText: Chat ended.
+  - fill: { label: Message, value: one more thing }
+  - click: { role: button, name: Send }
+  - expectText: The chat has ended. Start a new one to keep talking.

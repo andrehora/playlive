@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chart legend</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#5b21b6}</style>
+</head>
+<body>
+<h1>Traffic by source</h1>
+<fieldset><legend>Series</legend>
+<label class="inline"><input type="checkbox" id="direct" checked> Direct</label>
+<label class="inline"><input type="checkbox" id="search" checked> Search</label>
+<label class="inline"><input type="checkbox" id="social" checked> Social</label>
+</fieldset>
+<label for="unit">Show as</label>
+<select id="unit"><option>Visits</option><option>Share</option></select>
+<ul id="list" class="clean"></ul>
+<p id="total"></p>
+
+<script>
+const S=[['direct','Direct',4200],['search','Search',7800],['social','Social',1500]];
+function upd(){
+  const on=S.filter(([id])=>$(id).checked);
+  const sum=on.reduce((a,[,,v])=>a+v,0);
+  $('list').textContent='';
+  if(!on.length){const li=document.createElement('li');li.textContent='Every series is hidden.';$('list').appendChild(li);}
+  on.forEach(([,n,v])=>{const li=document.createElement('li');
+    li.textContent=n+' · '+($('unit').value==='Visits'?v.toLocaleString('en-US'):Math.round(v/sum*100)+'%');
+    $('list').appendChild(li);});
+  $('total').textContent=on.length?'Total of '+on.length+' series: '+sum.toLocaleString('en-US')+' visits':'Nothing to total';
+}
+S.forEach(([id])=>{$(id).onchange=upd;});$('unit').onchange=upd;upd();
+</script>
+</body>
+</html>

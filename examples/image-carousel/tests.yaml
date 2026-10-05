@@ -1,0 +1,23 @@
+test: The gallery opens on the first image
+steps:
+  - expectText: Image 1 of 3
+  - expectText: "Harbour at dawn · Lisbon"
+
+test: Next walks forward
+steps:
+  - click: { role: button, name: Next }
+  - expectText: Image 2 of 3
+  - expectText: "Tram on the hill · Lisbon"
+
+test: A thumbnail jumps straight there
+steps:
+  - click: { role: button, name: Show Rooftops }
+  - expectText: Image 3 of 3
+  - expectText: "Rooftops · Porto"
+
+test: Loop wraps past the end
+steps:
+  - check: { label: Loop around }
+  - click: { role: button, name: Show Rooftops }
+  - click: { role: button, name: Next }
+  - expectText: Image 1 of 3

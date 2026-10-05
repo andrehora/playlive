@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Word scramble</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#9f1239}</style>
+</head>
+<body>
+<h1>Unscramble it</h1>
+<p id="clue"></p>
+<label for="ans">Your answer</label>
+<input id="ans" type="text" placeholder="Type the word">
+<button id="check" type="button">Check</button>
+<button id="hint" type="button" class="secondary">Hint</button>
+<button id="next" type="button" class="secondary">Next word</button>
+<p id="msg">Three words to go.</p>
+<p id="score">Solved 0 of 3</p>
+
+<script>
+const W=[['tseter','tester'],['ntoubt','button'],['glcki','click']];
+let i=0,solved=0;
+function upd(){$('clue').textContent='Word '+(i+1)+' of '+W.length+': '+W[i][0];}
+$('check').onclick=()=>{
+  const v=$('ans').value.trim().toLowerCase();
+  if(!v){$('msg').className='';$('msg').textContent='Type an answer first.';return;}
+  if(v===W[i][1]){solved++;$('msg').className='ok';$('msg').textContent='Correct — '+W[i][1]+'.';
+    $('score').textContent='Solved '+solved+' of '+W.length;}
+  else{$('msg').className='';$('msg').textContent='Not quite. Try again.';}
+};
+$('hint').onclick=()=>{$('msg').className='';$('msg').textContent='It starts with '+W[i][1][0].toUpperCase()+'.';};
+$('next').onclick=()=>{i=(i+1)%W.length;$('ans').value='';$('msg').className='';
+  $('msg').textContent='New word.';upd();};
+upd();
+</script>
+</body>
+</html>

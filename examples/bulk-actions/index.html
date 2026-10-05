@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bulk actions</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#475569}</style>
+</head>
+<body>
+<h1>Members</h1>
+<p id="count">3 members · 0 selected</p>
+<label class="inline"><input type="checkbox" id="all"> Select everyone</label>
+<ul id="list" class="clean"></ul>
+<label for="action">Action</label>
+<select id="action"><option>Send invite</option><option>Suspend</option><option>Remove</option></select>
+<button id="apply" type="button">Apply to selected</button>
+<p id="msg" hidden></p>
+
+<script>
+let people=['Ana Reis','Bruno Lima','Chen Wei'];
+function picked(){return people.filter((_,i)=>$('p'+i).checked);}
+function upd(){
+  $('list').textContent='';
+  people.forEach((n,i)=>{
+    const li=document.createElement('li');
+    const lab=document.createElement('label');lab.className='inline';lab.htmlFor='p'+i;
+    const cb=document.createElement('input');cb.type='checkbox';cb.id='p'+i;
+    cb.onchange=cnt;lab.append(cb,document.createTextNode(' '+n));
+    li.appendChild(lab);$('list').appendChild(li);
+  });
+  $('all').checked=false;cnt();
+}
+function cnt(){$('count').textContent=people.length+' members · '+picked().length+' selected';}
+$('all').onchange=()=>{document.querySelectorAll('#list input').forEach(c=>{c.checked=$('all').checked;});cnt();};
+$('apply').onclick=()=>{
+  const sel=picked(),a=$('action').value,p=$('msg');p.hidden=false;
+  if(!sel.length){p.className='';p.textContent='Select someone first.';return;}
+  if(a==='Remove'){people=people.filter(n=>!sel.includes(n));upd();}
+  p.className='ok';p.textContent=a+' applied to '+sel.length+(sel.length===1?' member':' members')+'.';
+  cnt();
+};
+upd();
+</script>
+</body>
+</html>

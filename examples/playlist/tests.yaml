@@ -1,0 +1,26 @@
+test: Nothing plays until you choose
+steps:
+  - expectText: Nothing playing.
+
+test: Playing a track by name
+steps:
+  - click: { role: button, name: Play Harbour Lights }
+  - expectText: "Now playing: Harbour Lights · 4:10"
+  - expectText: "Harbour Lights · 4:10 · playing"
+
+test: Next walks down the list and stops at the end
+steps:
+  - click: { role: button, name: Next track }
+  - expectText: "Now playing: Night Drive"
+  - click: { role: button, name: Next track }
+  - click: { role: button, name: Next track }
+  - expectText: "Now playing: Slow Tide"
+  - click: { role: button, name: Next track }
+  - expectText: "Now playing: Slow Tide"
+
+test: Repeat wraps back to the first track
+steps:
+  - click: { role: button, name: Play Slow Tide }
+  - check: { label: Repeat the list }
+  - click: { role: button, name: Next track }
+  - expectText: "Now playing: Night Drive"

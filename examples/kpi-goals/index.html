@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KPI goals</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#5b21b6}</style>
+</head>
+<body>
+<h1>Goals</h1>
+<label for="q">Quarter</label>
+<select id="q"><option>Q1</option><option>Q2</option></select>
+<label class="inline"><input type="checkbox" id="stretch"> Use stretch targets</label>
+<ul id="list" class="clean"></ul>
+<p id="sum"></p>
+
+<script>
+const G={Q1:[['New customers',128,150],['Revenue',92000,100000],['Churn saves',44,40]],
+         Q2:[['New customers',181,150],['Revenue',118000,100000],['Churn saves',41,40]]};
+function upd(){
+  const rows=G[$('q').value],mult=$('stretch').checked?1.2:1;
+  $('list').textContent='';let met=0;
+  rows.forEach(([n,actual,target])=>{
+    const t=Math.round(target*mult),pct=Math.round(actual/t*100),ok=actual>=t;
+    if(ok) met++;
+    const li=document.createElement('li');
+    li.textContent=n+' · '+actual.toLocaleString('en-US')+' of '+t.toLocaleString('en-US')+' · '+pct+'% · '+(ok?'met':'missed');
+    $('list').appendChild(li);
+  });
+  $('sum').textContent=met+' of '+rows.length+' goals met in '+$('q').value;
+  $('sum').className=met===rows.length?'ok':'';
+}
+$('q').onchange=upd;$('stretch').onchange=upd;upd();
+</script>
+</body>
+</html>

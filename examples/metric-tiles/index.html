@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Metric tiles</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#5b21b6}</style>
+</head>
+<body>
+<h1>This week</h1>
+<label class="inline"><input type="checkbox" id="cmp"> Compare to last week</label>
+<label for="unit">Currency</label>
+<select id="unit"><option>USD</option><option>EUR</option></select>
+<div class="cols" id="tiles"></div>
+
+<script>
+const T=[['Revenue',12400,8,true],['Orders',318,-3,false],['Refunds',7,0,false]];
+const SYM={USD:'$',EUR:'€'},RATE={USD:1,EUR:0.92};
+function upd(){
+  $('tiles').textContent='';
+  T.forEach(([n,v,d,money])=>{
+    const c=document.createElement('div');c.className='card';
+    const val=money?SYM[$('unit').value]+Math.round(v*RATE[$('unit').value]).toLocaleString('en-US'):String(v);
+    let t=n+' · '+val;
+    if($('cmp').checked) t+=' · '+(d>0?'+':'')+d+'% vs last week';
+    c.textContent=t;$('tiles').appendChild(c);
+  });
+}
+$('cmp').onchange=upd;$('unit').onchange=upd;upd();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+test: Changing a role and saving it
+steps:
+  - select: { label: Bruno Lima, value: Admin }
+  - click: { role: button, name: Save roles }
+  - expectText: Roles saved.
+  - expectText: "Saved: Ana Reis is Editor, Bruno Lima is Admin."
+
+test: Discarding puts the saved role back
+steps:
+  - select: { label: Ana Reis, value: Viewer }
+  - click: { role: button, name: Discard changes }
+  - expectText: Changes discarded.
+  - expectText: Ana Reis is Editor
+
+test: The last admin cannot be removed
+steps:
+  - select: { label: Ana Reis, value: Admin }
+  - click: { role: button, name: Save roles }
+  - select: { label: Ana Reis, value: Viewer }
+  - click: { role: button, name: Save roles }
+  - expectText: Keep at least one admin.

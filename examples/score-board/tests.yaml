@@ -1,0 +1,28 @@
+test: Nobody leads at the start
+steps:
+  - expectText: Nobody has scored yet.
+
+test: A score puts a team in front
+steps:
+  - click: { role: button, name: Score for Foxes }
+  - expectText: "Foxes · 2"
+  - expectText: "Leading: Foxes with 2"
+
+test: Equal scores show as a tie
+steps:
+  - click: { role: button, name: Score for Harbour }
+  - click: { role: button, name: Score for Tide }
+  - expectText: "Tied at 2: Harbour and Tide"
+
+test: Points per score changes what a score is worth
+steps:
+  - select: { label: Points per score, value: "3" }
+  - click: { role: button, name: Score for Tide }
+  - expectText: "Tide · 3"
+  - expectText: "Leading: Tide with 3"
+
+test: Reset clears every score
+steps:
+  - click: { role: button, name: Score for Harbour }
+  - click: { role: button, name: Reset scores }
+  - expectText: Nobody has scored yet.

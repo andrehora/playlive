@@ -1,0 +1,22 @@
+test: Posting a comment adds it to the thread
+steps:
+  - fill: { label: Name, value: Ana }
+  - fill: { label: Comment, value: "The export bug is fixed, yes." }
+  - click: { role: button, name: Post comment }
+  - expectText: Comment posted.
+  - expectText: "Ana: The export bug is fixed, yes."
+  - expectText: 2 comments
+
+test: A comment with no name is refused
+steps:
+  - fill: { label: Comment, value: Looks good }
+  - click: { role: button, name: Post comment }
+  - expectText: Add your name before posting.
+  - expectText: 1 comment
+
+test: An empty comment is refused
+steps:
+  - fill: { label: Name, value: Ana }
+  - click: { role: button, name: Post comment }
+  - expectText: Write a comment before posting.
+  - expectText: 1 comment

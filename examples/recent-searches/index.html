@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Recent searches</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0369a1}</style>
+</head>
+<body>
+<h1>Search</h1>
+<label for="q">Search</label>
+<input id="q" type="text" placeholder="What are you looking for?">
+<button id="go" type="button">Search</button>
+<p id="res">No search yet.</p>
+<h2>Recent</h2>
+<p id="none">You have not searched for anything yet.</p>
+<ul id="list" class="clean"></ul>
+<button id="clear" type="button" class="secondary">Clear recent searches</button>
+
+<script>
+let recent=[];
+function upd(){
+  $('none').hidden=recent.length>0;
+  $('clear').disabled=!recent.length;
+  $('list').textContent='';
+  recent.forEach(q=>{
+    const li=document.createElement('li');
+    const b=document.createElement('button');b.type='button';b.textContent=q;
+    b.setAttribute('aria-label','Search again for '+q);
+    b.onclick=()=>{$('q').value=q;run();};
+    li.appendChild(b);$('list').appendChild(li);
+  });
+}
+function run(){
+  const q=$('q').value.trim();
+  if(!q){$('res').textContent='Type something to search for.';return;}
+  $('res').textContent='Results for '+q+' · 3 found';
+  recent=[q,...recent.filter(x=>x!==q)].slice(0,3);
+  upd();
+}
+$('go').onclick=run;
+$('clear').onclick=()=>{recent=[];$('res').textContent='No search yet.';upd();};
+upd();
+</script>
+</body>
+</html>

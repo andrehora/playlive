@@ -1,7 +1,7 @@
 import { $id } from './dom.js';
 
 /* ---------- Layout: resizable panels and screen sizes, remembered ---------- */
-export const LAYOUT = 'live-test-runner:layout:v1';
+export const LAYOUT = 'live-test-runner:layout';
 export let layout = {};
 try { layout = JSON.parse(localStorage.getItem(LAYOUT) || '{}') || {}; } catch {}
 export const rootStyle = document.documentElement.style;

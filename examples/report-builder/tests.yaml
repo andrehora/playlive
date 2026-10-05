@@ -1,0 +1,27 @@
+test: A report groups by region
+steps:
+  - click: { role: button, name: Build report }
+  - expectText: "Report of 2 rows by Region · Region, Orders"
+  - expectText: "North · 270 orders"
+  - expectText: "South · 90 orders"
+
+test: Adding revenue adds a column
+steps:
+  - check: { label: Revenue }
+  - click: { role: button, name: Build report }
+  - expectText: "Region, Orders, Revenue"
+  - expectText: "North · 270 orders · $55,000"
+
+test: Grouping by month changes the rows
+steps:
+  - select: { label: Group by, value: Month }
+  - click: { role: button, name: Build report }
+  - expectText: "Report of 2 rows by Month"
+  - expectText: "Jan · 210 orders"
+
+test: A report with no columns is refused
+steps:
+  - uncheck: { label: Region }
+  - uncheck: { label: Orders }
+  - click: { role: button, name: Build report }
+  - expectText: Choose at least one column.

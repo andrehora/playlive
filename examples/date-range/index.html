@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Date range</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#5b21b6}</style>
+</head>
+<body>
+<h1>Traffic</h1>
+<label for="range">Date range</label>
+<select id="range"><option>Last 7 days</option><option>Last 30 days</option><option>This year</option></select>
+<label class="inline"><input type="checkbox" id="bots"> Exclude bots</label>
+<div class="card"><p id="visits"></p><p id="signups"></p><p id="rate"></p></div>
+
+<script>
+const D={'Last 7 days':[1240,62],'Last 30 days':[5310,219],'This year':[62900,2480]};
+function upd(){
+  const [v,s]=D[$('range').value],visits=$('bots').checked?Math.round(v*0.9):v;
+  $('visits').textContent='Visits: '+visits.toLocaleString('en-US');
+  $('signups').textContent='Signups: '+s.toLocaleString('en-US');
+  $('rate').textContent='Conversion: '+(s/visits*100).toFixed(1)+'%';
+}
+$('range').onchange=upd;$('bots').onchange=upd;upd();
+</script>
+</body>
+</html>

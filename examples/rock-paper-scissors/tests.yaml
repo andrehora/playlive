@@ -1,0 +1,28 @@
+test: Rock beats the opening scissors
+steps:
+  - click: { role: button, name: Rock }
+  - expectText: "Rock against Scissors · you win"
+  - expectText: "You 1 · Computer 0 · Draws 0"
+
+test: The same move twice is a draw on the second round
+steps:
+  - click: { role: button, name: Rock }
+  - click: { role: button, name: Rock }
+  - expectText: "Rock against Rock · a draw"
+  - expectText: "You 1 · Computer 0 · Draws 1"
+
+test: Three rounds fill the scoreboard
+steps:
+  - click: { role: button, name: Scissors }
+  - click: { role: button, name: Scissors }
+  - click: { role: button, name: Scissors }
+  - expectText: "Scissors against Paper · you win"
+  - expectText: "You 1 · Computer 1 · Draws 1"
+
+test: Reset starts the cycle over
+steps:
+  - click: { role: button, name: Paper }
+  - click: { role: button, name: Reset score }
+  - expectText: Pick a move to start.
+  - click: { role: button, name: Rock }
+  - expectText: "Rock against Scissors · you win"

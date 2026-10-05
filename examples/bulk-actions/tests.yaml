@@ -1,0 +1,27 @@
+test: An action applies to the one you picked
+steps:
+  - check: { label: Bruno Lima }
+  - expectText: "3 members · 1 selected"
+  - click: { role: button, name: Apply to selected }
+  - expectText: Send invite applied to 1 member.
+
+test: Select everyone then suspend them
+steps:
+  - check: { label: Select everyone }
+  - select: { label: Action, value: Suspend }
+  - click: { role: button, name: Apply to selected }
+  - expectText: Suspend applied to 3 members.
+
+test: Removing takes them off the list
+steps:
+  - check: { label: Chen Wei }
+  - select: { label: Action, value: Remove }
+  - click: { role: button, name: Apply to selected }
+  - expectText: Remove applied to 1 member.
+  - expectText: 2 members
+  - expectNoText: Chen Wei
+
+test: Applying with nobody picked explains what to do
+steps:
+  - click: { role: button, name: Apply to selected }
+  - expectText: Select someone first.

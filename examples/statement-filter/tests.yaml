@@ -1,0 +1,16 @@
+test: March nets out to the month's balance
+steps:
+  - expectText: "Net for March: +$1020.00"
+  - expectText: "Rent · -$1200.00"
+
+test: Only deposits drops the payments
+steps:
+  - check: { label: Only deposits }
+  - expectText: "Net for March: +$2400.00"
+  - expectNoText: Groceries
+
+test: April has a bonus in it
+steps:
+  - select: { label: Month, value: April }
+  - expectText: "Bonus · +$500.00"
+  - expectText: "Net for April: +$1700.00"

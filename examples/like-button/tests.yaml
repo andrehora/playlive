@@ -1,0 +1,19 @@
+test: Liking a post counts it
+steps:
+  - expectText: 12 likes
+  - click: { role: button, name: Like }
+  - expectText: 13 likes · you liked this
+  - expectVisible: { role: button, name: Unlike }
+
+test: Unliking takes it back
+steps:
+  - click: { role: button, name: Like }
+  - click: { role: button, name: Unlike }
+  - expectText: 12 likes
+  - expectNoText: you liked this
+
+test: Saving is separate from liking
+steps:
+  - click: { role: button, name: Save }
+  - expectText: Saved to your collection.
+  - expectText: 12 likes

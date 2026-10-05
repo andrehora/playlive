@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video captions</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#a21caf}</style>
+</head>
+<body>
+<h1>Tide pools</h1>
+<div class="card"><p class="muted">A short film · 2:14</p>
+<p id="frame">Waves breaking over dark rock.</p>
+<p id="cap" hidden></p></div>
+<label class="inline"><input type="checkbox" id="on"> Captions</label>
+<label for="lang">Caption language</label>
+<select id="lang"><option>English</option><option>Portuguese</option></select>
+<label for="size">Caption size</label>
+<select id="size"><option>Small</option><option selected>Medium</option><option>Large</option></select>
+<p id="state"></p>
+
+<script>
+const TEXT={English:'The tide pulls back twice a day.',Portuguese:'A maré recua duas vezes por dia.'};
+function upd(){
+  const on=$('on').checked;
+  $('cap').hidden=!on;
+  $('cap').textContent=on?TEXT[$('lang').value]:'';
+  $('lang').disabled=!on;$('size').disabled=!on;
+  $('state').textContent=on?'Captions on · '+$('lang').value+' · '+$('size').value.toLowerCase():'Captions off';
+}
+$('on').onchange=upd;$('lang').onchange=upd;$('size').onchange=upd;upd();
+</script>
+</body>
+</html>

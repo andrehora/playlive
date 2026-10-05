@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Feature flags</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#475569}</style>
+</head>
+<body>
+<h1>Feature flags</h1>
+<label class="inline"><input type="checkbox" id="dark" checked> Dark mode</label>
+<label class="inline"><input type="checkbox" id="beta"> Beta search</label>
+<label class="inline"><input type="checkbox" id="metrics"> Usage metrics</label>
+<label for="env">Environment</label>
+<select id="env"><option>Staging</option><option>Production</option></select>
+<button id="save" type="button">Save flags</button>
+<p id="msg" hidden></p>
+<p id="live"></p>
+
+<script>
+const F=[['dark','Dark mode'],['beta','Beta search'],['metrics','Usage metrics']];
+function on(){return F.filter(([id])=>$(id).checked).map(([,n])=>n);}
+function upd(){const l=on();$('live').textContent=l.length?'On: '+l.join(', '):'Everything is off.';}
+$('save').onclick=()=>{
+  const p=$('msg');p.hidden=false;
+  if($('env').value==='Production'&&$('beta').checked){
+    p.className='';p.textContent='Beta search cannot go to Production yet.';return;}
+  p.className='ok';p.textContent='Saved '+on().length+' flags to '+$('env').value+'.';
+};
+F.forEach(([id])=>{$(id).onchange=upd;});upd();
+</script>
+</body>
+</html>

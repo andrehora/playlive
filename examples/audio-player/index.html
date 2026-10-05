@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Audio player</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#a21caf}</style>
+</head>
+<body>
+<h1>Night Drive</h1>
+<p class="muted">Ana Reis · 3:42</p>
+<button id="play" type="button">Play</button>
+<button id="mute" type="button" class="secondary">Mute</button>
+<label for="vol">Volume</label>
+<select id="vol"><option>Low</option><option selected>Medium</option><option>High</option></select>
+<label for="speed">Speed</label>
+<select id="speed"><option>0.5x</option><option selected>1x</option><option>1.5x</option></select>
+<p id="state"></p>
+
+<script>
+let playing=false,muted=false;
+function upd(){
+  $('play').textContent=playing?'Pause':'Play';
+  $('play').setAttribute('aria-pressed',String(playing));
+  $('mute').textContent=muted?'Unmute':'Mute';
+  $('state').textContent=(playing?'Playing':'Paused')+' · '+(muted?'muted':'volume '+$('vol').value.toLowerCase())+' · '+$('speed').value;
+}
+$('play').onclick=()=>{playing=!playing;upd();};
+$('mute').onclick=()=>{muted=!muted;upd();};
+$('vol').onchange=upd;$('speed').onchange=upd;upd();
+</script>
+</body>
+</html>

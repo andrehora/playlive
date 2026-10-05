@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flight search</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0e7490}</style>
+</head>
+<body>
+<h1>Find a flight</h1>
+<label for="from">From</label>
+<select id="from"><option>Lisbon</option><option>Berlin</option><option>Dublin</option></select>
+<label for="to">To</label>
+<select id="to"><option>Berlin</option><option>Lisbon</option><option>Dublin</option></select>
+<label for="when">Date</label>
+<input id="when" type="text" placeholder="YYYY-MM-DD">
+<label class="inline"><input type="checkbox" id="direct"> Direct flights only</label>
+<button id="go" type="button">Search</button>
+<p id="msg" hidden></p>
+<ul id="list" class="clean"></ul>
+
+<script>
+const F=[['TP 1234','08:15',true,142],['LH 9080','13:40',false,118],['FR 4410','19:05',true,96]];
+$('go').onclick=()=>{
+  const p=$('msg');p.hidden=false;p.className='';$('list').textContent='';
+  if($('from').value===$('to').value){p.textContent='Pick two different cities.';return;}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test($('when').value.trim())){p.textContent='Enter a date as YYYY-MM-DD.';return;}
+  const rows=F.filter(f=>!$('direct').checked||f[2]);
+  p.className='ok';
+  p.textContent=rows.length+' flights from '+$('from').value+' to '+$('to').value+' on '+$('when').value.trim()+'.';
+  rows.forEach(([n,t,d,price])=>{const li=document.createElement('li');
+    li.textContent=n+' · '+t+' · '+(d?'direct':'1 stop')+' · $'+price;$('list').appendChild(li);});
+};
+</script>
+</body>
+</html>

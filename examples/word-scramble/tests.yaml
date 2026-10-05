@@ -1,0 +1,32 @@
+test: The right answer is accepted
+steps:
+  - expectText: "Word 1 of 3: tseter"
+  - fill: { label: Your answer, value: tester }
+  - click: { role: button, name: Check }
+  - expectText: Correct — tester.
+  - expectText: Solved 1 of 3
+
+test: A wrong answer asks you to try again
+steps:
+  - fill: { label: Your answer, value: street }
+  - click: { role: button, name: Check }
+  - expectText: Not quite. Try again.
+  - expectText: Solved 0 of 3
+
+test: The hint gives the first letter
+steps:
+  - click: { role: button, name: Hint }
+  - expectText: It starts with T.
+
+test: Next moves on to the following word
+steps:
+  - click: { role: button, name: Next word }
+  - expectText: "Word 2 of 3: ntoubt"
+  - fill: { label: Your answer, value: button }
+  - click: { role: button, name: Check }
+  - expectText: Correct — button.
+
+test: An empty answer is refused
+steps:
+  - click: { role: button, name: Check }
+  - expectText: Type an answer first.

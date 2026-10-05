@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Image carousel</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#a21caf}</style>
+</head>
+<body>
+<h1>Gallery</h1>
+<p id="pos"></p>
+<div class="card"><p id="caption"></p></div>
+<button id="prev" type="button" class="secondary">Previous</button>
+<button id="next" type="button">Next</button>
+<label class="inline"><input type="checkbox" id="loop"> Loop around</label>
+<ul id="thumbs" class="clean"></ul>
+
+<script>
+const S=[['Harbour at dawn','Lisbon'],['Tram on the hill','Lisbon'],['Rooftops','Porto']];
+let i=0;
+function upd(){
+  $('pos').textContent='Image '+(i+1)+' of '+S.length;
+  $('caption').textContent=S[i][0]+' · '+S[i][1];
+  $('prev').disabled=!$('loop').checked&&i===0;
+  $('next').disabled=!$('loop').checked&&i===S.length-1;
+  $('thumbs').textContent='';
+  S.forEach(([t],k)=>{
+    const li=document.createElement('li');
+    const b=document.createElement('button');b.type='button';b.textContent=t;
+    b.setAttribute('aria-label','Show '+t);
+    if(k===i) b.disabled=true;
+    b.onclick=()=>{i=k;upd();};
+    li.appendChild(b);$('thumbs').appendChild(li);
+  });
+}
+$('next').onclick=()=>{i=i+1<S.length?i+1:($('loop').checked?0:i);upd();};
+$('prev').onclick=()=>{i=i>0?i-1:($('loop').checked?S.length-1:i);upd();};
+$('loop').onchange=upd;upd();
+</script>
+</body>
+</html>

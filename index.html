@@ -1,129 +1,223 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Playlive</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
-<link rel="stylesheet" href="src/app.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>Playlive - Live e2e tests</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <link rel="stylesheet" href="src/app.css">
 </head>
+
 <body>
-<header class="appbar">
-  <div class="brand">
-    <span class="mark" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 18.5A2 2 0 0 0 6.2 21.5h11.6a2 2 0 0 0 1.7-3L14 9V3"/><path d="M7.5 15h9"/></svg></span>
-    <span class="brand-name">Playlive</span>
-  </div>
-  <div class="picker">
-    <button id="siteBtn" type="button" class="site-btn" aria-haspopup="true" aria-expanded="false" aria-controls="sitePop" title="Choose an example site"><span class="swatch" id="siteSwatch" aria-hidden="true"></span><span id="siteName" class="site-name"></span><span class="tres" aria-hidden="true"></span><svg class="i caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
-    <div class="pop" id="sitePop" hidden>
-      <input id="siteSearch" type="search" aria-label="Search examples" autocomplete="off" spellcheck="false">
-      <div class="pop-list" id="tabs" role="group" aria-label="Example sites"></div>
-      <p class="pop-empty" id="popEmpty" hidden>No examples match.</p>
-    </div>
-  </div>
-  <div class="stepper">
-    <button id="prevSite" type="button" class="ghost icon-btn" aria-label="Previous example" title="Previous example"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
-    <span class="site-count" id="siteCount"></span>
-    <button id="nextSite" type="button" class="ghost icon-btn" aria-label="Next example" title="Next example"><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
-  </div>
-  <button id="reset" type="button" class="ghost small" title="Start this example over: its page reloaded, the example tests back, and its saved data, run history and last result cleared"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
-  <span class="spacer"></span>
-  <a class="repo-link" href="https://github.com/andrehora/playlive" target="_blank" rel="noopener" title="Playlive on GitHub"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48l-.01-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.93.83.09-.65.35-1.09.63-1.34-2.22-.25-4.555-1.11-4.555-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85l-.01 2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2z" fill="currentColor" stroke="none"/></svg><span class="repo-label">GitHub</span></a>
-</header>
-<main id="workspace">
-  <div class="left" id="left">
-    <section class="panel tests-panel">
-      <div class="panel-head">
-        <h2>Tests <span id="fileStatus" class="file-status" aria-live="polite"></span></h2>
-        <div class="head-actions">
-          <button id="export" type="button" class="ghost small" title="Export these tests for Playwright or Cypress"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</button>
-          <button id="foldSpec" type="button" class="ghost icon-btn" aria-label="Collapse all" aria-expanded="true" aria-controls="editor" title="Hide the code of every test"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="foldSpecIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5"/></svg></button>
-        </div>
-      </div>
-      <div class="editor" id="editor">
-        <div class="gutter" id="gutter" aria-hidden="true"></div>
-        <div class="code">
-          <pre class="hl" id="hl" aria-hidden="true"></pre>
-          <textarea id="spec" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" aria-label="Tests in YAML" title="Suggestions appear as you type. Ctrl+Space asks for them." aria-autocomplete="list" aria-controls="acPop" aria-expanded="false"></textarea>
-        </div>
-      </div>
-      <p id="error" role="alert"></p>
-      <div class="toolbar">
-        <button id="run" class="primary" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="ic-play" d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/><path class="ic-next" d="M5 4.5v15l10-7.5zM16.5 4.5h2.5v15h-2.5z" fill="currentColor" stroke="none" hidden/></svg><span class="lbl">Run</span></button>
-        <button id="stop" type="button" disabled title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>Stop</button>
-        <button id="record" type="button" title="Use the site and turn your actions into steps"><span class="rec-dot" aria-hidden="true"></span><span class="lbl">Record</span></button>
-        <div class="opts">
-          <label class="field">Speed
-            <select id="speed"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option><option value="step">Step by step</option></select>
-          </label>
-          <label class="field">Repeat
-            <select id="repeat"><option value="1">1×</option><option value="3">3×</option><option value="5">5×</option><option value="10">10×</option></select>
-          </label>
-        </div>
-      </div>
-    </section>
-    <div class="resizer row-resizer" id="rowResizer" role="separator" aria-orientation="horizontal" aria-label="Resize the editor" tabindex="0" title="Drag to resize, double-click to reset"></div>
-    <section class="panel results-panel">
-      <div class="panel-head">
-        <h2>Results</h2>
-        <div class="head-actions">
-          <button id="foldAll" type="button" class="ghost icon-btn" aria-label="Collapse all"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="foldIcon" d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg></button>
-        </div>
-      </div>
-      <div class="summary-bar"><div id="summary" aria-live="polite"></div><div class="progress" id="progress" hidden><span></span></div></div>
-      <div id="results"></div>
-    </section>
-  </div>
-  <div class="resizer col-resizer" id="colResizer" role="separator" aria-orientation="vertical" aria-label="Resize the panels" tabindex="0" title="Drag to resize, double-click to reset"></div>
-  <section class="panel browser">
-    <div class="site-head">
-      <h2>Site</h2>
-      <div class="addr">
-        <div class="seg view-seg" role="group" aria-label="What to show">
-          <button type="button" data-view="site" title="Show the site">Site</button>
-          <button type="button" data-view="html" title="Show the site's HTML, following the running step">HTML</button>
-        </div>
-        <div class="seg" role="group" aria-label="Screen size">
-          <button type="button" data-vp="desktop" aria-label="Desktop" title="Desktop"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>
-          <button type="button" data-vp="tablet" aria-label="Tablet, 768 pixels" title="Tablet (768px)"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M11 18h2"/></svg></button>
-          <button type="button" data-vp="mobile" aria-label="Phone, 390 pixels" title="Phone (390px)"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg></button>
-        </div>
+  <header class="appbar">
+    <a class="brand" href="./" title="Playlive home">
+      <span class="mark" aria-hidden="true"><svg class="i" viewBox="0 0 24 24">
+          <path d="M8.5 5.5v13l11-6.5z" fill="currentColor" stroke="none" />
+        </svg></span>
+      <span class="brand-name">Playlive</span>
+    </a>
+    <div class="picker">
+      <button id="siteBtn" type="button" class="site-btn" aria-haspopup="true" aria-expanded="false"
+        aria-controls="sitePop" title="Choose an example site"><span class="swatch" id="siteSwatch"
+          aria-hidden="true"></span><span id="siteName" class="site-name"></span><span class="tres"
+          aria-hidden="true"></span><svg class="i caret" viewBox="0 0 24 24">
+          <path d="M6 9l6 6 6-6" />
+        </svg></button>
+      <div class="pop" id="sitePop" hidden>
+        <input id="siteSearch" type="search" aria-label="Search examples" autocomplete="off" spellcheck="false">
+        <div class="pop-list" id="tabs" role="group" aria-label="Example sites"></div>
+        <p class="pop-empty" id="popEmpty" hidden>No examples match.</p>
       </div>
     </div>
-    <div id="snapbar" class="bar snapbar" hidden><span id="snapText"></span><button id="snapBack" type="button" class="small">Back to live site</button></div>
-    <div id="recbar" class="bar recbar" hidden>Recording. Use the site normally and each action becomes a step. Shift+click any text or button to add a check.</div>
-    <div class="view" id="view">
-      <div class="stage" id="stage"><div class="device" id="device" data-vp="desktop"><iframe id="app" title="Site under test"></iframe></div></div>
-      <div class="htmlpane" id="htmlPane" hidden>
-        <div class="html-bar">
-          <span class="html-bar-actions">
-            <button id="htmlRevert" type="button" class="ghost small" disabled title="Throw the edits away and read the page again">Revert</button>
-            <button id="htmlApply" type="button" class="primary small" disabled title="Put this markup on the page, for this run and the next">Save</button>
-          </span>
+    <div class="stepper">
+      <button id="prevSite" type="button" class="ghost icon-btn" aria-label="Previous example"
+        title="Previous example"><svg class="i" viewBox="0 0 24 24">
+          <path d="M15 6l-6 6 6 6" />
+        </svg></button>
+      <span class="site-count" id="siteCount"></span>
+      <button id="nextSite" type="button" class="ghost icon-btn" aria-label="Next example" title="Next example"><svg
+          class="i" viewBox="0 0 24 24">
+          <path d="M9 6l6 6-6 6" />
+        </svg></button>
+    </div>
+    <span class="spacer"></span>
+    <button id="share" type="button" class="ghost small" title="Copy a link that opens this example"><svg class="i"
+        viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M10 13.5a4 4 0 0 0 5.7.4l3-3a4 4 0 0 0-5.7-5.7l-1.6 1.6" />
+        <path d="M14 10.5a4 4 0 0 0-5.7-.4l-3 3a4 4 0 0 0 5.7 5.7l1.6-1.6" />
+      </svg>Share</button>
+    <button id="reset" type="button" class="ghost small"
+      title="Start over: every example back as it ships, this page reloaded, and all saved tests, data, run history and results cleared"><svg
+        class="i" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+        <path d="M3 3v5h5" />
+      </svg>Reset</button>
+    <a class="repo-link" href="https://github.com/andrehora/playlive" target="_blank" rel="noopener"
+      title="Playlive on GitHub"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48l-.01-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.93.83.09-.65.35-1.09.63-1.34-2.22-.25-4.555-1.11-4.555-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85l-.01 2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2z"
+          fill="currentColor" stroke="none" />
+      </svg><span class="repo-label">GitHub</span></a>
+  </header>
+  <main id="workspace">
+    <div class="left" id="left">
+      <section class="panel tests-panel">
+        <div class="panel-head">
+          <h2>Tests <span id="fileStatus" class="file-status" aria-live="polite"></span></h2>
+          <div class="head-actions">
+            <button id="export" type="button" class="ghost small"
+              title="Export these tests for Playwright or Cypress"><svg class="i" viewBox="0 0 24 24">
+                <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+              </svg>Export</button>
+            <button id="foldSpec" type="button" class="ghost icon-btn" aria-label="Collapse all" aria-expanded="true"
+              aria-controls="editor" title="Hide the code of every test"><svg class="i" viewBox="0 0 24 24"
+                aria-hidden="true">
+                <path id="foldSpecIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
+              </svg></button>
+          </div>
         </div>
-        <div class="html-body">
-          <div class="gutter" id="htmlGutter" aria-hidden="true"></div>
+        <div class="editor" id="editor">
+          <div class="gutter" id="gutter" aria-hidden="true"></div>
           <div class="code">
-            <pre class="code-view htmlcode" id="htmlCode" aria-hidden="true"></pre>
-            <textarea id="htmlEdit" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" aria-label="The site's HTML"></textarea>
+            <pre class="hl" id="hl" aria-hidden="true"></pre>
+            <textarea id="spec" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off"
+              aria-label="Tests in YAML" title="Suggestions appear as you type. Ctrl+Space asks for them."
+              aria-autocomplete="list" aria-controls="acPop" aria-expanded="false"></textarea>
+          </div>
+        </div>
+        <p id="error" role="alert"></p>
+        <div class="toolbar">
+          <button id="run" class="primary" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+              <path class="ic-play" d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none" />
+              <path class="ic-next" d="M5 4.5v15l10-7.5zM16.5 4.5h2.5v15h-2.5z" fill="currentColor" stroke="none"
+                hidden />
+            </svg><span class="lbl">Run</span></button>
+          <button id="stop" type="button" disabled title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24">
+              <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" />
+            </svg>Stop</button>
+          <button id="record" type="button" title="Use the site and turn your actions into steps"><span class="rec-dot"
+              aria-hidden="true"></span><span class="lbl">Record</span></button>
+          <div class="opts">
+            <label class="field">Speed
+              <select id="speed">
+                <option value="slow">Slow</option>
+                <option value="normal" selected>Normal</option>
+                <option value="fast">Fast</option>
+                <option value="step">Step by step</option>
+              </select>
+            </label>
+            <label class="field">Repeat
+              <select id="repeat">
+                <option value="1">1×</option>
+                <option value="3">3×</option>
+                <option value="5">5×</option>
+                <option value="10">10×</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </section>
+      <div class="resizer row-resizer" id="rowResizer" role="separator" aria-orientation="horizontal"
+        aria-label="Resize the editor" tabindex="0" title="Drag to resize, double-click to reset"></div>
+      <section class="panel results-panel">
+        <div class="panel-head">
+          <h2>Results <span id="summary" aria-live="polite"></span></h2>
+          <div class="head-actions">
+            <button id="foldAll" type="button" class="ghost icon-btn" aria-label="Collapse all"><svg class="i"
+                viewBox="0 0 24 24" aria-hidden="true">
+                <path id="foldIcon" d="M7 9l5-5 5 5M7 15l5 5 5-5" />
+              </svg></button>
+          </div>
+          <div class="progress" id="progress" hidden><span></span></div>
+        </div>
+        <div id="results"></div>
+      </section>
+    </div>
+    <div class="resizer col-resizer" id="colResizer" role="separator" aria-orientation="vertical"
+      aria-label="Resize the panels" tabindex="0" title="Drag to resize, double-click to reset"></div>
+    <section class="panel browser">
+      <div class="site-head">
+        <h2>Site <span class="head-sub" id="sitePanelName"></span> <span class="cat-badge" id="siteCat"></span></h2>
+        <div class="addr">
+          <button id="reload" type="button" class="ghost icon-btn" aria-label="Reload the page"
+            title="Reload the page: its scripts run again and what it held is lost"><svg class="i" viewBox="0 0 24 24"
+              aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+              <path d="M3 3v5h5" />
+            </svg></button>
+          <div class="seg view-seg" role="group" aria-label="What to show">
+            <button type="button" data-view="site" title="Show the site">Site</button>
+            <button type="button" data-view="html"
+              title="Show the site's HTML, following the running step">HTML</button>
+          </div>
+          <div class="seg" role="group" aria-label="Screen size">
+            <button type="button" data-vp="desktop" aria-label="Desktop" title="Desktop"><svg class="i"
+                viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="12" rx="2" />
+                <path d="M8 20h8M12 16v4" />
+              </svg></button>
+            <button type="button" data-vp="tablet" aria-label="Tablet, 768 pixels" title="Tablet (768px)"><svg class="i"
+                viewBox="0 0 24 24">
+                <rect x="5" y="3" width="14" height="18" rx="2" />
+                <path d="M11 18h2" />
+              </svg></button>
+            <button type="button" data-vp="mobile" aria-label="Phone, 390 pixels" title="Phone (390px)"><svg class="i"
+                viewBox="0 0 24 24">
+                <rect x="7" y="3" width="10" height="18" rx="2" />
+                <path d="M11 18h2" />
+              </svg></button>
           </div>
         </div>
       </div>
-    </div>
-  </section>
-</main>
-<div class="toast" id="toast" role="status"></div>
+      <div id="snapbar" class="bar snapbar" hidden><span id="snapText"></span><button id="snapBack" type="button"
+          class="small">Back to live site</button></div>
+      <div id="recbar" class="bar recbar" hidden>Recording. Use the site normally and each action becomes a step.
+        Shift+click any text or button to add a check.</div>
+      <div class="view" id="view">
+        <div class="stage" id="stage">
+          <div class="device" id="device" data-vp="desktop"><iframe id="app" title="Site under test"></iframe></div>
+        </div>
+        <div class="htmlpane" id="htmlPane" hidden>
+          <div class="html-bar">
+            <span class="html-bar-actions">
+              <button id="htmlRevert" type="button" class="ghost small" disabled
+                title="Throw the edits away and read the page again">Revert</button>
+              <button id="htmlApply" type="button" class="primary small" disabled
+                title="Put this markup on the page, for this run and the next">Save</button>
+            </span>
+          </div>
+          <div class="html-body">
+            <div class="gutter" id="htmlGutter" aria-hidden="true"></div>
+            <div class="code">
+              <pre class="code-view htmlcode" id="htmlCode" aria-hidden="true"></pre>
+              <textarea id="htmlEdit" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off"
+                aria-label="The site's HTML"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
 
-<dialog id="dlg" aria-labelledby="dlgTitle">
-  <div class="dlg-head"><h2 id="dlgTitle"></h2><button id="dlgClose" type="button" class="ghost small">Close</button></div>
-  <div class="dlg-tabs" id="dlgTabs" role="tablist" aria-label="Framework" hidden></div>
-  <p id="dlgNote"></p>
-  <pre id="dlgText" class="code-view" tabindex="0" aria-label="Exported code"></pre>
-  <div class="dlg-foot"><button id="dlgCopy" class="primary" type="button">Copy</button><span id="dlgCopied" aria-live="polite"></span></div>
-</dialog>
-<script type="module" src="src/main.js"></script>
+  <dialog id="dlg" aria-labelledby="dlgTitle">
+    <div class="dlg-head">
+      <h2 id="dlgTitle"></h2><button id="dlgClose" type="button" class="ghost small">Close</button>
+    </div>
+    <div class="dlg-tabs" id="dlgTabs" role="tablist" aria-label="Framework" hidden></div>
+    <p id="dlgNote"></p>
+    <pre id="dlgText" class="code-view" tabindex="0" aria-label="Exported code"></pre>
+    <div class="dlg-foot"><button id="dlgCopy" class="primary" type="button">Copy</button><span id="dlgCopied"
+        aria-live="polite"></span></div>
+  </dialog>
+  <script type="module" src="src/main.js"></script>
 </body>
+
 </html>

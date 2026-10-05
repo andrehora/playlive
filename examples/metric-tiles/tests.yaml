@@ -1,0 +1,17 @@
+test: The tiles start without a comparison
+steps:
+  - expectText: "Revenue · $12,400"
+  - expectText: "Orders · 318"
+  - expectNoText: vs last week
+
+test: Comparing adds a change to every tile
+steps:
+  - check: { label: Compare to last week }
+  - expectText: "Revenue · $12,400 · +8% vs last week"
+  - expectText: "Orders · 318 · -3% vs last week"
+
+test: Switching currency converts the money tile
+steps:
+  - select: { label: Currency, value: EUR }
+  - expectText: "Revenue · €11,408"
+  - expectText: "Orders · 318"

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Offline banner</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#52525b}</style>
+</head>
+<body>
+<h1>Notes</h1>
+<p id="banner" hidden>You are offline. Changes are kept on this device until you reconnect.</p>
+<label for="note">Note</label>
+<input id="note" type="text" placeholder="Write something">
+<button id="save" type="button">Save note</button>
+<button id="net" type="button" class="secondary">Go offline</button>
+<p id="state"></p>
+<ul id="list" class="clean"></ul>
+
+<script>
+let online=true,pending=0;const notes=[];
+function upd(){
+  $('banner').hidden=online;
+  $('net').textContent=online?'Go offline':'Go back online';
+  $('save').textContent=online?'Save note':'Save on this device';
+  $('state').textContent=online
+    ? (pending?'Online · '+pending+' waiting to sync':'Online · everything is saved')
+    : 'Offline · '+pending+(pending===1?' note':' notes')+' waiting';
+  $('list').textContent='';
+  notes.forEach(n=>{const li=document.createElement('li');
+    li.textContent=n.text+' · '+(n.synced?'saved':'waiting');$('list').appendChild(li);});
+}
+$('save').onclick=()=>{
+  const t=$('note').value.trim();
+  if(!t){$('state').textContent='Write the note before saving.';return;}
+  notes.push({text:t,synced:online});
+  if(!online) pending++;
+  $('note').value='';upd();
+};
+$('net').onclick=()=>{
+  online=!online;
+  if(online){notes.forEach(n=>{n.synced=true;});pending=0;}
+  upd();
+};
+upd();
+</script>
+</body>
+</html>

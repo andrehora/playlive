@@ -1,0 +1,29 @@
+test: Logging a symptom
+steps:
+  - check: { label: Headache }
+  - fill: { label: Since, value: 2 days }
+  - click: { role: button, name: Submit }
+  - expectText: "Logged Headache · mild · for 2 days."
+
+test: Two symptoms and a severity
+steps:
+  - check: { label: Tiredness }
+  - check: { label: Cough }
+  - select: { label: Severity, value: Moderate }
+  - fill: { label: Since, value: a week }
+  - click: { role: button, name: Submit }
+  - expectText: "Logged Tiredness and Cough · moderate · for a week."
+
+test: Severe adds advice
+steps:
+  - check: { label: Headache }
+  - select: { label: Severity, value: Severe }
+  - fill: { label: Since, value: 3 days }
+  - click: { role: button, name: Submit }
+  - expectText: Please contact your doctor.
+
+test: No symptom chosen is refused
+steps:
+  - fill: { label: Since, value: 2 days }
+  - click: { role: button, name: Submit }
+  - expectText: Choose at least one symptom.

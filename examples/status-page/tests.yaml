@@ -1,0 +1,23 @@
+test: A degraded service shows at the top
+steps:
+  - expectText: 1 service having trouble
+  - expectText: "API · Degraded"
+
+test: Only problems hides the healthy services
+steps:
+  - select: { label: Show, value: Only problems }
+  - expectText: "API · Degraded"
+  - expectNoText: "Website · Operational"
+
+test: Resolving the incident clears the page
+steps:
+  - click: { role: button, name: Mark incident resolved }
+  - expectText: Incident resolved. Thanks for your patience.
+  - expectText: All services operational
+  - expectText: "API · Operational"
+
+test: With nothing wrong the filter says so
+steps:
+  - click: { role: button, name: Mark incident resolved }
+  - select: { label: Show, value: Only problems }
+  - expectText: Nothing is having trouble.

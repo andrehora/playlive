@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>User roles</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#475569}</style>
+</head>
+<body>
+<h1>Team access</h1>
+<label for="ana">Ana Reis</label>
+<select id="ana"><option>Viewer</option><option selected>Editor</option><option>Admin</option></select>
+<label for="bruno">Bruno Lima</label>
+<select id="bruno"><option selected>Viewer</option><option>Editor</option><option>Admin</option></select>
+<button id="save" type="button">Save roles</button>
+<button id="reset" type="button" class="secondary">Discard changes</button>
+<p id="msg" hidden></p>
+<p id="now"></p>
+
+<script>
+const START={ana:'Editor',bruno:'Viewer'};let saved={...START};
+function upd(){$('now').textContent='Saved: Ana Reis is '+saved.ana+', Bruno Lima is '+saved.bruno+'.';}
+$('save').onclick=()=>{
+  const p=$('msg');p.hidden=false;
+  const admins=['ana','bruno'].filter(k=>$(k).value==='Admin').length;
+  if(!admins&&(saved.ana==='Admin'||saved.bruno==='Admin')){p.className='';p.textContent='Keep at least one admin.';return;}
+  saved={ana:$('ana').value,bruno:$('bruno').value};
+  p.className='ok';p.textContent='Roles saved.';upd();
+};
+$('reset').onclick=()=>{$('ana').value=saved.ana;$('bruno').value=saved.bruno;
+  $('msg').hidden=false;$('msg').className='';$('msg').textContent='Changes discarded.';};
+upd();
+</script>
+</body>
+</html>

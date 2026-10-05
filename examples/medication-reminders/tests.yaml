@@ -1,0 +1,30 @@
+test: Adding a reminder lists it
+steps:
+  - fill: { label: Medicine, value: Vitamin D }
+  - check: { label: Take with food }
+  - click: { role: button, name: Add reminder }
+  - expectText: Reminder added.
+  - expectText: "Vitamin D · Morning · with food"
+  - expectText: 1 reminder
+
+test: A medicine with no name is refused
+steps:
+  - click: { role: button, name: Add reminder }
+  - expectText: Name the medicine first.
+  - expectText: No reminders yet.
+
+test: The same medicine at the same time is refused
+steps:
+  - fill: { label: Medicine, value: Vitamin D }
+  - click: { role: button, name: Add reminder }
+  - fill: { label: Medicine, value: Vitamin D }
+  - click: { role: button, name: Add reminder }
+  - expectText: Vitamin D already has a morning reminder.
+
+test: Deleting a reminder empties the list
+steps:
+  - fill: { label: Medicine, value: Iron }
+  - select: { label: Time, value: Evening }
+  - click: { role: button, name: Add reminder }
+  - click: { role: button, name: Delete Iron }
+  - expectText: No reminders yet.

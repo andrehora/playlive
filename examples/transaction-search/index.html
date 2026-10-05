@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Transaction search</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#a16207}</style>
+</head>
+<body>
+<h1>Transactions</h1>
+<label for="q">Search</label>
+<input id="q" type="text" placeholder="Shop or amount">
+<label for="kind">Kind</label>
+<select id="kind"><option>All</option><option>Deposits</option><option>Payments</option></select>
+<p id="count"></p>
+<ul id="list" class="clean"></ul>
+
+<script>
+const T=[['Blue Bottle Coffee',-4.5],['Rent',-1200],['Payroll',2400],['Corner Grocery',-62.3],['Refund: Headphones',89]];
+function upd(){
+  const q=$('q').value.trim().toLowerCase(),k=$('kind').value;
+  const rows=T.filter(([n,a])=>n.toLowerCase().includes(q)&&(k==='All'||(k==='Deposits'?a>0:a<0)));
+  $('count').textContent=rows.length+(rows.length===1?' transaction':' transactions');
+  $('list').textContent='';
+  if(!rows.length){const li=document.createElement('li');li.textContent='No transactions match that search.';$('list').appendChild(li);return;}
+  rows.forEach(([n,a])=>{const li=document.createElement('li');
+    li.textContent=n+' · '+(a<0?'-$'+Math.abs(a).toFixed(2):'+$'+a.toFixed(2));$('list').appendChild(li);});
+}
+$('q').addEventListener('input',upd);$('kind').onchange=upd;upd();
+</script>
+</body>
+</html>

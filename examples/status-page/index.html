@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Status page</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>System status</h1>
+<p id="overall"></p>
+<label for="filter">Show</label>
+<select id="filter"><option>Everything</option><option>Only problems</option></select>
+<ul id="list" class="clean"></ul>
+<button id="fix" type="button">Mark incident resolved</button>
+<p id="note" hidden></p>
+
+<script>
+const S=[['Website','Operational'],['API','Degraded'],['Email delivery','Operational'],['Dashboards','Operational']];
+function upd(){
+  const rows=$('filter').value==='Everything'?S:S.filter(([,s])=>s!=='Operational');
+  $('list').textContent='';
+  if(!rows.length){const li=document.createElement('li');li.textContent='Nothing is having trouble.';$('list').appendChild(li);}
+  rows.forEach(([n,s])=>{const li=document.createElement('li');li.textContent=n+' · '+s;$('list').appendChild(li);});
+  const bad=S.filter(([,s])=>s!=='Operational').length;
+  $('overall').textContent=bad?bad+' service'+(bad===1?'':'s')+' having trouble':'All services operational';
+  $('overall').className=bad?'':'ok';
+  $('fix').disabled=!bad;
+}
+$('fix').onclick=()=>{S.forEach(r=>{r[1]='Operational';});
+  $('note').hidden=false;$('note').className='ok';$('note').textContent='Incident resolved. Thanks for your patience.';upd();};
+$('filter').onchange=upd;upd();
+</script>
+</body>
+</html>

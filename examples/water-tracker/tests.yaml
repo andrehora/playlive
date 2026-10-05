@@ -1,0 +1,28 @@
+test: The day starts empty
+steps:
+  - expectText: 0 of 8 glasses
+  - expectNoText: Goal reached.
+
+test: Adding glasses counts them
+steps:
+  - click: { role: button, name: Add a glass }
+  - click: { role: button, name: Add a glass }
+  - expectText: 2 of 8 glasses
+
+test: Undo takes one back
+steps:
+  - click: { role: button, name: Add a glass }
+  - click: { role: button, name: Undo }
+  - expectText: 0 of 8 glasses
+
+test: A smaller goal is reached sooner
+steps:
+  - select: { label: Daily goal, value: 6 glasses }
+  - click: { role: button, name: Add a glass }
+  - click: { role: button, name: Add a glass }
+  - click: { role: button, name: Add a glass }
+  - click: { role: button, name: Add a glass }
+  - click: { role: button, name: Add a glass }
+  - click: { role: button, name: Add a glass }
+  - expectText: 6 of 6 glasses
+  - expectText: Goal reached. Nice work.

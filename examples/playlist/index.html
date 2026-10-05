@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Playlist</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#a21caf}</style>
+</head>
+<body>
+<h1>Evening mix</h1>
+<p id="now">Nothing playing.</p>
+<ul id="list" class="clean"></ul>
+<button id="prev" type="button" class="secondary">Previous</button>
+<button id="next" type="button">Next track</button>
+<label class="inline"><input type="checkbox" id="repeat"> Repeat the list</label>
+
+<script>
+const T=[['Night Drive','3:42'],['Harbour Lights','4:10'],['Slow Tide','2:58']];
+let i=-1;
+function upd(){
+  $('now').textContent=i<0?'Nothing playing.':'Now playing: '+T[i][0]+' · '+T[i][1];
+  $('list').textContent='';
+  T.forEach(([n,d],k)=>{
+    const li=document.createElement('li');
+    const s=document.createElement('span');s.textContent=n+' · '+d+(k===i?' · playing':'');
+    const b=document.createElement('button');b.type='button';b.textContent='Play';
+    b.setAttribute('aria-label','Play '+n);b.onclick=()=>{i=k;upd();};
+    li.append(s,b);$('list').appendChild(li);
+  });
+  $('prev').disabled=i<=0;
+}
+$('next').onclick=()=>{
+  if(i+1<T.length) i++; else if($('repeat').checked) i=0; else return;
+  upd();
+};
+$('prev').onclick=()=>{if(i>0){i--;upd();}};
+upd();
+</script>
+</body>
+</html>

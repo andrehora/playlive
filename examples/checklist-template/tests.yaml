@@ -1,0 +1,28 @@
+test: A template fills the checklist
+steps:
+  - click: { role: button, name: Use this template }
+  - expectText: "0 of 2 done · New laptop"
+  - expectText: Sign in
+  - expectNoText: Set the wallpaper
+
+test: The optional steps can be included
+steps:
+  - check: { label: Add the optional steps }
+  - click: { role: button, name: Use this template }
+  - expectText: "0 of 3 done · New laptop"
+  - expectText: Set the wallpaper
+
+test: Ticking everything finishes the list
+steps:
+  - click: { role: button, name: Use this template }
+  - check: { label: Sign in }
+  - expectText: "1 of 2 done"
+  - check: { label: Install the tools }
+  - expectText: Everything is ticked off.
+
+test: Another template brings other steps
+steps:
+  - select: { label: Template, value: Trip packing }
+  - click: { role: button, name: Use this template }
+  - expectText: "0 of 2 done · Trip packing"
+  - expectText: Passport

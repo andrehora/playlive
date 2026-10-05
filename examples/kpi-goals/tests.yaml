@@ -1,0 +1,17 @@
+test: Q1 misses two of its goals
+steps:
+  - expectText: 1 of 3 goals met in Q1
+  - expectText: "New customers · 128 of 150 · 85% · missed"
+  - expectText: "Churn saves · 44 of 40 · 110% · met"
+
+test: Q2 beats every goal
+steps:
+  - select: { label: Quarter, value: Q2 }
+  - expectText: 3 of 3 goals met in Q2
+
+test: Stretch targets are harder to hit
+steps:
+  - select: { label: Quarter, value: Q2 }
+  - check: { label: Use stretch targets }
+  - expectText: "New customers · 181 of 180 · 101% · met"
+  - expectText: 1 of 3 goals met in Q2

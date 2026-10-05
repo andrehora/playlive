@@ -1,0 +1,23 @@
+test: The track starts paused
+steps:
+  - expectText: "Paused · volume medium · 1x"
+
+test: Play and pause swap the button
+steps:
+  - click: { role: button, name: Play }
+  - expectText: "Playing · volume medium · 1x"
+  - click: { role: button, name: Pause }
+  - expectText: Paused
+
+test: Volume and speed show in the state
+steps:
+  - click: { role: button, name: Play }
+  - select: { label: Volume, value: High }
+  - select: { label: Speed, value: 1.5x }
+  - expectText: "Playing · volume high · 1.5x"
+
+test: Muting hides the volume
+steps:
+  - click: { role: button, name: Mute }
+  - expectText: "Paused · muted"
+  - expectVisible: { role: button, name: Unmute }

@@ -1,0 +1,25 @@
+test: Booking a free slot
+steps:
+  - click: { role: button, name: "09:30, free" }
+  - expectText: "Chosen: Monday at 09:30 with Dr Reis"
+  - click: { role: button, name: Confirm booking }
+  - expectText: Booked Monday at 09:30 with Dr Reis
+
+test: A first visit asks you to come early
+steps:
+  - check: { label: First visit }
+  - click: { role: button, name: "11:00, free" }
+  - click: { role: button, name: Confirm booking }
+  - expectText: arrive 10 minutes early for a first visit
+
+test: Another clinician has different slots taken
+steps:
+  - select: { label: Clinician, value: Dr Lima }
+  - select: { label: Day, value: Tuesday }
+  - expectVisible: { role: button, name: "11:00, taken" }
+  - expectVisible: { role: button, name: "09:00, free" }
+
+test: Confirming with no time is refused
+steps:
+  - click: { role: button, name: Confirm booking }
+  - expectText: Choose a time first.

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video quality</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#a21caf}</style>
+</head>
+<body>
+<h1>Tide pools</h1>
+<div class="card"><p id="screen">Paused at 0:00</p></div>
+<button id="play" type="button">Play</button>
+<label for="q">Quality</label>
+<select id="q"><option>Auto</option><option>480p</option><option>720p</option><option>1080p</option></select>
+<label class="inline"><input type="checkbox" id="data"> Save data</label>
+<label for="speed">Speed</label>
+<select id="speed"><option>0.5x</option><option selected>1x</option><option>2x</option></select>
+<p id="state"></p>
+<p id="warn" hidden></p>
+
+<script>
+let playing=false;
+function upd(){
+  const save=$('data').checked;
+  const q=save?'480p':$('q').value;
+  $('q').disabled=save;
+  $('play').textContent=playing?'Pause':'Play';
+  $('screen').textContent=(playing?'Playing':'Paused')+' at 0:00';
+  $('state').textContent=(playing?'Playing':'Paused')+' · '+q+' · '+$('speed').value;
+  const w=$('warn');
+  if(save){w.hidden=false;w.className='';w.textContent='Save data caps quality at 480p.';}
+  else if($('q').value==='1080p'){w.hidden=false;w.className='';w.textContent='1080p uses about 3 GB an hour.';}
+  else w.hidden=true;
+}
+$('play').onclick=()=>{playing=!playing;upd();};
+$('q').onchange=upd;$('data').onchange=upd;$('speed').onchange=upd;upd();
+</script>
+</body>
+</html>

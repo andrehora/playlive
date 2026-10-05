@@ -1,11 +1,13 @@
 import { SITES, SITE_IDS } from '../examples/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
+import { catIconSvg } from './icons.js';
 import { preview } from './run.js';
+import { syncUrl } from './share.js';
 import { loadApp, persist, savedTests, testsFor } from './sites.js';
 import { editorSite, previewTimer, recording, running, setCurrentSite, setEditorSite } from './state.js';
 import { paintTabs } from './ui.js';
 
-/* ---------- Site picker: 50 examples, grouped and searchable ---------- */
+/* ---------- Site picker: 100 examples, grouped and searchable ---------- */
 export const CATEGORIES = [...new Set(SITE_IDS.map(id => SITES[id].category))];
 export const siteBtn = $id('siteBtn'), sitePop = $id('sitePop'), siteSearch = $id('siteSearch');
 siteSearch.placeholder = `Search ${SITE_IDS.length} examples`;
@@ -14,8 +16,9 @@ export function renderTabs(){
   for (const cat of CATEGORIES){
     const group = document.createElement('div'); group.className = 'pop-group';
     const head = document.createElement('div'); head.className = 'pop-cat';
-    head.innerHTML = '<span class="swatch" aria-hidden="true"></span><span></span>';
-    head.firstChild.style.background = SITES[SITE_IDS.find(id => SITES[id].category === cat)].accent;
+    head.innerHTML = catIconSvg(cat) + '<span></span>';
+    // The accent still carries the grouping; the icon is what makes it readable.
+    head.style.setProperty('--cat', SITES[SITE_IDS.find(id => SITES[id].category === cat)].accent);
     head.lastChild.textContent = cat;
     group.appendChild(head);
     for (const id of SITE_IDS.filter(i => SITES[i].category === cat)){
@@ -33,8 +36,15 @@ export function renderTabs(){
 export function setView(id){
   setCurrentSite(id);
   tabsEl.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === id)));
-  $id('siteSwatch').style.background = SITES[id].accent;
+  const swatch = $id('siteSwatch');
+  swatch.innerHTML = catIconSvg(SITES[id].category);
+  swatch.style.setProperty('--cat', SITES[id].accent);
   $id('siteName').textContent = SITES[id].name;
+  $id('sitePanelName').textContent = SITES[id].name;
+  const cat = $id('siteCat');
+  cat.innerHTML = catIconSvg(SITES[id].category) + '<span></span>';
+  cat.lastChild.textContent = SITES[id].category;
+  cat.style.setProperty('--cat', SITES[id].accent);
   siteBtn.title = `${SITES[id].category}: ${SITES[id].name}. Choose another example`;
   $id('siteCount').textContent = `${SITE_IDS.indexOf(id) + 1} of ${SITE_IDS.length}`;
   paintTabs();
@@ -93,7 +103,9 @@ export async function selectSite(id){
   // tests below are fetched, so it has to be settled before the site changes.
   clearTimeout(previewTimer);
   savedTests[editorSite] = specEl.value;
-  setEditorSite(id); setView(id);
+  // The URL changes with the visible example, before the fetch below, so the
+  // address bar is never a step behind what the app bar says.
+  setEditorSite(id); setView(id); syncUrl(id);
   specEl.value = await testsFor(id);
   errorEl.textContent = '';
   persist(); preview(); loadApp();

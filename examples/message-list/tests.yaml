@@ -1,0 +1,18 @@
+test: Opening a message marks it read
+steps:
+  - click: { role: button, name: "Open Invoice #4821" }
+  - expectText: "Reading: Invoice #4821"
+  - expectText: "Invoice #4821 · Billing · read"
+  - expectText: "Unread: 2"
+
+test: Two messages leaves one unread
+steps:
+  - click: { role: button, name: Open Standup notes }
+  - click: { role: button, name: Open Welcome aboard }
+  - expectText: "Unread: 1"
+
+test: Mark all read empties the counter
+steps:
+  - click: { role: button, name: Mark all read }
+  - expectText: "Unread: 0"
+  - expectText: "Standup notes · Dana · read"

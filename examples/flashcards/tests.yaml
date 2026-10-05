@@ -1,0 +1,26 @@
+test: The answer is hidden until you ask
+steps:
+  - expectText: What does expectText do?
+  - expectNoText: It waits for text to appear.
+  - click: { role: button, name: Show answer }
+  - expectText: It waits for text to appear.
+  - expectText: 1 of 3 answers revealed
+
+test: Next moves to the following card
+steps:
+  - click: { role: button, name: Next card }
+  - expectText: Card 2 of 3
+  - expectText: What is a flow?
+  - expectNoText: A reusable list of steps.
+
+test: Next wraps around to the first card
+steps:
+  - click: { role: button, name: Next card }
+  - click: { role: button, name: Next card }
+  - click: { role: button, name: Next card }
+  - expectText: Card 1 of 3
+
+test: Automatic reveal shows the answer with no click
+steps:
+  - check: { label: Reveal answers automatically }
+  - expectText: It waits for text to appear.

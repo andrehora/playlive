@@ -1,5 +1,5 @@
 /* ---------- Run history: spot flaky tests ---------- */
-export const HIST = 'live-test-runner:history:v1';
+export const HIST = 'live-test-runner:history';
 export let runHistory = {};
 try { runHistory = JSON.parse(localStorage.getItem(HIST) || '{}') || {}; } catch {}
 // Same title + same steps = same test; editing a test starts a fresh history

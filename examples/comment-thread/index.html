@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Comment thread</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Release notes 2.1</h1>
+<p id="count"></p>
+<ul id="list" class="clean"></ul>
+<label for="who">Name</label>
+<input id="who" type="text" placeholder="Your name">
+<label for="body">Comment</label>
+<textarea id="body" rows="3" placeholder="Say something"></textarea>
+<button id="post" type="button">Post comment</button>
+<p id="msg" hidden></p>
+
+<script>
+const C=[['Dana','Does this fix the export bug?']];
+function upd(){
+  $('list').textContent='';
+  C.forEach(([w,t])=>{const li=document.createElement('li');li.textContent=w+': '+t;$('list').appendChild(li);});
+  $('count').textContent=C.length+(C.length===1?' comment':' comments');
+}
+$('post').onclick=()=>{
+  const w=$('who').value.trim(),t=$('body').value.trim(),p=$('msg');
+  p.hidden=false;p.className='';
+  if(!w){p.textContent='Add your name before posting.';return;}
+  if(!t){p.textContent='Write a comment before posting.';return;}
+  C.push([w,t]);$('body').value='';p.className='ok';p.textContent='Comment posted.';upd();
+};
+upd();
+</script>
+</body>
+</html>

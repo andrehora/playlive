@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tic tac toe</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#9f1239}</style>
+</head>
+<body>
+<h1>Tic tac toe</h1>
+<p id="turn">X to play</p>
+<div id="board"></div>
+<button id="reset" type="button" class="secondary">New game</button>
+<p id="result" class="ok" hidden></p>
+
+<script>
+const NAMES=['top left','top middle','top right','middle left','centre','middle right','bottom left','bottom middle','bottom right'];
+const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+let cells=Array(9).fill(''),turn='X',over=false;
+function winner(){
+  for(const [a,b,c] of WINS) if(cells[a]&&cells[a]===cells[b]&&cells[b]===cells[c]) return cells[a];
+  return cells.every(Boolean)?'draw':null;
+}
+function upd(){
+  $('board').textContent='';
+  for(let r=0;r<3;r++){
+    const row=document.createElement('div');row.className='row';
+    for(let c=0;c<3;c++){
+      const i=r*3+c,b=document.createElement('button');b.type='button';
+      b.textContent=cells[i]||'·';
+      b.setAttribute('aria-label',NAMES[i]+(cells[i]?', '+cells[i]:', empty'));
+      if(cells[i]||over) b.disabled=true;
+      else b.onclick=()=>{cells[i]=turn;const w=winner();
+        if(w){over=true;$('result').hidden=false;
+          $('result').textContent=w==='draw'?'A draw.':w+' wins!';}
+        else turn=turn==='X'?'O':'X';
+        upd();};
+      row.appendChild(b);
+    }
+    $('board').appendChild(row);
+  }
+  $('turn').textContent=over?'Game over':turn+' to play';
+}
+$('reset').onclick=()=>{cells=Array(9).fill('');turn='X';over=false;$('result').hidden=true;upd();};
+upd();
+</script>
+</body>
+</html>

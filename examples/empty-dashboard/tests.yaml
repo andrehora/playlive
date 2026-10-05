@@ -1,0 +1,17 @@
+test: An empty dashboard says what to do
+steps:
+  - expectText: No widgets yet. Add one to get started.
+
+test: Adding a widget replaces the empty state
+steps:
+  - select: { label: Widget, value: Signup funnel }
+  - click: { role: button, name: Add widget }
+  - expectText: Signup funnel
+  - expectNoText: No widgets yet.
+
+test: Removing the last widget brings the empty state back
+steps:
+  - click: { role: button, name: Add widget }
+  - expectText: Revenue chart
+  - click: { role: button, name: Remove Revenue chart }
+  - expectText: No widgets yet. Add one to get started.

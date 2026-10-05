@@ -13,7 +13,7 @@ export function toast(msg){
   const t = $id('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove('show'), 1800);
 }
-export const STATUS = 'live-test-runner:status:v1';
+export const STATUS = 'live-test-runner:status';
 export let siteStatus = {};
 try { siteStatus = JSON.parse(localStorage.getItem(STATUS) || '{}') || {}; } catch {}
 export function paintTabs(){

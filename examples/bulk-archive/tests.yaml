@@ -1,0 +1,20 @@
+test: Archiving one message moves it out of the inbox
+steps:
+  - check: { label: Standup notes }
+  - click: { role: button, name: Archive selected }
+  - expectText: "Archived 1 message."
+  - expectText: "Inbox: 2 · Archived: 1"
+  - expectNoText: Standup notes
+
+test: Select all archives everything
+steps:
+  - check: { label: Select all }
+  - click: { role: button, name: Archive selected }
+  - expectText: "Archived 3 messages."
+  - expectText: "Inbox: 0 · Archived: 3"
+
+test: Archiving nothing explains what to do
+steps:
+  - click: { role: button, name: Archive selected }
+  - expectText: Select at least one message to archive.
+  - expectText: "Inbox: 3 · Archived: 0"

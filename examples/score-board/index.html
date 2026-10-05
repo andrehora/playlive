@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Score board</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#9f1239}</style>
+</head>
+<body>
+<h1>Scoreboard</h1>
+<p id="lead">Nobody has scored yet.</p>
+<ul id="list" class="clean"></ul>
+<label for="pts">Points per score</label>
+<select id="pts"><option>1</option><option selected>2</option><option>3</option></select>
+<button id="reset" type="button" class="secondary">Reset scores</button>
+
+<script>
+const teams=[['Harbour',0],['Foxes',0],['Tide',0]];
+function upd(){
+  $('list').textContent='';
+  teams.forEach(t=>{
+    const li=document.createElement('li');
+    const s=document.createElement('span');s.textContent=t[0]+' · '+t[1];
+    const b=document.createElement('button');b.type='button';b.textContent='Score';
+    b.setAttribute('aria-label','Score for '+t[0]);
+    b.onclick=()=>{t[1]+=Number($('pts').value);upd();};
+    li.append(s,b);$('list').appendChild(li);
+  });
+  const top=Math.max(...teams.map(t=>t[1]));
+  if(!top){$('lead').textContent='Nobody has scored yet.';return;}
+  const best=teams.filter(t=>t[1]===top).map(t=>t[0]);
+  $('lead').textContent=best.length>1?'Tied at '+top+': '+best.join(' and '):'Leading: '+best[0]+' with '+top;
+}
+$('reset').onclick=()=>{teams.forEach(t=>{t[1]=0;});upd();};
+upd();
+</script>
+</body>
+</html>

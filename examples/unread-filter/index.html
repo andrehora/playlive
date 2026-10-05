@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unread filter</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4338ca}</style>
+</head>
+<body>
+<h1>Mail</h1>
+<label for="show">Show</label>
+<select id="show"><option>All</option><option>Unread</option><option>Starred</option></select>
+<p id="count"></p>
+<ul id="list" class="clean"></ul>
+
+<script>
+const M=[{s:'Invoice #4821',read:false,star:true},{s:'Standup notes',read:true,star:false},
+         {s:'Welcome aboard',read:false,star:false}];
+function upd(){
+  const f=$('show').value;
+  const rows=M.filter(m=>f==='All'||(f==='Unread'?!m.read:m.star));
+  $('count').textContent=rows.length+(rows.length===1?' message':' messages')+' · '+M.filter(m=>!m.read).length+' unread';
+  $('list').textContent='';
+  if(!rows.length){const li=document.createElement('li');li.textContent='Nothing here.';$('list').appendChild(li);return;}
+  rows.forEach(m=>{
+    const li=document.createElement('li');
+    const s=document.createElement('span');
+    s.textContent=m.s+' · '+(m.read?'read':'unread')+(m.star?' · starred':'');
+    const st=document.createElement('button');st.type='button';st.textContent=m.star?'Unstar':'Star';
+    st.setAttribute('aria-label',(m.star?'Unstar ':'Star ')+m.s);
+    st.onclick=()=>{m.star=!m.star;upd();};
+    const rd=document.createElement('button');rd.type='button';rd.className='secondary';
+    rd.textContent=m.read?'Mark unread':'Mark read';
+    rd.setAttribute('aria-label',(m.read?'Mark unread ':'Mark read ')+m.s);
+    rd.onclick=()=>{m.read=!m.read;upd();};
+    li.append(s,st,rd);$('list').appendChild(li);
+  });
+}
+$('show').onchange=upd;upd();
+</script>
+</body>
+</html>

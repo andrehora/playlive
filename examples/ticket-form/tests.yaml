@@ -1,0 +1,30 @@
+test: Opening a ticket gives it a number
+steps:
+  - fill: { label: Subject, value: Card declined }
+  - fill: { label: What happened, value: My card was declined at checkout twice. }
+  - click: { role: button, name: Open ticket }
+  - expectText: "Ticket #4101 opened · Billing · normal"
+
+test: Urgent tickets promise a faster answer
+steps:
+  - fill: { label: Subject, value: Site is down }
+  - select: { label: Area, value: Something broken }
+  - select: { label: Priority, value: Urgent }
+  - fill: { label: What happened, value: Nothing loads on the dashboard at all. }
+  - check: { label: Email me a copy }
+  - click: { role: button, name: Open ticket }
+  - expectText: we answer urgent tickets within an hour
+  - expectText: a copy is on its way to your inbox
+
+test: A ticket with no subject is refused
+steps:
+  - fill: { label: What happened, value: Something is broken here. }
+  - click: { role: button, name: Open ticket }
+  - expectText: Give the ticket a subject.
+
+test: A thin description is refused
+steps:
+  - fill: { label: Subject, value: Help }
+  - fill: { label: What happened, value: broken }
+  - click: { role: button, name: Open ticket }
+  - expectText: Describe what happened in at least 10 characters.

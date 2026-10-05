@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Memory match</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#9f1239}</style>
+</head>
+<body>
+<h1>Memory</h1>
+<p id="state">0 pairs found · 0 turns</p>
+<div id="board"></div>
+<button id="reset" type="button" class="secondary">Start again</button>
+<p id="won" class="ok" hidden>All pairs found!</p>
+
+<script>
+const CARDS=['Moon','Star','Moon','Star','Sun','Sun'];
+let found=[],up=[],turns=0;
+function upd(){
+  $('board').textContent='';
+  const row=document.createElement('div');row.className='row';
+  CARDS.forEach((name,i)=>{
+    const b=document.createElement('button');b.type='button';
+    const shown=found.includes(i)||up.includes(i);
+    b.textContent=shown?name:'?';
+    b.setAttribute('aria-label','Card '+(i+1)+(shown?', '+name:', face down'));
+    if(shown) b.disabled=true;
+    else b.onclick=()=>{
+      up.push(i);
+      if(up.length===2){
+        turns++;
+        if(CARDS[up[0]]===CARDS[up[1]]) found=found.concat(up);
+        up=[];
+      }
+      upd();
+    };
+    row.appendChild(b);
+  });
+  $('board').appendChild(row);
+  $('state').textContent=(found.length/2)+' pairs found · '+turns+(turns===1?' turn':' turns');
+  $('won').hidden=found.length<CARDS.length;
+}
+$('reset').onclick=()=>{found=[];up=[];turns=0;$('won').hidden=true;upd();};
+upd();
+</script>
+</body>
+</html>

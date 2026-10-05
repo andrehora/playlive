@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Symptom form</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4d7c0f}</style>
+</head>
+<body>
+<h1>How are you feeling?</h1>
+<fieldset><legend>Symptoms</legend>
+<label class="inline"><input type="checkbox" id="head"> Headache</label>
+<label class="inline"><input type="checkbox" id="tired"> Tiredness</label>
+<label class="inline"><input type="checkbox" id="cough"> Cough</label>
+</fieldset>
+<label for="sev">Severity</label>
+<select id="sev"><option>Mild</option><option>Moderate</option><option>Severe</option></select>
+<label for="since">Since</label>
+<input id="since" type="text" placeholder="e.g. 2 days">
+<button id="send" type="button">Submit</button>
+<p id="msg" hidden></p>
+
+<script>
+const S=[['head','Headache'],['tired','Tiredness'],['cough','Cough']];
+$('send').onclick=()=>{
+  const on=S.filter(([id])=>$(id).checked).map(([,n])=>n),p=$('msg');p.hidden=false;
+  if(!on.length){p.className='';p.textContent='Choose at least one symptom.';return;}
+  if(!$('since').value.trim()){p.className='';p.textContent='Say how long you have felt this way.';return;}
+  p.className='ok';
+  p.textContent='Logged '+on.join(' and ')+' · '+$('sev').value.toLowerCase()+' · for '+$('since').value.trim()+'.';
+  if($('sev').value==='Severe') p.textContent+=' Please contact your doctor.';
+};
+</script>
+</body>
+</html>

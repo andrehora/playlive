@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Store locator</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0e7490}</style>
+</head>
+<body>
+<h1>Find a store</h1>
+<label for="city">City</label>
+<select id="city"><option>Lisbon</option><option>Porto</option><option>Faro</option></select>
+<label for="dist">Within</label>
+<select id="dist"><option>2 km</option><option>10 km</option></select>
+<label class="inline"><input type="checkbox" id="open"> Open now</label>
+<p id="count"></p>
+<ul id="list" class="clean"></ul>
+
+<script>
+const S=[['Baixa','Lisbon',0.8,true],['Alvalade','Lisbon',6.2,false],
+         ['Boavista','Porto',1.4,true],['Foz','Porto',7.5,true]];
+function upd(){
+  const km=Number($('dist').value.split(' ')[0]);
+  const rows=S.filter(([,c,d,o])=>c===$('city').value&&d<=km&&(!$('open').checked||o));
+  $('count').textContent=rows.length+(rows.length===1?' store':' stores')+' within '+$('dist').value+' of '+$('city').value;
+  $('list').textContent='';
+  if(!rows.length){const li=document.createElement('li');li.textContent='No stores here yet.';$('list').appendChild(li);return;}
+  rows.forEach(([n,,d,o])=>{const li=document.createElement('li');
+    li.textContent=n+' · '+d.toFixed(1)+' km · '+(o?'open now':'closed');$('list').appendChild(li);});
+}
+$('city').onchange=upd;$('dist').onchange=upd;$('open').onchange=upd;upd();
+</script>
+</body>
+</html>

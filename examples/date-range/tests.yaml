@@ -1,0 +1,17 @@
+test: The last seven days are the default
+steps:
+  - expectText: "Visits: 1,240"
+  - expectText: "Signups: 62"
+
+test: A wider range shows more
+steps:
+  - select: { label: Date range, value: Last 30 days }
+  - expectText: "Visits: 5,310"
+  - select: { label: Date range, value: This year }
+  - expectText: "Visits: 62,900"
+  - expectText: "Signups: 2,480"
+
+test: Excluding bots lowers the visits
+steps:
+  - check: { label: Exclude bots }
+  - expectText: "Visits: 1,116"

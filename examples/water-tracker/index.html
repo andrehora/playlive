@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Water tracker</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4d7c0f}</style>
+</head>
+<body>
+<h1>Water today</h1>
+<label for="goal">Daily goal</label>
+<select id="goal"><option>6 glasses</option><option selected>8 glasses</option></select>
+<p id="count">0 of 8 glasses</p>
+<button id="add" type="button">Add a glass</button>
+<button id="undo" type="button" class="secondary">Undo</button>
+<p id="hit" class="ok" hidden>Goal reached. Nice work.</p>
+
+<script>
+let n=0;
+function goal(){return Number($('goal').value.split(' ')[0]);}
+function upd(){
+  $('count').textContent=n+' of '+goal()+' glasses';
+  $('hit').hidden=n<goal();
+  $('undo').disabled=n===0;
+}
+$('add').onclick=()=>{n++;upd();};
+$('undo').onclick=()=>{if(n>0)n--;upd();};
+$('goal').onchange=upd;upd();
+</script>
+</body>
+</html>

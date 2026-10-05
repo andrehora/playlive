@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lesson progress</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#78350f}</style>
+</head>
+<body>
+<h1>Intro to testing</h1>
+<p id="prog">0 of 3 lessons done · 0%</p>
+<ul id="list" class="clean"></ul>
+<p id="done" class="ok" hidden>Course complete. Your certificate is ready.</p>
+
+<script>
+const L=['What a test is','Finding elements','Waiting well'];const done=new Set();
+function upd(){
+  const n=done.size;
+  $('prog').textContent=n+' of '+L.length+' lessons done · '+Math.round(n/L.length*100)+'%';
+  $('done').hidden=n<L.length;
+  $('list').textContent='';
+  L.forEach((t,i)=>{
+    const li=document.createElement('li');
+    const s=document.createElement('span');s.textContent=t+' · '+(done.has(i)?'done':'not started');
+    const b=document.createElement('button');b.type='button';
+    const on=done.has(i);b.textContent=on?'Undo':'Mark done';
+    b.setAttribute('aria-label',(on?'Undo ':'Mark done ')+t);
+    if(on) b.className='secondary';
+    b.onclick=()=>{on?done.delete(i):done.add(i);upd();};
+    li.append(s,b);$('list').appendChild(li);
+  });
+}
+upd();
+</script>
+</body>
+</html>

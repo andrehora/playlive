@@ -1,0 +1,18 @@
+test: Following someone raises the count
+steps:
+  - expectText: Following 1 person
+  - click: { role: button, name: Follow Bruno Lima }
+  - expectText: Following 2 people
+  - expectVisible: { role: button, name: Unfollow Bruno Lima }
+
+test: Unfollowing lowers it again
+steps:
+  - click: { role: button, name: Unfollow Ana Reis }
+  - expectText: Following 0 people
+  - expectVisible: { role: button, name: Follow Ana Reis }
+
+test: Following everyone counts them all
+steps:
+  - click: { role: button, name: Follow Bruno Lima }
+  - click: { role: button, name: Follow Chen Wei }
+  - expectText: Following 3 people

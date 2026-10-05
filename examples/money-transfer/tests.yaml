@@ -1,0 +1,20 @@
+test: A transfer moves money between accounts
+steps:
+  - fill: { label: Amount, value: "50" }
+  - click: { role: button, name: Send }
+  - expectText: Sent $50.00 from Checking to Savings.
+  - expectText: "Checking: $70.00 · Savings: $350.00"
+
+test: Sending more than the balance is refused
+steps:
+  - fill: { label: Amount, value: "500" }
+  - click: { role: button, name: Send }
+  - expectText: Not enough money in Checking.
+  - expectText: "Checking: $120.00"
+
+test: The same account twice is refused
+steps:
+  - select: { label: To, value: Checking }
+  - fill: { label: Amount, value: "10" }
+  - click: { role: button, name: Send }
+  - expectText: Choose two different accounts.

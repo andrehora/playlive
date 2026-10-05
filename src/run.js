@@ -1,6 +1,6 @@
 import { ACTIONS } from './actions.js';
 import { harvest } from './catalog.js';
-import { $id, KEY, errorEl, recBar, recordBtn, resetBtn, resultsEl, runBtn, specEl, speed, speedMode, stopBtn, summaryEl, tabsEl } from './dom.js';
+import { $id, KEY, errorEl, recBar, recordBtn, reloadBtn, resetBtn, resultsEl, runBtn, specEl, speed, speedMode, stopBtn, summaryEl, tabsEl } from './dom.js';
 import { lineForStep, setCurrentLine, setFileStatus } from './editor.js';
 import { describeStep, followInResults } from './find.js';
 import { renderHtmlView } from './htmlview.js';
@@ -154,7 +154,7 @@ export function syncUI(){
   recordBtn.classList.toggle('recording', recording);
   recBar.hidden = !recording;
   specEl.readOnly = recording;
-  resetBtn.disabled = busy;
+  resetBtn.disabled = reloadBtn.disabled = busy;
   [siteBtn, $id('prevSite'), $id('nextSite'), ...tabsEl.querySelectorAll('button')].forEach(b => b.disabled = busy);
   if (busy) closePicker();
   resultsEl.querySelectorAll('.run-one').forEach(b => b.disabled = busy);

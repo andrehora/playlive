@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compose mail</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4338ca}</style>
+</head>
+<body>
+<h1>New message</h1>
+<label for="to">To</label>
+<input id="to" type="text" placeholder="name@example.com">
+<label for="subj">Subject</label>
+<input id="subj" type="text" placeholder="Subject">
+<label for="body">Message</label>
+<textarea id="body" rows="4" placeholder="Write your message"></textarea>
+<label class="inline"><input type="checkbox" id="receipt"> Ask for a read receipt</label>
+<button id="send" type="button">Send</button>
+<button id="draft" type="button" class="secondary">Save draft</button>
+<p id="msg" hidden></p>
+
+<script>
+$('send').onclick=()=>{
+  const to=$('to').value.trim(),s=$('subj').value.trim(),p=$('msg');p.hidden=false;p.className='';
+  if(!to){p.textContent='Say who the message is for.';return;}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)){p.textContent=to+' is not an email address.';return;}
+  if(!s){p.textContent='Add a subject, or it will look like spam.';return;}
+  p.className='ok';
+  p.textContent='Sent to '+to+($('receipt').checked?' · you will be told when it is read':'');
+};
+$('draft').onclick=()=>{const p=$('msg');p.hidden=false;p.className='';
+  p.textContent='Draft saved'+($('subj').value.trim()?' as “'+$('subj').value.trim()+'”':' with no subject')+'.';};
+</script>
+</body>
+</html>

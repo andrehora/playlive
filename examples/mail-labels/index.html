@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mail labels</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#4338ca}</style>
+</head>
+<body>
+<h1>Labels</h1>
+<label for="msg">Message</label>
+<select id="msg"><option>Invoice #4821</option><option>Standup notes</option><option>Welcome aboard</option></select>
+<label for="lab">Label</label>
+<select id="lab"><option>Billing</option><option>Team</option><option>Personal</option></select>
+<button id="apply" type="button">Apply label</button>
+<p id="said" class="ok" hidden></p>
+<label for="show">Show</label>
+<select id="show"><option>All</option><option>Billing</option><option>Team</option><option>Personal</option></select>
+<ul id="list" class="clean"></ul>
+
+<script>
+const labels={'Invoice #4821':'','Standup notes':'','Welcome aboard':''};
+function upd(){
+  const f=$('show').value;$('list').textContent='';
+  const rows=Object.keys(labels).filter(s=>f==='All'||labels[s]===f);
+  if(!rows.length){const li=document.createElement('li');li.textContent='Nothing labelled '+f+'.';$('list').appendChild(li);return;}
+  rows.forEach(s=>{const li=document.createElement('li');
+    li.textContent=s+' · '+(labels[s]||'no label');$('list').appendChild(li);});
+}
+$('apply').onclick=()=>{labels[$('msg').value]=$('lab').value;
+  $('said').hidden=false;$('said').textContent=$('msg').value+' labelled '+$('lab').value+'.';upd();};
+$('show').onchange=upd;upd();
+</script>
+</body>
+</html>

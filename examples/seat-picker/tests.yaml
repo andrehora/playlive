@@ -1,0 +1,16 @@
+test: No seat is chosen to start with
+steps:
+  - expectText: No seat chosen.
+
+test: Picking a free seat shows its fee
+steps:
+  - click: { role: button, name: Seat 1A }
+  - expectText: "Seat 1A · Economy"
+  - expectText: "Seat fee: $12.00"
+
+test: Extra legroom costs more
+steps:
+  - click: { role: button, name: Seat 2A }
+  - select: { label: Cabin, value: Extra legroom }
+  - expectText: "Seat 2A · Extra legroom"
+  - expectText: "Seat fee: $35.00"

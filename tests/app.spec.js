@@ -1,14 +1,17 @@
 // End-to-end tests of the app itself: picker, editor, running, stopping,
 // step by step, time travel, the HTML view, recorder, export, reset, persistence, layout.
 import { test, expect } from '@playwright/test';
-import { describeFailures, openApp, readResults, runAll, selectSite, setSpeed, siteIds } from './app.mjs';
+import { describeFailures, openApp, readResults, runAll, selectSite, setSpeed, siteIds, siteName } from './app.mjs';
 
 const ids = await siteIds();
+// Home is whatever the manifest lists first, so reordering the examples cannot stale these tests.
+const HOME = ids[0];
+const homeName = await siteName(HOME);
 
 test.describe('Boot', () => {
   test('loads with the first example, its tests and its site', async ({ page }) => {
     const { errors } = await openApp(page);
-    await expect(page.locator('#siteName')).toHaveText('Contact form');
+    await expect(page.locator('#siteName')).toHaveText(homeName);
     await expect(page.locator('#siteCount')).toHaveText(`1 of ${ids.length}`);
     expect(await page.inputValue('#spec')).toContain('test:');
     await expect(page.locator('#error')).toHaveText('');
@@ -73,6 +76,112 @@ test.describe('Site picker', () => {
   });
 });
 
+test.describe('Shareable links', () => {
+  test('a link with an example in the hash opens that example', async ({ page }) => {
+    const { errors } = await openApp(page, { hash: '#coupon-code' });
+    await expect(page.locator('#siteName')).toHaveText('Coupon code');
+    await expect(page.locator('#tabs .tab[data-site="coupon-code"]')).toHaveAttribute('aria-pressed', 'true');
+    expect(await page.inputValue('#spec')).toContain('test:');
+    await expect(page.frameLocator('#app').locator('h1')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('an example that does not exist falls back to the first one', async ({ page }) => {
+    const { errors } = await openApp(page, { hash: '#no-such-example' });
+    await expect(page.locator('#siteName')).toHaveText(homeName);
+    expect(new URL(page.url()).hash).toBe('');
+    expect(errors).toEqual([]);
+  });
+
+  test('home and the first example are the same place', async ({ page }) => {
+    // "/" shows the first example and stays "/"; "/#<first example>" is the same
+    // place spelled out, and settles on the shorter spelling.
+    const { errors } = await openApp(page);
+    await expect(page.locator('#siteName')).toHaveText(homeName);
+    expect(new URL(page.url()).pathname).toBe('/');
+    expect(new URL(page.url()).hash).toBe('');
+
+    await openApp(page, { hash: '#' + HOME });
+    await expect(page.locator('#siteName')).toHaveText(homeName);
+    expect(new URL(page.url()).pathname).toBe('/');
+    expect(new URL(page.url()).hash).toBe('');
+    await expect(page.frameLocator('#app').locator('h1')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('walking back to the first example clears the hash again', async ({ page }) => {
+    await openApp(page, { site: 'newsletter-signup' });
+    expect(new URL(page.url()).hash).toBe('#newsletter-signup');
+    await selectSite(page, HOME);
+    expect(new URL(page.url()).hash).toBe('');
+  });
+
+  test('opening the page again starts at the first example, not the last one visited', async ({ page }) => {
+    await openApp(page, { site: 'coupon-code' });
+    await openApp(page);
+    await expect(page.locator('#siteName')).toHaveText(homeName);
+    expect(new URL(page.url()).hash).toBe('');
+  });
+
+  test('the name and icon link home', async ({ page }) => {
+    await openApp(page, { hash: '#coupon-code' });
+    await page.click('.brand');
+    await expect(page.locator('#siteName')).toHaveText(homeName);
+    expect(new URL(page.url()).pathname).toBe('/');
+    expect(new URL(page.url()).hash).toBe('');
+  });
+
+  test('the URL drops index.html, so a link reads ".../#newsletter-signup"', async ({ page }) => {
+    const { errors } = await openApp(page);
+    await selectSite(page, 'newsletter-signup');
+    const url = new URL(page.url());
+    expect(url.pathname).toBe('/');
+    expect(url.hash).toBe('#newsletter-signup');
+    expect(await page.evaluate(() => window.playlive.share.url('newsletter-signup')))
+      .toBe(`${url.origin}/#newsletter-signup`);
+    // The page is still the page: relative paths resolve from the same folder.
+    await expect(page.frameLocator('#app').locator('h1')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('choosing an example writes it to the URL without filling the back button', async ({ page }) => {
+    await openApp(page);
+    expect(new URL(page.url()).hash).toBe('');
+    await selectSite(page, 'coupon-code');
+    expect(new URL(page.url()).hash).toBe('#coupon-code');
+
+  });
+
+  test('walking the examples replaces the URL rather than pushing it', async ({ page }) => {
+    await openApp(page);
+    // Stepping through 50 examples would otherwise fill the back button with
+    // steps nobody took on purpose.
+    await page.evaluate(() => {
+      window.__pushed = [];
+      const push = history.pushState;
+      history.pushState = function(...args){ window.__pushed.push(args[2]); return push.apply(this, args); };
+    });
+    await page.click('#nextSite');
+    await expect(page.locator('#siteName')).not.toHaveText(homeName);
+    expect(new URL(page.url()).hash).not.toBe('#' + HOME);
+    expect(await page.evaluate(() => window.__pushed)).toEqual([]);
+  });
+
+  test('editing the hash switches the example, and Share copies the link', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await openApp(page);
+    await page.evaluate(() => { location.hash = '#coupon-code'; });
+    await expect(page.locator('#siteName')).toHaveText('Coupon code');
+    await expect(page.locator('#spec')).not.toHaveValue('');
+
+    await page.click('#share');
+    await expect(page.locator('#toast')).toHaveText('Link to Coupon code copied');
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copied).toBe(page.url());
+    expect(copied.endsWith('/#coupon-code')).toBe(true);
+  });
+});
+
 test.describe('Running', () => {
   test('a passing run marks every step and reports a green summary', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
@@ -86,7 +195,7 @@ test.describe('Running', () => {
     // Each step shows how long it took.
     await expect(page.locator('#results .steps li.passed .ms').first()).toHaveText(/\d+ ms/);
     // The picker remembers the result for this site.
-    expect(await page.evaluate(() => localStorage.getItem('live-test-runner:status:v1'))).toContain('contact-form');
+    expect(await page.evaluate(() => localStorage.getItem('live-test-runner:status'))).toContain('contact-form');
   });
 
   test('a step carries its value inside the target', async ({ page }) => {
@@ -417,7 +526,7 @@ test.describe('Export', () => {
   // Selenium used to be the third tab, so a saved tab index can point past the end.
   test('a saved tab index from the removed third tab still opens', async ({ page }) => {
     await page.addInitScript(() => {
-      try { localStorage.setItem('live-test-runner:layout:v1', JSON.stringify({ exportTab: 2 })); } catch {}
+      try { localStorage.setItem('live-test-runner:layout', JSON.stringify({ exportTab: 2 })); } catch {}
     });
     const { errors } = await openApp(page);
     await page.click('#export');
@@ -445,7 +554,47 @@ test.describe('Reset', () => {
 
     await page.click('#reset');
     expect(await page.inputValue('#spec')).toBe(example);
-    await expect(page.locator('#toast')).toContainText('reset');
+    await expect(page.locator('#toast')).toContainText('Reset');
+  });
+
+  test('clears every example, not only the one showing', async ({ page }) => {
+    await openApp(page, { site: 'login' });
+    const loginExample = await page.inputValue('#spec');
+    await page.fill('#spec', 'test: Mine\nsteps:\n  - expectText: Log in\n');
+
+    await selectSite(page, 'contact-form');
+    const formExample = await page.inputValue('#spec');
+    await page.fill('#spec', 'test: Also mine\nsteps:\n  - expectText: Contact\n');
+    await setSpeed(page, 'fast');
+    await runAll(page);
+    // A run leaves a status dot and a history behind for this site
+    await expect(page.locator('#tabs .tab[data-site="contact-form"]')).toHaveAttribute('data-status', /pass|fail/);
+
+    await page.click('#reset');
+    expect(await page.inputValue('#spec')).toBe(formExample);
+    await expect(page.locator('#tabs .tab[data-site="contact-form"]')).not.toHaveAttribute('data-status', /.*/);
+    // Nothing of ours is left in storage, bar the layout, which is about this browser
+    expect(await page.evaluate(() => Object.keys(localStorage)
+      .filter(k => k.startsWith('live-test-runner') && k !== 'live-test-runner:layout'))).toEqual([]);
+    // and the other example's edits are gone too
+    await selectSite(page, 'login');
+    expect(await page.inputValue('#spec')).toBe(loginExample);
+  });
+});
+
+test.describe('Reload', () => {
+  test('starts the page over and keeps the tests', async ({ page }) => {
+    await openApp(page, { site: 'contact-form' });
+    const frame = page.frameLocator('#app');
+    await frame.locator('#openBtn').click();
+    await frame.locator('#nameInput').fill('Ana');
+    await page.fill('#spec', 'test: Mine\nsteps:\n  - expectText: Contact\n');
+
+    await page.click('#reload');
+    // The page starts over: the form is closed again and what was typed is gone.
+    await expect(frame.locator('#openBtn')).toBeVisible();
+    await expect(frame.locator('#nameInput')).toHaveValue('');
+    expect(await page.inputValue('#spec')).toContain('test: Mine');
   });
 });
 
@@ -457,19 +606,19 @@ test.describe('Persistence', () => {
     await page.click('.seg [data-vp="tablet"]');
     // The editor saves shortly after the last keystroke.
     await page.waitForFunction(() =>
-      (localStorage.getItem('live-test-runner:v4') || '').includes('test: Kept'));
+      (localStorage.getItem('live-test-runner') || '').includes('test: Kept'));
 
     await page.reload();
     await page.waitForFunction(() => typeof window.playlive?.selectSite === 'function');
     await expect(page.locator('#siteName')).toHaveText('Coupon code');
     expect(await page.inputValue('#spec')).toContain('test: Kept');
     await expect(page.locator('.seg [data-vp="tablet"]')).toHaveAttribute('aria-pressed', 'true');
-    expect(await page.evaluate(() => localStorage.getItem('live-test-runner:v4'))).toContain('test: Kept');
+    expect(await page.evaluate(() => localStorage.getItem('live-test-runner'))).toContain('test: Kept');
   });
 
   test('a broken layout value does not stop the app from loading', async ({ page }) => {
     await page.addInitScript(() => {
-      try { localStorage.setItem('live-test-runner:layout:v1', '{not json'); } catch {}
+      try { localStorage.setItem('live-test-runner:layout', '{not json'); } catch {}
     });
     const { errors } = await openApp(page);
     await expect(page.locator('#results .test').first()).toBeVisible();

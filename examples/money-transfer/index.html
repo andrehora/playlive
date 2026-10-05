@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Money transfer</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#a16207}</style>
+</head>
+<body>
+<h1>Transfer money</h1>
+<p id="bal"></p>
+<label for="from">From</label>
+<select id="from"><option>Checking</option><option>Savings</option></select>
+<label for="to">To</label>
+<select id="to"><option>Savings</option><option>Checking</option></select>
+<label for="amt">Amount</label>
+<input id="amt" type="text" placeholder="0.00">
+<button id="send" type="button">Send</button>
+<p id="msg" hidden></p>
+
+<script>
+const acc={Checking:120,Savings:300};
+function upd(){$('bal').textContent='Checking: $'+acc.Checking.toFixed(2)+' · Savings: $'+acc.Savings.toFixed(2);}
+$('send').onclick=()=>{
+  const f=$('from').value,t=$('to').value,n=Number($('amt').value),p=$('msg');
+  p.hidden=false;p.className='';
+  if(f===t){p.textContent='Choose two different accounts.';return;}
+  if(!$('amt').value.trim()||isNaN(n)||n<=0){p.textContent='Enter an amount greater than zero.';return;}
+  if(n>acc[f]){p.textContent='Not enough money in '+f+'.';return;}
+  acc[f]-=n;acc[t]+=n;upd();
+  p.className='ok';p.textContent='Sent $'+n.toFixed(2)+' from '+f+' to '+t+'.';
+};
+upd();
+</script>
+</body>
+</html>

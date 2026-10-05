@@ -1,0 +1,23 @@
+test: One flag is on to start with
+steps:
+  - expectText: "On: Dark mode"
+
+test: Turning flags on lists them
+steps:
+  - check: { label: Beta search }
+  - check: { label: Usage metrics }
+  - expectText: "On: Dark mode, Beta search, Usage metrics"
+  - click: { role: button, name: Save flags }
+  - expectText: Saved 3 flags to Staging.
+
+test: Turning everything off says so
+steps:
+  - uncheck: { label: Dark mode }
+  - expectText: Everything is off.
+
+test: Beta search is blocked in production
+steps:
+  - check: { label: Beta search }
+  - select: { label: Environment, value: Production }
+  - click: { role: button, name: Save flags }
+  - expectText: Beta search cannot go to Production yet.

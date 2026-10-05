@@ -1,0 +1,22 @@
+test: Relevance is the order the shop chose
+steps:
+  - expectText: "4 results · sorted by relevance"
+  - expectText: "1. Studio Pro · $249 · 4.8"
+
+test: Cheapest first puts the buds on top
+steps:
+  - select: { label: Sort by, value: "Price: low to high" }
+  - expectText: "1. Daily Buds · $59"
+  - expectText: "4. Studio Pro · $249"
+
+test: Sorting by rating leads with the best
+steps:
+  - select: { label: Sort by, value: Rating }
+  - expectText: "1. Studio Pro · $249 · 4.8"
+  - expectText: "4. Desk Set · $129 · 3.9"
+
+test: In stock only drops what cannot ship
+steps:
+  - check: { label: In stock only }
+  - expectText: 3 results
+  - expectNoText: out of stock

@@ -1,0 +1,30 @@
+test: Every card starts face down
+steps:
+  - expectText: "0 pairs found · 0 turns"
+  - expectVisible: { role: button, name: "Card 1, face down" }
+
+test: A matching pair stays face up
+steps:
+  - click: { role: button, name: "Card 1, face down" }
+  - click: { role: button, name: "Card 3, face down" }
+  - expectText: "1 pairs found · 1 turn"
+  - expectVisible: { role: button, name: "Card 1, Moon" }
+  - expectVisible: { role: button, name: "Card 3, Moon" }
+
+test: A wrong pair turns back over
+steps:
+  - click: { role: button, name: "Card 1, face down" }
+  - click: { role: button, name: "Card 2, face down" }
+  - expectText: "0 pairs found · 1 turn"
+  - expectVisible: { role: button, name: "Card 1, face down" }
+
+test: Finding every pair wins the game
+steps:
+  - click: { role: button, name: "Card 1, face down" }
+  - click: { role: button, name: "Card 3, face down" }
+  - click: { role: button, name: "Card 2, face down" }
+  - click: { role: button, name: "Card 4, face down" }
+  - click: { role: button, name: "Card 5, face down" }
+  - click: { role: button, name: "Card 6, face down" }
+  - expectText: "3 pairs found · 3 turns"
+  - expectText: All pairs found!

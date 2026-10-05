@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Checklist template</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#7c3aed}</style>
+</head>
+<body>
+<h1>Start a checklist</h1>
+<label for="tpl">Template</label>
+<select id="tpl"><option>New laptop</option><option>Trip packing</option></select>
+<label class="inline"><input type="checkbox" id="extra"> Add the optional steps</label>
+<button id="start" type="button">Use this template</button>
+<p id="state">No checklist yet.</p>
+<ul id="list" class="clean"></ul>
+<p id="done" class="ok" hidden>Everything is ticked off.</p>
+
+<script>
+const T={'New laptop':[['Sign in',false],['Install the tools',false],['Set the wallpaper',true]],
+         'Trip packing':[['Passport',false],['Chargers',false],['Snacks',true]]};
+let items=[];
+function upd(){
+  $('state').textContent=items.length
+    ? items.filter(i=>i.done).length+' of '+items.length+' done · '+$('tpl').value
+    : 'No checklist yet.';
+  $('done').hidden=!items.length||items.some(i=>!i.done);
+  $('list').textContent='';
+  items.forEach((it,k)=>{
+    const li=document.createElement('li');
+    const lab=document.createElement('label');lab.className='inline';lab.htmlFor='i'+k;
+    const cb=document.createElement('input');cb.type='checkbox';cb.id='i'+k;cb.checked=it.done;
+    cb.onchange=()=>{it.done=cb.checked;upd();};
+    lab.append(cb,document.createTextNode(' '+it.name));
+    li.appendChild(lab);$('list').appendChild(li);
+  });
+}
+$('start').onclick=()=>{
+  items=T[$('tpl').value].filter(([,opt])=>$('extra').checked||!opt).map(([name])=>({name,done:false}));
+  upd();
+};
+upd();
+</script>
+</body>
+</html>

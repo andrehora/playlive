@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Like button</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#be185d}</style>
+</head>
+<body>
+<h1>Morning light</h1>
+<p class="muted">Posted by Ana Reis</p>
+<div class="card">
+<p>Caught the sunrise over the river today.</p>
+<button id="like" type="button">Like</button>
+<button id="save" type="button" class="secondary">Save</button>
+<p id="likes">12 likes</p>
+<p id="saved" hidden>Saved to your collection.</p>
+</div>
+
+<script>
+let n=12,liked=false,saved=false;
+function upd(){
+  $('like').textContent=liked?'Unlike':'Like';
+  $('like').setAttribute('aria-pressed',String(liked));
+  $('likes').textContent=n+(n===1?' like':' likes')+(liked?' · you liked this':'');
+  $('saved').hidden=!saved;
+}
+$('like').onclick=()=>{liked=!liked;n+=liked?1:-1;upd();};
+$('save').onclick=()=>{saved=!saved;$('save').textContent=saved?'Unsave':'Save';upd();};
+upd();
+</script>
+</body>
+</html>

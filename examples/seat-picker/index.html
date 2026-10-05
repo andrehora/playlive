@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Seat picker</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0e7490}</style>
+</head>
+<body>
+<h1>Choose a seat</h1>
+<p class="muted">Flight TP 1234 · Lisbon to Berlin</p>
+<label for="cabin">Cabin</label>
+<select id="cabin"><option>Economy</option><option>Extra legroom</option></select>
+<div id="seats"></div>
+<p id="chosen">No seat chosen.</p>
+<p id="price"></p>
+
+<script>
+const rows=[1,2],cols=['A','B','C'],taken=['1B','2C'];let seat=null;
+function upd(){
+  $('seats').textContent='';
+  rows.forEach(r=>{
+    const div=document.createElement('div');div.className='row';
+    cols.forEach(c=>{
+      const id=r+c,b=document.createElement('button');b.type='button';b.textContent=id;
+      b.setAttribute('aria-label','Seat '+id+(taken.includes(id)?', taken':''));
+      if(taken.includes(id)) b.disabled=true;
+      else b.onclick=()=>{seat=id;upd();};
+      div.appendChild(b);
+    });
+    $('seats').appendChild(div);
+  });
+  const extra=$('cabin').value==='Extra legroom';
+  $('chosen').textContent=seat?'Seat '+seat+' · '+$('cabin').value:'No seat chosen.';
+  $('price').textContent=seat?'Seat fee: $'+(extra?35:12)+'.00':'';
+}
+$('cabin').onchange=upd;upd();
+</script>
+</body>
+</html>

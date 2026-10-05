@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live chat</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#0f766e}</style>
+</head>
+<body>
+<h1>Chat with us</h1>
+<p id="state">Agent Dana is online.</p>
+<ul id="log" class="clean"></ul>
+<label for="msg">Message</label>
+<input id="msg" type="text" placeholder="Type your question">
+<button id="send" type="button">Send</button>
+<button id="end" type="button" class="secondary">End chat</button>
+<p id="note" hidden></p>
+
+<script>
+const REPLY={'hours':'We answer from 9 to 6, Monday to Friday.',
+             'refund':'Refunds land back on your card within five days.',
+             'default':'Thanks — let me look that up for you.'};
+let over=false;
+function add(who,text){const li=document.createElement('li');li.textContent=who+': '+text;$('log').appendChild(li);}
+$('send').onclick=()=>{
+  const t=$('msg').value.trim(),p=$('note');
+  if(over){p.hidden=false;p.className='';p.textContent='The chat has ended. Start a new one to keep talking.';return;}
+  if(!t){p.hidden=false;p.className='';p.textContent='Type a message before sending.';return;}
+  p.hidden=true;add('You',t);$('msg').value='';
+  const key=Object.keys(REPLY).find(k=>k!=='default'&&t.toLowerCase().includes(k))||'default';
+  add('Dana',REPLY[key]);
+};
+$('end').onclick=()=>{over=true;$('state').textContent='Chat ended.';
+  $('note').hidden=false;$('note').className='ok';$('note').textContent='Thanks for chatting. A transcript is in your inbox.';};
+</script>
+</body>
+</html>

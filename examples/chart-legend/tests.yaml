@@ -1,0 +1,25 @@
+test: Every series counts towards the total
+steps:
+  - expectText: "Total of 3 series: 13,500 visits"
+  - expectText: "Search · 7,800"
+
+test: Hiding a series takes it out of the total
+steps:
+  - uncheck: { label: Search }
+  - expectText: "Total of 2 series: 5,700 visits"
+  - expectNoText: "Search · 7,800"
+
+test: Share recomputes against what is showing
+steps:
+  - uncheck: { label: Social }
+  - select: { label: Show as, value: Share }
+  - expectText: "Direct · 35%"
+  - expectText: "Search · 65%"
+
+test: Hiding everything leaves nothing to chart
+steps:
+  - uncheck: { label: Direct }
+  - uncheck: { label: Search }
+  - uncheck: { label: Social }
+  - expectText: Every series is hidden.
+  - expectText: Nothing to total

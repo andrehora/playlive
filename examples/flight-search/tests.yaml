@@ -1,0 +1,26 @@
+test: A search lists the flights
+steps:
+  - fill: { label: Date, value: "2026-04-18" }
+  - click: { role: button, name: Search }
+  - expectText: 3 flights from Lisbon to Berlin on 2026-04-18.
+  - expectText: "LH 9080 · 13:40 · 1 stop · $118"
+
+test: Direct only drops the flight with a stop
+steps:
+  - fill: { label: Date, value: "2026-04-18" }
+  - check: { label: Direct flights only }
+  - click: { role: button, name: Search }
+  - expectText: 2 flights from Lisbon to Berlin
+  - expectNoText: LH 9080
+
+test: The same city twice is refused
+steps:
+  - select: { label: To, value: Lisbon }
+  - fill: { label: Date, value: "2026-04-18" }
+  - click: { role: button, name: Search }
+  - expectText: Pick two different cities.
+
+test: A missing date explains the format
+steps:
+  - click: { role: button, name: Search }
+  - expectText: Enter a date as YYYY-MM-DD.

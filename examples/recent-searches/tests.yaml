@@ -1,0 +1,36 @@
+test: A search is remembered
+steps:
+  - fill: { label: Search, value: wool socks }
+  - click: { role: button, name: Search }
+  - expectText: Results for wool socks · 3 found
+  - expectVisible: { role: button, name: Search again for wool socks }
+  - expectNoText: You have not searched for anything yet.
+
+test: Searching again from the list
+steps:
+  - fill: { label: Search, value: rain jacket }
+  - click: { role: button, name: Search }
+  - fill: { label: Search, value: wool socks }
+  - click: { role: button, name: Search }
+  - click: { role: button, name: Search again for rain jacket }
+  - expectText: Results for rain jacket · 3 found
+
+test: Only the last three are kept
+steps:
+  - fill: { label: Search, value: alpha }
+  - click: { role: button, name: Search }
+  - fill: { label: Search, value: bravo }
+  - click: { role: button, name: Search }
+  - fill: { label: Search, value: charlie }
+  - click: { role: button, name: Search }
+  - fill: { label: Search, value: delta }
+  - click: { role: button, name: Search }
+  - expectVisible: { role: button, name: Search again for delta }
+  - expectNoText: alpha
+
+test: Clearing empties the list
+steps:
+  - fill: { label: Search, value: wool socks }
+  - click: { role: button, name: Search }
+  - click: { role: button, name: Clear recent searches }
+  - expectText: You have not searched for anything yet.

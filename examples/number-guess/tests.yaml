@@ -1,0 +1,29 @@
+test: A low guess is called low
+steps:
+  - fill: { label: Your guess, value: "10" }
+  - click: { role: button, name: Guess }
+  - expectText: 10 is too low.
+  - expectText: "Guesses: 1"
+
+test: A high guess is called high
+steps:
+  - fill: { label: Your guess, value: "40" }
+  - click: { role: button, name: Guess }
+  - expectText: 40 is too high.
+
+test: Narrowing down wins the game
+steps:
+  - fill: { label: Your guess, value: "10" }
+  - click: { role: button, name: Guess }
+  - fill: { label: Your guess, value: "30" }
+  - click: { role: button, name: Guess }
+  - fill: { label: Your guess, value: "23" }
+  - click: { role: button, name: Guess }
+  - expectText: Got it in 3 guesses.
+
+test: A guess off the scale is refused
+steps:
+  - fill: { label: Your guess, value: "99" }
+  - click: { role: button, name: Guess }
+  - expectText: Enter a whole number from 1 to 50.
+  - expectText: "Guesses: 0"

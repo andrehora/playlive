@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flashcards</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#78350f}</style>
+</head>
+<body>
+<h1>Flashcards</h1>
+<p id="pos">Card 1 of 3</p>
+<div class="card"><p id="q"></p><p id="a" hidden></p></div>
+<button id="show" type="button">Show answer</button>
+<button id="next" type="button" class="secondary">Next card</button>
+<label class="inline"><input type="checkbox" id="auto"> Reveal answers automatically</label>
+<p id="score"></p>
+
+<script>
+const C=[['What does expectText do?','It waits for text to appear.'],
+         ['What is a flow?','A reusable list of steps.'],
+         ['What does timeout change?','How long one step waits.']];
+let i=0,seen=new Set();
+function upd(){
+  $('pos').textContent='Card '+(i+1)+' of '+C.length;
+  $('q').textContent=C[i][0];
+  const show=$('auto').checked||seen.has(i);
+  $('a').hidden=!show;$('a').textContent=show?C[i][1]:'';
+  $('show').disabled=show;
+  $('score').textContent=seen.size+' of '+C.length+' answers revealed';
+}
+$('show').onclick=()=>{seen.add(i);upd();};
+$('next').onclick=()=>{i=(i+1)%C.length;upd();};
+$('auto').onchange=upd;upd();
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Empty dashboard</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#5b21b6}</style>
+</head>
+<body>
+<h1>My dashboard</h1>
+<label for="kind">Widget</label>
+<select id="kind"><option>Revenue chart</option><option>Signup funnel</option><option>Error rate</option></select>
+<button id="add" type="button">Add widget</button>
+<p id="empty">No widgets yet. Add one to get started.</p>
+<ul id="list" class="clean"></ul>
+
+<script>
+let widgets=[];
+function upd(){
+  $('empty').hidden=widgets.length>0;
+  $('list').textContent='';
+  widgets.forEach(w=>{
+    const li=document.createElement('li');
+    const s=document.createElement('span');s.textContent=w;
+    const b=document.createElement('button');b.type='button';b.textContent='Remove';
+    b.setAttribute('aria-label','Remove '+w);
+    b.onclick=()=>{widgets=widgets.filter(x=>x!==w);upd();};
+    li.append(s,b);$('list').appendChild(li);
+  });
+}
+$('add').onclick=()=>{const k=$('kind').value;if(!widgets.includes(k))widgets.push(k);upd();};
+upd();
+</script>
+</body>
+</html>
