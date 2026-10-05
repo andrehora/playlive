@@ -283,6 +283,81 @@ test.describe('HTML view', () => {
     expect(errors).toEqual([]);
   });
 
+  test('edits the markup, saves it to the page, and Reload brings the original back', async ({ page }) => {
+    const { errors } = await openApp(page, { site: 'login' });
+    await page.click('.view-seg [data-view="html"]');
+    const markup = await page.inputValue('#htmlEdit');
+    expect(markup).toContain('<button id="loginBtn"');
+    await expect(page.locator('#htmlApply')).toBeDisabled();
+
+    await page.fill('#htmlEdit', markup.replace('>Log in</button>', '>Sign in</button>'));
+    await expect(page.locator('#htmlApply')).toBeEnabled();
+    await page.click('#htmlApply');
+    await expect(page.locator('#htmlApply')).toBeDisabled();
+    await expect(page.frameLocator('#app').locator('#loginBtn')).toHaveText('Sign in');
+    expect(await page.inputValue('#htmlEdit')).toContain('>Sign in</button>');
+
+    // The page was parsed again, so its own script still answers the button.
+    await page.click('.view-seg [data-view="site"]');
+    await page.frameLocator('#app').locator('#loginBtn').click();
+    await expect(page.frameLocator('#app').locator('#err')).toHaveText(/Wrong email or password/);
+
+    await page.click('.view-seg [data-view="html"]');
+    await page.click('#reload');
+    await expect(page.frameLocator('#app').locator('#loginBtn')).toHaveText('Log in');
+    expect(await page.inputValue('#htmlEdit')).toContain('>Log in</button>');
+    expect(errors).toEqual([]);
+  });
+
+  test('saved markup is the page a run starts from, until Reload', async ({ page }) => {
+    await openApp(page, { site: 'login' });
+    await page.click('.view-seg [data-view="html"]');
+    const markup = await page.inputValue('#htmlEdit');
+    await page.fill('#htmlEdit', markup.replace('<p id="err"', '<p id="note">Edited page</p><p id="err"'));
+    await page.click('#htmlApply');
+    await expect(page.frameLocator('#app').locator('#note')).toHaveText('Edited page');
+
+    // Every test starts from a fresh page, and the fresh page is this one.
+    await setSpeed(page, 'fast');
+    const res = await runAll(page);
+    expect(res.state, describeFailures(res)).toBe('ok');
+    await expect(page.frameLocator('#app').locator('#note')).toHaveText('Edited page');
+    expect(await page.inputValue('#htmlEdit')).toContain('Edited page');
+
+    await page.click('#reload');
+    await expect(page.frameLocator('#app').locator('#note')).toHaveCount(0);
+    expect(await page.inputValue('#htmlEdit')).not.toContain('Edited page');
+  });
+
+  test('what Save puts on the page is offered by autocomplete', async ({ page }) => {
+    await openApp(page, { site: 'login' });
+    await page.click('.view-seg [data-view="html"]');
+    const markup = await page.inputValue('#htmlEdit');
+    await page.fill('#htmlEdit', markup.replace('<p id="err"', '<button id="sp" type="button">Sparkle</button><p id="err"'));
+    await page.click('#htmlApply');
+    await expect(page.frameLocator('#app').locator('#sp')).toBeVisible();
+
+    // Saving harvests the page again, so the new button is a target like any other.
+    const items = await page.evaluate(() => {
+      const text = 'test: t\nsteps:\n  - click: { role: button, name: ';
+      return window.playlive.complete.suggest(text, text.length).items.map(i => i.insert);
+    });
+    expect(items).toContain('Sparkle');
+  });
+
+  test('Revert throws the edits away and reads the page again', async ({ page }) => {
+    await openApp(page, { site: 'login' });
+    await page.click('.view-seg [data-view="html"]');
+    const markup = await page.inputValue('#htmlEdit');
+
+    await page.fill('#htmlEdit', markup.replace('>Log in</button>', '>Nonsense</button>'));
+    expect(await page.evaluate(() => window.playlive.html.edited())).toBe(true);
+    await page.click('#htmlRevert');
+    expect(await page.evaluate(() => window.playlive.html.edited())).toBe(false);
+    expect(await page.inputValue('#htmlEdit')).toBe(markup);
+    await expect(page.frameLocator('#app').locator('#loginBtn')).toHaveText('Log in');
+  });
+
   test('remembers the view, and going back shows the site again', async ({ page }) => {
     await openApp(page);
     await page.click('.view-seg [data-view="html"]');

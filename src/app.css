@@ -1,6 +1,6 @@
 :root{
-  --bg:#EEF1F5; --panel:#FFFFFF; --panel-2:#F7F8FA; --ink:#18202E; --muted:#5B6577; --line:#DCE1E8;
-  --run:#2563EB; --on-run:#FFFFFF; --running:#EAB308; --running-ink:#8A6100; --pass:#1F8A55; --fail:#C2412D; --warn:#9A6700; --rec:#D92D20;
+  --bg:#EEF1F5; --panel:#FFF; --panel-2:#F7F8FA; --ink:#18202E; --muted:#5B6577; --line:#DCE1E8;
+  --run:#2563EB; --on-run:#FFF; --running:#EAB308; --running-ink:#8A6100; --pass:#1F8A55; --fail:#C2412D; --warn:#9A6700; --rec:#D92D20;
   --syn-key:#6D28D9; --syn-act:#B45309; --syn-str:#15803D; --syn-var:#BE185D; --syn-com:#8A93A3; --syn-num:#0E7490;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
   --left-w:480px; --editor-h:36vh;
@@ -165,10 +165,10 @@ body.resizing iframe{pointer-events:none}
 .hist i{width:4px;height:12px;border-radius:2px;background:var(--line)}
 .hist i.h-pass{background:var(--pass)} .hist i.h-fail{background:var(--fail)}
 .sdots{display:inline-flex;flex-wrap:wrap;gap:3px;margin-left:8px;vertical-align:1px;max-width:100%}
-.sdots i{width:7px;height:7px;border-radius:50%;background:var(--line);animation:dotIn .18s ease-out}
-.sdots i.run{background:var(--running);animation:dotIn .18s ease-out,pulse 1s ease-in-out .18s infinite}
+.sdots i{width:7px;height:7px;border-radius:50%;background:var(--line);animation:dot-in .18s ease-out}
+.sdots i.run{background:var(--running);animation:dot-in .18s ease-out,pulse 1s ease-in-out .18s infinite}
 .sdots i.ok{background:var(--pass)} .sdots i.bad{background:var(--fail)}
-@keyframes dotIn{from{transform:scale(0)}}
+@keyframes dot-in{from{transform:scale(0)}}
 .flaky{font-size:11px;font-weight:600;color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent);border-radius:999px;padding:1px 7px;margin-left:8px;vertical-align:1px}
 .ms{font:11.5px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted);white-space:nowrap}
 .steps{list-style:none;margin:0;padding:0 0 8px;counter-reset:s}
@@ -233,10 +233,17 @@ body.resizing iframe{pointer-events:none}
 
 /* The HTML view: the site's markup instead of the site, on top of it rather
    than in place of it, so the page keeps its size and steps can still see it */
-.htmlpane{position:absolute;inset:0;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+.htmlpane{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
 .htmlpane[hidden]{display:none}
-.htmlcode{margin:0;padding:12px 14px;border:0;background:transparent;color:var(--ink);font:inherit;white-space:pre;tab-size:2;overflow:auto;outline:none;scrollbar-width:thin}
-.htmlcode:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
+/* The markup is editable: a textarea over the highlighted copy, as in the test editor */
+.html-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 10px;border-bottom:1px solid var(--line);background:var(--panel);font:12.5px/1.4 "IBM Plex Sans",system-ui,sans-serif;color:var(--muted)}
+.html-bar-actions{display:flex;align-items:center;gap:6px;flex:none;margin-left:auto}
+.html-body{flex:1;min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr)}
+.html-body:focus-within{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
+.htmlcode,#htmlEdit{position:absolute;inset:0;margin:0;padding:12px 14px;border:0;font:inherit;white-space:pre;tab-size:2;letter-spacing:0}
+.htmlcode{overflow:hidden;pointer-events:none;background:transparent;color:var(--ink)}
+#htmlEdit{resize:none;background:transparent;color:transparent;caret-color:var(--ink);overflow:auto;outline:none;scrollbar-width:thin}
+#htmlEdit::selection{background:color-mix(in srgb,var(--run) 28%,transparent);color:transparent}
 .htmlcode .l{display:block;min-height:var(--code-line)}
 .htmlcode .l.cur{background:color-mix(in srgb,var(--running) 24%,transparent);box-shadow:inset 3px 0 var(--running)}
 .htmlcode .l.ok{background:color-mix(in srgb,var(--pass) 16%,transparent);box-shadow:inset 3px 0 var(--pass)}
@@ -314,7 +321,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   /* Editor: taller lines, and 16px keeps iOS from zooming when it takes focus */
   .editor{height:clamp(220px,42dvh,380px)}
   .gutter{min-width:38px;padding:10px 8px 10px 10px}
-  .hl,#spec{padding:10px 12px}
+  .hl,#spec,.htmlcode,#htmlEdit{padding:10px 12px}
 
   .toolbar{padding:10px;gap:8px}
 
@@ -328,7 +335,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .view-seg button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
 
   /* The example list opens as a sheet, so it is reachable wherever the page sits */
-  .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px)) 8px;width:auto;max-height:min(70dvh,560px);border-radius:14px}
+  .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(70dvh,560px);border-radius:14px}
   .pop-cat{padding:12px 8px 4px}
 
   /* Text that is comfortable at arm's length rather than at desk distance */

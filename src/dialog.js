@@ -18,7 +18,7 @@ export let dlgRaw = '';
 export const JS_KEYWORDS = new Set(['import','from','export','const','let','var','async','await','return','new','true','false','null','undefined','function']);
 export const JS_OBJECTS = new Set(['page','cy','expect','test','describe','it','BASE','unique','driver']);
 export function highlightJs(code){
-  const re = /(\/\/[^\n]*)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(\d+(?:\.\d+)?)\b|([A-Za-z_$][\w$]*)|(=>|[{}()\[\];,.+])/g;
+  const re = /(\/\/[^\n]*)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(\d+(?:\.\d+)?)\b|([A-Za-z_$][\w$]*)|(=>|[{}()[\];,.+])/g;
   let out = '', last = 0, m;
   while ((m = re.exec(code))){
     out += escH(code.slice(last, m.index));

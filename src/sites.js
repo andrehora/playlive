@@ -3,7 +3,7 @@ import { harvest } from './catalog.js';
 import { frame, specEl } from './dom.js';
 import { attachRecorder } from './recorder.js';
 import { hideSnapshot } from './snapshots.js';
-import { currentSite, editorSite, setEditorSite } from './state.js';
+import { currentSite, editedHtml, editorSite, setEditorSite } from './state.js';
 
 /* ---------- Sites and saved tests (kept in this browser between visits) ---------- */
 
@@ -48,7 +48,7 @@ window.__trRecordKey = (site, area, key) => {
 export const pageErrors = () => (frame.contentWindow && frame.contentWindow.__trErrors) || [];
 // Reloading the same URL needs a new one, so each load gets a fresh token.
 export let loadCount = 0;
-export function loadApp(path = '/'){
+export function loadApp(){
   hideSnapshot();
   const site = currentSite;
   return new Promise(res => {
@@ -59,6 +59,9 @@ export function loadApp(path = '/'){
       res();
     };
     frame.removeAttribute('srcdoc');          // a snapshot may have been showing
-    frame.src = `examples/${currentSite}/index.html?load=${++loadCount}`;
+    // Markup applied in the HTML view is the page until Reload or Reset, so a
+    // run starts every test from the page as it was edited.
+    if (editedHtml[currentSite]) frame.srcdoc = editedHtml[currentSite];
+    else frame.src = `examples/${currentSite}/index.html?load=${++loadCount}`;
   });
 }

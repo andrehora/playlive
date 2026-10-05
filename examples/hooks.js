@@ -7,13 +7,13 @@ window.__trSite = location.pathname.replace(/\/[^/]*$/, '').split('/').pop();
 window.$ = id => document.getElementById(id);
 
 window.__trErrors = [];
-addEventListener('error', e => __trErrors.push(e.message || 'Script error'));
+addEventListener('error', e => window.__trErrors.push(e.message || 'Script error'));
 addEventListener('unhandledrejection', e =>
-  __trErrors.push('Unhandled promise rejection: ' + ((e.reason && e.reason.message) || e.reason)));
+  window.__trErrors.push('Unhandled promise rejection: ' + ((e.reason && e.reason.message) || e.reason)));
 (function () {
   const original = console.error;
   console.error = function () {
-    __trErrors.push([].map.call(arguments, String).join(' '));
+    window.__trErrors.push([].map.call(arguments, String).join(' '));
     return original.apply(console, arguments);
   };
 })();

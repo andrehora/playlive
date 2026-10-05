@@ -10,7 +10,7 @@ import { validate } from './parse.js';
 import { closePicker, setView, siteBtn } from './picker.js';
 import { markStep, renderResults } from './results.js';
 import { loadApp, pageErrors, persist } from './sites.js';
-import { TIMEOUT, editorSite, lastEl, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stepTimeout, stopRequested } from './state.js';
+import { TIMEOUT, editorSite, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from './state.js';
 import { setProgress, setSiteStatus } from './ui.js';
 import { sleep } from './util.js';
 
@@ -31,7 +31,7 @@ export async function runTest(t, sec, opts){
   sec.dataset.state = 'running';
   followInResults(sec);
   setView(editorSite);
-  await loadApp('/');                         // every test starts from a fresh page
+  await loadApp();                            // every test starts from a fresh page
   const items = [...sec.querySelectorAll('li')];
   const sdots = sec.querySelector('.sdots'); sdots.innerHTML = '';   // one small circle per step, added as each step starts
   const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);   // the value of ${unique} for this run

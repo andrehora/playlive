@@ -5,7 +5,7 @@ import { validate } from './parse.js';
 import { setView } from './picker.js';
 import { preview, syncUI, withUnique } from './run.js';
 import { loadApp, persist } from './sites.js';
-import { TIMEOUT, editorSite, recording, running, setRecording, setRunning, setStepTimeout, stepTimeout } from './state.js';
+import { TIMEOUT, editorSite, recording, setRecording, setRunning, setStepTimeout } from './state.js';
 import { toast } from './ui.js';
 import { clean } from './util.js';
 
@@ -94,7 +94,7 @@ export function startRecording(){
 export async function prepareRecording(spec){
   const pre = spec && spec.tests.length ? spec.tests[0].steps.filter(s => s.from === 'beforeEach') : [];
   setRunning(true); syncUI();
-  await loadApp('/');
+  await loadApp();
   const unique = Date.now().toString(36);
   try {
     for (const st of pre){ setStepTimeout(st.timeout || TIMEOUT); await ACTIONS[st.action](withUnique(st, unique)); }

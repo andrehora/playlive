@@ -2,12 +2,12 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:
 h1{font-size:24px;margin:0 0 6px} h2{font-size:18px;margin:18px 0 6px} p{color:#4b5563}
 label{display:block;font-size:14px;font-weight:600;margin:14px 0 4px}
 label.inline{display:flex;align-items:center;gap:8px;font-weight:400}
-input:not([type=checkbox]):not([type=radio]),textarea,select{width:100%;font:inherit;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box}
+input:not([type="checkbox"], [type="radio"]),textarea,select{width:100%;font:inherit;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box}
 textarea{min-height:90px}
 button{font:inherit;background:var(--accent);color:#fff;border:0;border-radius:6px;padding:9px 16px;margin-top:16px;cursor:pointer}
 button.secondary{background:#e5e7eb;color:#1f2937;margin-right:8px}
 button:disabled{background:#94a3b8;cursor:default}
-[role=alert]{color:#b91c1c;min-height:1.2em}
+[role="alert"]{color:#b91c1c;min-height:1.2em}
 .ok{background:#ecfdf5;color:#065f46;padding:14px;border-radius:8px;font-weight:600}
 .step{font-size:13px;color:var(--accent);font-weight:600;margin:0}
 ul.clean{list-style:none;padding:0;margin:12px 0}
@@ -25,9 +25,9 @@ legend{font-weight:600;padding:0 4px}
 table{border-collapse:collapse;width:100%;margin-top:12px}
 th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #e5e7eb}
 button.th{background:transparent;color:#111827;padding:0;margin:0;font-weight:600}
-[role=tablist]{display:flex;gap:4px;border-bottom:2px solid #e5e7eb;margin-top:12px}
-[role=tab]{margin:0;background:transparent;color:#374151;border-radius:6px 6px 0 0}
-[role=tab][aria-selected=true]{background:var(--accent);color:#fff}
+[role="tablist"]{display:flex;gap:4px;border-bottom:2px solid #e5e7eb;margin-top:12px}
+[role="tab"]{margin:0;background:transparent;color:#374151;border-radius:6px 6px 0 0}
+[role="tab"][aria-selected="true"]{background:var(--accent);color:#fff}
 .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .cols h2{font-size:15px;margin:0 0 6px}
 button.q{display:block;width:100%;text-align:left;background:#f3f4f6;color:#111827;margin-top:0}

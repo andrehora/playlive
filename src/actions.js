@@ -1,6 +1,6 @@
 import { doc, speed } from './dom.js';
 import { closestText, describeTarget, find, query, scrollWithinFrame, slowHint, waitFor } from './find.js';
-import { lastEl, setLastEl, stepTimeout, stopRequested } from './state.js';
+import { setLastEl, stepTimeout, stopRequested } from './state.js';
 import { clean, norm, sleep } from './util.js';
 
 /* ---------- Doing what a step says, inside the site ---------- */
@@ -64,7 +64,7 @@ export const ACTIONS = {
   async wait(s){ await sleep(s.ms || 500); },
   async expectText(s){
     try { await waitFor(() => doc() && doc().body && norm(doc().body.innerText).includes(norm(s.text)), `the text “${s.text}”`); }
-    catch (e) { if (stopRequested) throw e; throw new Error(e.message + (closestText(s.text) || slowHint())); }
+    catch (e) { if (stopRequested) throw e; throw new Error(e.message + (closestText(s.text) || slowHint()), { cause: e }); }
     const el = query({ text: s.text })[0]; if (el){ setLastEl(el); await highlight(el, 'expectText', '#1F8A55'); }
   },
   async expectNoText(s){

@@ -1,0 +1,21 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "ignoreFiles": ["node_modules/**", "test-results/**", "playwright-report/**"],
+  "rules": {
+    "declaration-block-single-line-max-declarations": null,
+    "selector-id-pattern": null,
+    "no-descending-specificity": null,
+    "no-duplicate-selectors": null,
+    "color-function-notation": null,
+    "color-function-alias-notation": null,
+    "alpha-value-notation": null,
+    "value-keyword-case": null,
+    "property-no-vendor-prefix": null,
+    "media-feature-range-notation": null,
+    "comment-empty-line-before": null,
+    "at-rule-empty-line-before": null,
+    "rule-empty-line-before": null,
+    "declaration-empty-line-before": null,
+    "length-zero-no-unit": [true, { "ignoreFunctions": ["env", "max", "min", "clamp"] }]
+  }
+}

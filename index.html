@@ -84,7 +84,7 @@
         <button id="nextSite" type="button" class="ghost icon-btn" aria-label="Next example" title="Next example"><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       <div class="addr">
-        <button id="reload" type="button" class="ghost icon-btn" aria-label="Reload the site" title="Reload the site"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+        <button id="reload" type="button" class="ghost icon-btn" aria-label="Reload the site" title="Reload the site, back to its original HTML"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
         <div class="seg view-seg" role="group" aria-label="What to show">
           <button type="button" data-view="site" title="Show the site">Site</button>
           <button type="button" data-view="html" title="Show the site's HTML, following the running step">HTML</button>
@@ -101,8 +101,19 @@
     <div class="view" id="view">
       <div class="stage" id="stage"><div class="device" id="device" data-vp="desktop"><iframe id="app" title="Site under test"></iframe></div></div>
       <div class="htmlpane" id="htmlPane" hidden>
-        <div class="gutter" id="htmlGutter" aria-hidden="true"></div>
-        <pre class="code-view htmlcode" id="htmlCode" tabindex="0" aria-label="The site's HTML"></pre>
+        <div class="html-bar">
+          <span class="html-bar-actions">
+            <button id="htmlRevert" type="button" class="ghost small" disabled title="Throw the edits away and read the page again">Revert</button>
+            <button id="htmlApply" type="button" class="primary small" disabled title="Put this markup on the page, for this run and the next">Save</button>
+          </span>
+        </div>
+        <div class="html-body">
+          <div class="gutter" id="htmlGutter" aria-hidden="true"></div>
+          <div class="code">
+            <pre class="code-view htmlcode" id="htmlCode" aria-hidden="true"></pre>
+            <textarea id="htmlEdit" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" aria-label="The site's HTML"></textarea>
+          </div>
+        </div>
       </div>
     </div>
   </section>

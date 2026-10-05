@@ -12,6 +12,7 @@ export let currentSite = 'contact-form';   // the site showing on the right
 export let editorSite = 'contact-form';    // the site whose tests are in the editor
 export let lastEl = null;                  // the element the current step acted on
 export let completionOpen = false;         // the autocomplete list is showing, so it owns Tab and Enter
+export const editedHtml = {};              // site -> markup applied in the HTML view, until Reload or Reset
 
 export const setStepTimeout = v => { stepTimeout = v; };
 export const setStopRequested = v => { stopRequested = v; };
@@ -22,3 +23,5 @@ export const setCurrentSite = v => { currentSite = v; };
 export const setEditorSite = v => { editorSite = v; };
 export const setLastEl = v => { lastEl = v; };
 export const setCompletionOpen = v => { completionOpen = v; };
+export const setEditedHtml = (site, markup) => { editedHtml[site] = markup; };
+export const clearEditedHtml = site => { delete editedHtml[site]; };

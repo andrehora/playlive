@@ -31,7 +31,7 @@ async function checkSyntax(code, ext, label){
   const file = join(dir, `export.${ext}`);
   await writeFile(file, code);
   try { await run(process.execPath, ['--check', file]); }
-  catch (e) { throw new Error(`${label} export is not valid JavaScript:\n${e.stderr || e.message}`); }
+  catch (e) { throw new Error(`${label} export is not valid JavaScript:\n${e.stderr || e.message}`, { cause: e }); }
 }
 
 test.describe('Exports', () => {

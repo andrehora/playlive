@@ -96,7 +96,7 @@ export function slowHint(){
 }
 export async function find(t){
   try { const el = await waitFor(() => query(t)[0], describeTarget(t)); setLastEl(el); return el; }
-  catch (e) { if (stopRequested) throw e; throw new Error(e.message + hintFor(t)); }
+  catch (e) { if (stopRequested) throw e; throw new Error(e.message + hintFor(t), { cause: e }); }
 }
 
 /* ---------- Helpful failures: "did you mean…?" ---------- */

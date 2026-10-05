@@ -10,12 +10,12 @@ export const escH = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
 let actionKeys = null;
 export const isAction = key => (actionKeys ||= new Set([...Object.keys(ACTIONS), 'use'])).has(key);
 export function hlValue(v){
-  const re = /("(?:[^"\\]|\\.)*"?|'(?:[^']|'')*'?|\$\{\w+\}|[{}\[\],]|[A-Za-z_][\w-]*(?=:(?:\s|$))|\b\d+(?:\.\d+)?\b)/g;
+  const re = /("(?:[^"\\]|\\.)*"?|'(?:[^']|'')*'?|\$\{\w+\}|[{}[\],]|[A-Za-z_][\w-]*(?=:(?:\s|$))|\b\d+(?:\.\d+)?\b)/g;
   let out = '', last = 0, m;
   while ((m = re.exec(v))){
     const tok = m[0], c = tok[0];
     out += escH(v.slice(last, m.index));
-    const cls = c === '"' || c === "'" ? 's' : c === '$' ? 'v' : /[{}\[\],]/.test(c) ? 'p' : /\d/.test(c) ? 'n' : 'fk';
+    const cls = c === '"' || c === "'" ? 's' : c === '$' ? 'v' : /[{}[\],]/.test(c) ? 'p' : /\d/.test(c) ? 'n' : 'fk';
     let inner = escH(tok);
     if (cls === 's') inner = inner.replace(/\$\{\w+\}/g, x => `<i class="v">${x}</i>`);
     out += `<i class="${cls}">${inner}</i>`;
@@ -28,7 +28,7 @@ export function hlLine(line){
   for (let i = 0; i < line.length; i++){
     const ch = line[i];
     if (q){ if (ch === q && line[i - 1] !== '\\') q = null; continue; }
-    if ((ch === '"' || ch === "'") && (i === 0 || /[\s:{\[,-]/.test(line[i - 1]))){ q = ch; continue; }
+    if ((ch === '"' || ch === "'") && (i === 0 || /[\s:{[,-]/.test(line[i - 1]))){ q = ch; continue; }
     if (ch === '#' && (i === 0 || /\s/.test(line[i - 1]))){ ci = i; break; }
   }
   const code = ci >= 0 ? line.slice(0, ci) : line, com = ci >= 0 ? line.slice(ci) : '';

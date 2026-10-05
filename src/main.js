@@ -3,6 +3,7 @@ import { clearCatalog, harvest, snapshot } from './catalog.js';
 import { closeCompletion, completion, context, suggest } from './complete.js';
 import { $id, errorEl, recordBtn, resetBtn, runBtn, specEl, speedMode, stopBtn, summaryEl } from './dom.js';
 import { toCypress, toPlaywright } from './exports.js';
+import { applyHtml, htmlDirty, htmlEdit, revertHtml } from './htmlview.js';
 import { query } from './find.js';
 import { HIST, runHistory } from './history.js';
 import { validate } from './parse.js';
@@ -10,7 +11,7 @@ import { renderTabs, selectSite, setView } from './picker.js';
 import { startRecording, stopRecording } from './recorder.js';
 import { nextResolve, preview, releaseNext, run, syncUI } from './run.js';
 import { SITE_KEYS, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './sites.js';
-import { editorSite, previewTimer, recording, running, setPreviewTimer, setStopRequested, stopRequested } from './state.js';
+import { clearEditedHtml, editorSite, previewTimer, recording, running, setPreviewTimer, setStopRequested } from './state.js';
 import { STATUS, paintTabs, setProgress, siteStatus, toast } from './ui.js';
 import './dialog.js';          // registers the export dialog and its Copy button
 import './complete.js';       // registers the editor's suggestion list
@@ -42,6 +43,7 @@ export async function resetSite(site){
   }
   delete siteKeys[site];
   clearCatalog(site);          // what the page offers depends on the data it kept
+  clearEditedHtml(site);       // and on the markup, which goes back to the file
   if (window.__trMem) delete window.__trMem[site];
   // the runner's data about this site
   for (const k of Object.keys(runHistory)) if (k.startsWith(site + ':')) delete runHistory[k];
@@ -70,5 +72,6 @@ window.playlive = {
   selectSite, validate, toPlaywright, toCypress, SITES, SITE_IDS,
   catalog: { harvest, snapshot, clear: clearCatalog },
   complete: { suggest, context, showing: completion, close: closeCompletion },
+  html: { markup: () => htmlEdit.value, apply: applyHtml, revert: revertHtml, edited: () => htmlDirty() },
   query
 };

@@ -2,7 +2,7 @@ import { SITES, SITE_IDS } from '../examples/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
 import { preview } from './run.js';
 import { loadApp, persist, savedTests, testsFor } from './sites.js';
-import { currentSite, editorSite, previewTimer, recording, running, setCurrentSite, setEditorSite } from './state.js';
+import { editorSite, previewTimer, recording, running, setCurrentSite, setEditorSite } from './state.js';
 import { paintTabs } from './ui.js';
 
 /* ---------- Site picker: 50 examples, grouped and searchable ---------- */
