@@ -33,7 +33,7 @@ test.describe('Site picker', () => {
     await openApp(page);
     await page.click('#siteBtn');
     await expect(page.locator('#siteBtn')).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator('#siteSearch')).toHaveAttribute('placeholder', `Search ${ids.length} examples`);
+    await expect(page.locator('#siteSearch')).toHaveAttribute('placeholder', 'Search examples');
 
     await page.fill('#siteSearch', 'coupon');
     await expect(page.locator('#tabs .tab:visible')).toHaveCount(1);
@@ -724,12 +724,90 @@ test.describe('Layout and theming', () => {
     for (const width of [390, 1440]){
       await page.setViewportSize({ width, height: 900 });
       await openApp(page);
+      // On a phone the code starts folded, so ask for it back before measuring.
+      if (await page.locator('#editor').isHidden()) await page.click('#foldSpec');
       const { line, gutter } = await page.evaluate(() => ({
         line: parseFloat(getComputedStyle(document.getElementById('spec')).lineHeight),
         gutter: document.querySelector('#gutter div').getBoundingClientRect().height
       }));
       expect(Math.abs(line - gutter), `gutter and code disagree at ${width}px`).toBeLessThan(0.5);
     }
+  });
+
+  test('a phone opens with the code folded, and the button brings it back', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openApp(page);
+    await expect(page.locator('#editor')).toBeHidden();
+    await expect(page.locator('#foldSpec')).toHaveAttribute('aria-expanded', 'false');
+    // Folding only hides the code: the tests are still there to run.
+    await expect(page.locator('#run')).toBeEnabled();
+    await expect(page.locator('#results .test').first()).toBeVisible();
+    await page.click('#foldSpec');
+    await expect(page.locator('#editor')).toBeVisible();
+  });
+
+  test('a wide screen opens with the code showing', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openApp(page);
+    await expect(page.locator('#editor')).toBeVisible();
+  });
+
+  test('the app bar keeps Reset, Share and the repository named on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await openApp(page);
+    for (const [sel, label] of [['#reset', 'Reset'], ['#share', 'Share'], ['.repo-link', 'GitHub']]){
+      const el = page.locator(sel);
+      await expect(el).toBeVisible();
+      await expect(el).toContainText(label);
+      // The published page allows no remote images, so each mark is inline.
+      await expect(el.locator('svg')).toHaveCount(1);
+      expect((await el.boundingBox()).height, `${sel} is too small to tap`).toBeGreaterThanOrEqual(34);
+    }
+    // Reset comes before Share, and the repository last.
+    const order = await page.$$eval('.appbar #reset, .appbar #share, .appbar .repo-link',
+      els => els.map(e => e.id || e.className));
+    expect(order).toEqual(['reset', 'share', 'repo-link']);
+  });
+
+  test('the app bar is two rows on a phone: the name with the icons, then the example', async ({ page }) => {
+    for (const width of [360, 390]){
+      await page.setViewportSize({ width, height: 844 });
+      await openApp(page);
+      const box = async sel => page.locator(sel).boundingBox();
+      const [brand, share, reset, repo, picker, stepper] =
+        await Promise.all(['.brand', '#share', '#reset', '.repo-link', '.picker', '.stepper'].map(box));
+      // First row: the name and the three icons.
+      for (const [what, b] of [['Share', share], ['Reset', reset], ['the repository', repo]])
+        expect(Math.abs(b.y - brand.y), `${what} is not on the brand's row at ${width}px`).toBeLessThan(20);
+      // Second row: the example and its stepper, side by side.
+      expect(picker.y, `the example is not on its own row at ${width}px`).toBeGreaterThan(brand.y + brand.height);
+      expect(Math.abs(stepper.y - picker.y), `the stepper left the example's row at ${width}px`).toBeLessThan(20);
+
+      // Both rows use the whole bar: the names spread across the first, and the
+      // example and its stepper share the second 60/40.
+      const bar = await box('.appbar');
+      for (const [what, row] of [['the names', [brand, repo]], ['the example', [picker, stepper]]]){
+        expect(row[0].x, `${what} does not start at the edge at ${width}px`).toBeLessThan(bar.x + 14);
+        expect(row[1].x + row[1].width, `${what} does not reach the edge at ${width}px`)
+          .toBeGreaterThan(bar.x + bar.width - 14);
+      }
+      const row2 = stepper.x + stepper.width - picker.x;
+      expect(picker.width / row2, `the example is not 60% of its row at ${width}px`).toBeCloseTo(0.6, 1);
+      expect(stepper.width / row2, `the stepper is not 40% of its row at ${width}px`).toBeCloseTo(0.4, 1);
+    }
+  });
+
+  test('the site panel head is two centred rows on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openApp(page);
+    const head = await page.locator('.site-head').boundingBox();
+    const title = await page.locator('.site-head h2').boundingBox();
+    const addr = await page.locator('.site-head .addr').boundingBox();
+    // The controls sit below the name, not beside it.
+    expect(addr.y).toBeGreaterThanOrEqual(title.y + title.height - 1);
+    // Both rows are centred in the head.
+    for (const [what, box] of [['the name', title], ['the controls', addr]])
+      expect(Math.abs((box.x + box.width / 2) - (head.x + head.width / 2)), `${what} is off centre`).toBeLessThan(2);
   });
 });
 

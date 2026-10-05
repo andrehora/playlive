@@ -319,6 +319,11 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .appbar{flex-wrap:wrap;row-gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
   .tagline{display:none}
 
+  /* The trailing actions keep their names: the example takes the second row,
+     so the first is theirs. They tighten to fit three names beside the mark. */
+  .appbar #share,.appbar #reset,.repo-link{height:var(--icon-tap);min-height:0;padding:0 6px;gap:5px;font-size:13px;border-radius:var(--small-r)}
+  .appbar #share svg.i,.appbar #reset svg.i,.repo-link svg.i{width:17px;height:17px}
+
   /* Panel heads: the actions get a line of their own rather than being squeezed */
   .panel-head{flex-wrap:wrap;row-gap:2px;padding:8px 10px}
   .head-actions{gap:6px}
@@ -333,7 +338,10 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 
   /* Site panel */
   .browser{height:clamp(360px,70dvh,640px)}
-  .site-head{gap:8px;padding:10px}
+  /* The head reads as two centred rows: what this page is, then what to do with it */
+  .site-head{flex-direction:column;align-items:center;gap:8px;padding:10px}
+  .site-head h2{justify-content:center;flex-wrap:wrap;row-gap:4px}
+  .addr{margin-left:0;width:100%;justify-content:center}
   .site-btn{width:100%;min-width:0}
   .stepper{gap:4px}
   /* The screen-size toggle goes, but Site/HTML stays, at a size worth tapping */
@@ -370,9 +378,20 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 }
 /* ---------- Phones: one control per row rather than a crowded line ---------- */
 @media (max-width:600px){
-  /* Too narrow for one row: the example and its stepper take the second one */
-  .appbar .picker{order:3;flex:1 1 180px;margin-left:0}
-  .appbar .stepper{order:4}
+  /* Two rows that each use the whole width: the name, then Reset, Share and the
+     repository spread across the rest of the first, then the example's list and
+     its stepper sharing the second 60/40 (the 8px gap comes off both). */
+  .appbar{column-gap:8px}
+  .appbar .spacer{display:none}
+  .appbar #share,.appbar #reset,.appbar .repo-link{flex:1 1 auto;justify-content:center}
+  .appbar .picker{order:3;flex:1 1 calc(60% - 4px);min-width:0;margin-left:0}
+  .appbar .stepper{order:4;flex:1 1 calc(40% - 4px);min-width:0;justify-content:space-between}
+  /* The stepper has a share of the row rather than its natural width, so its
+     arrows and count give up what they can spare. */
+  .appbar .stepper .icon-btn{width:36px}
+  .site-count{min-width:0;font-size:12.5px}
+  .appbar .site-btn{overflow:hidden}
+  .site-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* Run is the primary target, so it takes whatever room the row has spare */
   .toolbar #run{flex:1 1 auto}
   .toolbar .opts{width:100%;margin-left:0;gap:8px}

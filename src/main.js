@@ -2,6 +2,7 @@ import { SITES, SITE_IDS } from '../examples/examples.js';
 import { clearCatalog, harvest, snapshot } from './catalog.js';
 import { closeCompletion, completion, context, suggest } from './complete.js';
 import { $id, errorEl, recordBtn, reloadBtn, resetBtn, runBtn, specEl, speedMode, stopBtn, summaryEl } from './dom.js';
+import { setSpecFolded } from './editor.js';
 import { toCypress, toPlaywright } from './exports.js';
 import { applyHtml, htmlDirty, htmlEdit, revertHtml } from './htmlview.js';
 import { query } from './find.js';
@@ -82,6 +83,10 @@ setView(editorSite);
 syncUrl(editorSite);
 specEl.value = await testsFor(editorSite);
 preview(); loadApp(); syncUI();
+// On a narrow screen the panels stack, so a screenful of YAML would push the
+// site and its results off the bottom: the code starts folded and the Tests
+// panel's own button brings it back.
+if (matchMedia('(max-width:900px)').matches) setSpecFolded(true);
 
 // Playlive's own tests drive the app through this.
 window.playlive = {

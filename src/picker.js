@@ -10,7 +10,7 @@ import { paintTabs } from './ui.js';
 /* ---------- Site picker: 100 examples, grouped and searchable ---------- */
 export const CATEGORIES = [...new Set(SITE_IDS.map(id => SITES[id].category))];
 export const siteBtn = $id('siteBtn'), sitePop = $id('sitePop'), siteSearch = $id('siteSearch');
-siteSearch.placeholder = `Search ${SITE_IDS.length} examples`;
+siteSearch.placeholder = 'Search examples';
 export function renderTabs(){
   tabsEl.innerHTML = '';
   for (const cat of CATEGORIES){

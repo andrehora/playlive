@@ -136,6 +136,8 @@ test.describe('In the editor', () => {
   async function start(page, text = 'test: t\nsteps:\n'){
     await openApp(page, { site: 'login' });
     await ready(page, 'login');
+    // On a phone the code starts folded, and these tests are about typing in it.
+    if (await page.locator('#editor').isHidden()) await page.click('#foldSpec');
     await page.fill('#spec', text);
     await expect(pop(page)).toBeHidden();
     return page.locator('#spec');
