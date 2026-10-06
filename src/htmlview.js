@@ -29,6 +29,11 @@ const VOID = new Set(['area','base','br','col','embed','hr','img','input','link'
 // Attributes written without a value, so "checked" does not read checked=""
 const BOOL = new Set(['checked','selected','disabled','readonly','required','multiple','open','hidden','autofocus','novalidate','default','inert']);
 
+// The code an injected bug changed, pushed in by bugs.js rather than read from
+// it, so this view never calls across at load time.
+let bugMark = null;                      // { hit, src } while a bug is on the page
+export function setBugMark(m){ bugMark = m; renderHtmlView(); }
+
 let elLine = new Map();                  // element -> the line its opening tag is on
 let shown = '';                          // the markup as the view last read it
 let dirty = false;                       // the editor holds changes the page has not seen
@@ -136,8 +141,16 @@ export function renderHtmlView(state, action){
   const cur = state && lastEl && lastEl.ownerDocument === d ? elLine.get(lastEl) : undefined;
   const mark = state === 'failed' ? 'bad' : state === 'passed' ? 'ok' : 'cur';
   const tag = action ? `<i class="tag">${escH(action)}</i>` : '';
-  paint(lines, i => (i === cur ? ' ' + mark : ''), i => (i === cur ? tag : ''));
+  // An injected bug marks the line it changed, so the page's own code says what
+  // was done to it. A line counts only if it holds the new text and is not a
+  // line the page always had: the same snippet can sit where the bug never was.
+  // The running step still owns its line.
+  const isBug = i => !!bugMark && lines[i].includes(bugMark.hit) && !bugMark.src.includes(lines[i].trim());
+  paint(lines,
+    i => i === cur ? ' ' + mark : isBug(i) ? ' bug' : '',
+    i => i === cur ? tag : isBug(i) ? '<i class="tag">bug</i>' : '');
   if (cur !== undefined) followLine(cur);
+  else { const first = lines.findIndex((_, i) => isBug(i)); if (first >= 0) followLine(first); }
 }
 // The coloured copy under the textarea, and the line numbers beside it
 function paint(lines, cls = () => '', after = () => ''){
@@ -179,7 +192,7 @@ export function applyHtml(){
 // the stylesheet and scripts the markup asks for. The tag is the runner's, and
 // the view skips it, so saving twice does not stack them up.
 const BASE_MARK = 'data-playlive-base';
-function withBase(markup, href){
+export function withBase(markup, href){
   const tag = `<base ${BASE_MARK} href="${href}">`;
   const head = /<head[^>]*>/i.exec(markup);
   if (head) return markup.slice(0, head.index + head[0].length) + '\n' + tag + markup.slice(head.index + head[0].length);

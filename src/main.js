@@ -1,4 +1,5 @@
 import { SITES, SITE_IDS } from '../examples/examples.js';
+import { bugsFor, clearBugs, hunt, inject, renderBugs, repair, report as bugReport, setCovView } from './bugs.js';
 import { clearCatalog, harvest, snapshot } from './catalog.js';
 import { clearCoverage, report } from './coverage.js';
 import { closeCompletion, completion, context, suggest } from './complete.js';
@@ -15,7 +16,7 @@ import { expandedTests } from './results.js';
 import { nextResolve, preview, releaseNext, run, syncUI } from './run.js';
 import { copyLink, shareUrl, siteFromHash, syncUrl } from './share.js';
 import { SITE_KEYS, STORE, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './sites.js';
-import { clearEditedHtml, editorSite, previewTimer, recording, running, setEditorSite, setPreviewTimer, setStopRequested } from './state.js';
+import { clearBugHtml, clearEditedHtml, editorSite, previewTimer, recording, running, setEditorSite, setPreviewTimer, setStopRequested } from './state.js';
 import { STATUS, paintTabs, setProgress, siteStatus, toast } from './ui.js';
 import './dialog.js';          // registers the export dialog and its Copy button
 import './complete.js';       // registers the editor's suggestion list
@@ -49,6 +50,8 @@ export async function resetAll(){
     clearCatalog(id);            // what a page offers depends on the data it kept
     clearCoverage(id);           // and the score was about a run of that page
     clearEditedHtml(id);         // and on the markup, which goes back to the file
+    clearBugs(id);               // and a bug score was about a hunt of those tests
+    clearBugHtml(id);            // and no bug is left on any page
     delete savedTests[id];
     if (window.__trMem) delete window.__trMem[id];
   }
@@ -63,7 +66,7 @@ export async function resetAll(){
   specEl.value = await exampleTests(site);
   errorEl.textContent = ''; summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
   // deliberately no persist(): after Reset nothing of ours is in storage until you type
-  setView(site); paintTabs(); preview(); loadApp(); syncUI();
+  setView(site); paintTabs(); preview(); renderBugs(); loadApp(); syncUI();
   toast('Reset: every example back as it ships, saved data and history cleared');
 }
 resetBtn.addEventListener('click', () => {
@@ -84,6 +87,7 @@ renderTabs();
 setView(editorSite);
 syncUrl(editorSite);
 specEl.value = await testsFor(editorSite);
+setCovView('coverage');          // the panel starts on the score it has always shown
 preview(); loadApp(); syncUI();
 // On a narrow screen the panels stack, so a screenful of YAML would push the
 // site and its results off the bottom: the code starts folded and the Tests
@@ -95,6 +99,7 @@ window.playlive = {
   selectSite, validate, toPlaywright, toCypress, SITES, SITE_IDS,
   catalog: { harvest, snapshot, clear: clearCatalog },
   coverage: { report, clear: clearCoverage },
+  bugs: { report: bugReport, list: bugsFor, hunt, inject, repair, view: setCovView, render: renderBugs },
   share: { copy: copyLink, url: shareUrl, linked: siteFromHash },
   complete: { suggest, context, showing: completion, close: closeCompletion },
   html: { markup: () => htmlEdit.value, apply: applyHtml, revert: revertHtml, edited: () => htmlDirty() },

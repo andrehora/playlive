@@ -15,6 +15,8 @@ export let editorSite = SITE_IDS[0];       // the site whose tests are in the ed
 export let lastEl = null;                  // the element the current step acted on
 export let completionOpen = false;         // the autocomplete list is showing, so it owns Tab and Enter
 export const editedHtml = {};              // site -> markup applied in the HTML view, until Reset
+export let hunting = false;                // a bug hunt is running the tests against a broken page
+export const bugHtml = {};                 // site -> the page with one bug patched in, while it is injected
 
 export const setStepTimeout = v => { stepTimeout = v; };
 export const setStopRequested = v => { stopRequested = v; };
@@ -25,5 +27,8 @@ export const setCurrentSite = v => { currentSite = v; };
 export const setEditorSite = v => { editorSite = v; };
 export const setLastEl = v => { lastEl = v; };
 export const setCompletionOpen = v => { completionOpen = v; };
+export const setHunting = v => { hunting = v; };
+export const setBugHtml = (site, markup) => { bugHtml[site] = markup; };
+export const clearBugHtml = site => { delete bugHtml[site]; };
 export const setEditedHtml = (site, markup) => { editedHtml[site] = markup; };
 export const clearEditedHtml = site => { delete editedHtml[site]; };

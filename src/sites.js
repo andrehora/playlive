@@ -4,7 +4,7 @@ import { renderCoverage } from './coverage.js';
 import { frame, specEl } from './dom.js';
 import { attachRecorder } from './recorder.js';
 import { hideSnapshot } from './snapshots.js';
-import { currentSite, editedHtml, editorSite } from './state.js';
+import { bugHtml, currentSite, editedHtml, editorSite } from './state.js';
 
 /* ---------- Sites and saved tests (kept in this browser between visits) ---------- */
 
@@ -22,6 +22,17 @@ export async function exampleTests(id){
 }
 // What the editor should show for a site: your saved copy, or the shipped tests
 export const testsFor = async id => savedTests[id] ?? await exampleTests(id);
+// The site's markup as it ships, fetched once: what a bug patch is applied to
+export const sourceCache = {};
+export async function pageSource(id){
+  if (sourceCache[id] === undefined){
+    try {
+      const res = await fetch(`examples/${id}/index.html`);
+      sourceCache[id] = res.ok ? await res.text() : '';
+    } catch { sourceCache[id] = ''; }
+  }
+  return sourceCache[id];
+}
 export const STORE = 'live-test-runner';
 try {
   const d = JSON.parse(localStorage.getItem(STORE) || 'null');
@@ -61,9 +72,11 @@ export function loadApp(){
       res();
     };
     frame.removeAttribute('srcdoc');          // a snapshot may have been showing
-    // Markup applied in the HTML view is the page until Reset, so a
-    // run starts every test from the page as it was edited.
-    if (editedHtml[currentSite]) frame.srcdoc = editedHtml[currentSite];
+    // An injected bug is the page while it is injected, so the tests meet the
+    // broken version. Markup applied in the HTML view is the page until Reset,
+    // so a run starts every test from the page as it was edited.
+    if (bugHtml[currentSite]) frame.srcdoc = bugHtml[currentSite];
+    else if (editedHtml[currentSite]) frame.srcdoc = editedHtml[currentSite];
     else frame.src = `examples/${currentSite}/index.html?load=${++loadCount}`;
   });
 }

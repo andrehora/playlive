@@ -10,7 +10,7 @@ import { validate } from './parse.js';
 import { closePicker, setView, siteBtn } from './picker.js';
 import { markStep, renderResults } from './results.js';
 import { loadApp, pageErrors, persist } from './sites.js';
-import { TIMEOUT, editorSite, lastEl, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from './state.js';
+import { TIMEOUT, editorSite, hunting, lastEl, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from './state.js';
 import { setProgress, setSiteStatus } from './ui.js';
 import { sleep } from './util.js';
 
@@ -34,6 +34,9 @@ export async function runTest(t, sec, opts){
   await loadApp();                            // every test starts from a fresh page
   const items = [...sec.querySelectorAll('li')];
   const sdots = sec.querySelector('.sdots'); sdots.innerHTML = '';   // one small circle per step, added as each step starts
+  // The same circles pile up in the panel head, one per step of the whole run,
+  // so a collapsed panel still shows how far it has got.
+  const headDots = $id('runDots');
   const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);   // the value of ${unique} for this run
   const warnBox = sec.querySelector('.warnings');
   const rec = { title: t.title, ok: true, warnings: [] };
@@ -57,6 +60,7 @@ export async function runTest(t, sec, opts){
     setCurrentLine(lineForStep(specEl.value, t.steps[i].src));   // the editor always follows the step
     const dot = document.createElement('i'); dot.className = 'run'; sdots.appendChild(dot);
     sdots.title = `Step ${i + 1} of ${t.steps.length}`;
+    const hdot = document.createElement('i'); hdot.className = 'run'; headDots.appendChild(hdot);
     followInResults(li);
     setLastEl(null);
     const step = withUnique(t.steps[i], unique);
@@ -70,7 +74,7 @@ export async function runTest(t, sec, opts){
       markTested(editorSite, lastEl, step.action, step.value);
       collectErrors(i + 1);
       harvest();                                // the step may have revealed a new screen
-      markStep(li, 'passed'); dot.className = 'ok';
+      markStep(li, 'passed'); dot.className = hdot.className = 'ok';
       renderHtmlView('passed', step.action);  // the HTML view follows the element the step touched
       renderCoverage();
       li.querySelector('.ms').textContent = `${Math.round(performance.now() - s0)} ms`;
@@ -78,7 +82,7 @@ export async function runTest(t, sec, opts){
     } catch (e) {
       try { collectErrors(i + 1); } catch {}
       harvest();
-      markStep(li, 'failed'); dot.className = 'bad';
+      markStep(li, 'failed'); dot.className = hdot.className = 'bad';
       renderHtmlView('failed', t.steps[i].action);
       renderCoverage();
       const err = document.createElement('span'); err.className = 'err'; err.textContent = e.message;
@@ -91,7 +95,9 @@ export async function runTest(t, sec, opts){
   rec.secs = ((performance.now() - t0) / 1000).toFixed(1);
   sec.dataset.state = rec.ok ? 'passed' : 'failed';
   sec.querySelector('.test-head .ms').textContent = `${rec.secs}s`;
-  if (!stopRequested){ recordHistory(sec.dataset.key, rec.ok); paintHistory(sec); }
+  // A bug hunt breaks the page on purpose, so its failures are neither this
+  // test's history nor a verdict on the site.
+  if (!stopRequested && !hunting){ recordHistory(sec.dataset.key, rec.ok); paintHistory(sec); }
   return rec;
 }
 
@@ -105,7 +111,8 @@ export async function run(only){
   persist();
   setStopRequested(false); setRunning(true);
   // A full run's score is that run's; running one test adds to what is there.
-  if (only === undefined) clearCoverage(editorSite);
+  // A hunt leaves it alone: the score belongs to the run the user watched.
+  if (only === undefined && !hunting) clearCoverage(editorSite);
   const reps = Number($id('repeat').value) || 1;
   const tally = spec.tests.map(() => ({ pass: 0, runs: 0 }));
   const started = performance.now();
@@ -114,6 +121,7 @@ export async function run(only){
   let done = 0;
   setProgress(0);
   for (let rep = 1; rep <= reps && !stopRequested; rep++){
+    $id('runDots').innerHTML = '';
     renderResults(spec.tests);
     resultsEl.scrollTop = 0;
     syncUI();
@@ -123,7 +131,7 @@ export async function run(only){
       if (only !== undefined && i !== only){ sections[i].dataset.state = 'idle'; continue; }
       if (stopRequested){ sections[i].dataset.state = 'notrun'; continue; }
       summaryEl.className = '';
-      summaryEl.textContent = `Running “${spec.tests[i].title}” · ${done + 1} of ${total}` + (reps > 1 ? ` · repetition ${rep} of ${reps}` : '');
+      summaryEl.textContent = `Running ${done + 1} of ${total}` + (reps > 1 ? ` · repetition ${rep} of ${reps}` : '');
       const r = await runTest(spec.tests[i], sections[i], spec);
       setProgress(++done / total);
       if (!stopRequested){ tally[i].runs++; if (r.ok) tally[i].pass++; }
@@ -144,13 +152,14 @@ export async function run(only){
   else { summaryEl.textContent = `${ran - passed} of ${ran} ${noun(ran)} failed (${secs}s)`; summaryEl.className = 'bad'; }
   const allOk = summaryEl.className === 'ok';
   setProgress(stopRequested ? null : 1, allOk ? 'ok' : 'bad');
-  if (!stopRequested && only === undefined) setSiteStatus(editorSite, allOk);
+  if (!stopRequested && only === undefined && !hunting) setSiteStatus(editorSite, allOk);
   if (!stopRequested && passed < ran){ const f = resultsEl.querySelector('li.failed'); if (f) followInResults(f); }
   setRunning(false); setCurrentLine(-1); syncUI(); renderCoverage();
+  return { ran, passed, records, stopped: stopRequested };
 }
 
 export function syncUI(){
-  const busy = running || recording;
+  const busy = running || recording || hunting;
   const stepping = running && speedMode() === 'step';
   runBtn.disabled = busy && !nextResolve;
   runBtn.querySelector('.lbl').textContent = stepping ? 'Next step' : 'Run';
@@ -176,4 +185,5 @@ export function preview(){
   else if (!recording){ errorEl.textContent = v.error; setFileStatus(v); }
   renderCoverage();                 // whether a step can be added depends on the file parsing
   summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
+  $id('runDots').innerHTML = '';
 }

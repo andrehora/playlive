@@ -5,7 +5,7 @@
 // recognise, and every site in it shares that theme's accent.
 export const SITES = {
   "address-form": { name: "Address form", category: "Shopping", host: "localhost:3001", accent: "#b45309" },
-  "coupon-code": { name: "Coupon code", category: "Shopping", host: "localhost:3002", accent: "#b45309" },
+  "coupon-code": { name: "Coupon code", category: "Shopping", host: "localhost:3002", accent: "#b45309", bugs: true },
   "pricing-tabs": { name: "Pricing tabs", category: "Shopping", host: "localhost:3003", accent: "#b45309" },
   "quantity-stepper": { name: "Quantity stepper", category: "Shopping", host: "localhost:3004", accent: "#b45309" },
   "shipping-options": { name: "Shipping options", category: "Shopping", host: "localhost:3005", accent: "#b45309" },

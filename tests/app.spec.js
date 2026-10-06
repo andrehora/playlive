@@ -205,6 +205,28 @@ test.describe('Running', () => {
     expect(await page.evaluate(() => localStorage.getItem('live-test-runner:status'))).toContain('contact-form');
   });
 
+  test('the head counts the run in circles, one per step, and keeps them', async ({ page }) => {
+    await openApp(page, { site: 'contact-form' });
+    await setSpeed(page, 'fast');
+    const steps = await page.locator('#results .steps li').count();
+
+    // Collapsed to one row, the head is all there is to watch: the summary says
+    // how far the run has got and the circles say the rest, over the whole run
+    // rather than the test running now.
+    await page.click('#foldAll');                     // folded -> collapsed
+    await expect(page.locator('#results')).toBeHidden();
+    const res = await runAll(page);
+    expect(res.state, describeFailures(res)).toBe('ok');
+    await expect(page.locator('#runDots i')).toHaveCount(steps);
+    await expect(page.locator('#runDots i.ok')).toHaveCount(steps);
+    // The summary names no test: the circles are the detail.
+    expect(res.summary).not.toContain('“');
+
+    // They describe that run, so an edit clears them with the summary.
+    await page.fill('#spec', await page.inputValue('#spec') + '\n');
+    await expect(page.locator('#runDots i')).toHaveCount(0);
+  });
+
   test('a step carries its value inside the target', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'fast');
@@ -804,17 +826,21 @@ test.describe('Layout and theming', () => {
     }
   });
 
-  test('the site panel head is two centred rows on a phone', async ({ page }) => {
+  test('the site panel head fills two rows on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openApp(page);
     const head = await page.locator('.site-head').boundingBox();
     const title = await page.locator('.site-head h2').boundingBox();
-    const addr = await page.locator('.site-head .addr').boundingBox();
-    // The controls sit below the name, not beside it.
-    expect(addr.y).toBeGreaterThanOrEqual(title.y + title.height - 1);
-    // Both rows are centred in the head.
-    for (const [what, box] of [['the name', title], ['the controls', addr]])
-      expect(Math.abs((box.x + box.width / 2) - (head.x + head.width / 2)), `${what} is off centre`).toBeLessThan(2);
+    const reload = await page.locator('.site-head #reload').boundingBox();
+    const seg = await page.locator('.site-head .view-seg').boundingBox();
+    // The reload ends the first row, beside the name rather than below it.
+    expect(reload.y).toBeLessThan(title.y + title.height);
+    expect(reload.x).toBeGreaterThanOrEqual(title.x + title.width - 1);
+    expect(head.x + head.width - (reload.x + reload.width), 'the reload is not at the end of its row')
+      .toBeLessThan(12);
+    // Site/HTML has the whole second row.
+    expect(seg.y).toBeGreaterThanOrEqual(reload.y + reload.height - 1);
+    expect(seg.width / head.width, 'Site/HTML does not fill its row').toBeGreaterThan(0.9);
   });
 });
 
@@ -870,11 +896,17 @@ test.describe('Accessibility basics', () => {
     await expect(chev).toHaveAttribute('aria-expanded', 'true');
     await expect(chev).toHaveAttribute('aria-label', 'Collapse steps');
 
-    // Collapse all / Expand all follows the folds.
+    // One button, three stops: the steps, then no steps, then no panel. It
+    // always says what the next press does.
+    await expect(page.locator('#foldAll')).toHaveAttribute('aria-label', 'Collapse all');
+    await page.click('#foldAll');
+    await expect(page.locator('#foldAll')).toHaveAttribute('aria-label', 'Collapse the panel');
     await page.click('#foldAll');
     await expect(page.locator('#foldAll')).toHaveAttribute('aria-label', 'Expand all');
+    await expect(page.locator('#results')).toBeHidden();
     await page.click('#foldAll');
     await expect(page.locator('#foldAll')).toHaveAttribute('aria-label', 'Collapse all');
+    await expect(page.locator('#results')).toBeVisible();
   });
 
   test('every toolbar button has an accessible name', async ({ page }) => {

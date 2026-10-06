@@ -128,7 +128,8 @@
         aria-label="Resize the editor" tabindex="0" title="Drag to resize, double-click to reset"></div>
       <section class="panel results-panel">
         <div class="panel-head">
-          <h2>Results <span id="summary" aria-live="polite"></span></h2>
+          <h2>Results <span id="summary" aria-live="polite"></span><span id="runDots" class="sdots"
+              aria-hidden="true"></span></h2>
           <div class="head-actions">
             <button id="foldAll" type="button" class="ghost icon-btn" aria-label="Collapse all"><svg class="i"
                 viewBox="0 0 24 24" aria-hidden="true">
@@ -143,16 +144,33 @@
         aria-label="Resize the coverage panel" tabindex="0" title="Drag to resize, double-click to reset"></div>
       <section class="panel coverage-panel">
         <div class="panel-head">
-          <h2>Coverage <span id="covScore" aria-live="polite"></span></h2>
+          <h2><span id="covTitle">Coverage</span> <span id="covScore" aria-live="polite"></span> <span id="bugScore"
+              aria-live="polite" hidden></span></h2>
           <div class="head-actions">
-            <button id="foldCov" type="button" class="ghost icon-btn" aria-expanded="true" aria-controls="coverage"><svg
+            <div class="seg cov-seg" role="group" aria-label="What to measure">
+              <button type="button" data-cov="coverage" aria-pressed="true"
+                title="Which of this page's controls the tests use">Coverage</button>
+              <button type="button" data-cov="bugs" aria-pressed="false"
+                title="Which bugs the tests would catch">Bugs</button>
+            </div>
+            <button id="foldCov" type="button" class="ghost icon-btn" aria-expanded="true" aria-controls="covBody"><svg
                 class="i" viewBox="0 0 24 24" aria-hidden="true">
                 <path id="foldCovIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
               </svg></button>
           </div>
           <div class="covbar" id="covBar" hidden><span></span></div>
         </div>
-        <div id="coverage"></div>
+        <div class="cov-body" id="covBody">
+          <div id="coverage"></div>
+          <div class="bug-pane" id="bugPane" hidden>
+            <div class="bug-top">
+              <button id="hunt" type="button" class="primary small"
+                title="Break the page one way at a time and run the tests against each">Check bugs</button>
+              <span class="bug-hint">Each bug is a real mistake someone could make. Do your tests notice?</span>
+            </div>
+            <div id="bugs"></div>
+          </div>
+        </div>
       </section>
     </div>
     <div class="resizer col-resizer" id="colResizer" role="separator" aria-orientation="vertical"
@@ -193,6 +211,8 @@
       </div>
       <div id="snapbar" class="bar snapbar" hidden><span id="snapText"></span><button id="snapBack" type="button"
           class="small">Back to live site</button></div>
+      <div id="bugbar" class="bar bugbar" hidden><span id="bugbarText"></span><button id="bugbarRepair" type="button"
+          class="small">Repair the page</button></div>
       <div id="recbar" class="bar recbar" hidden>Recording. Use the site normally and each action becomes a step.
         Shift+click any text or button to add a check.</div>
       <div class="view" id="view">
@@ -201,7 +221,10 @@
         </div>
         <div class="htmlpane" id="htmlPane" hidden>
           <div class="html-bar">
+            <span id="htmlBugText" class="html-bug" hidden></span>
             <span class="html-bar-actions">
+              <button id="htmlBugRepair" type="button" class="ghost small" hidden
+                title="Put the page back as it ships">Repair</button>
               <button id="htmlRevert" type="button" class="ghost small" disabled
                 title="Throw the edits away and read the page again">Revert</button>
               <button id="htmlApply" type="button" class="primary small" disabled

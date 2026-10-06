@@ -1,3 +1,4 @@
+import { covView, renderBugs } from './bugs.js';
 import { catalogs, keyFor } from './catalog.js';
 import { $id, specEl } from './dom.js';
 import { validate } from './parse.js';
@@ -118,7 +119,7 @@ export function stepFor(e){
 
 /* ---------- The panel ---------- */
 export const covEl = $id('coverage'), covScore = $id('covScore'), covBar = $id('covBar');
-export const covPanel = covEl.parentElement;        // the accent belongs to the head's bar as well
+export const covPanel = covEl.closest('.panel');    // the band is the panel's, head and bar included
 export const foldCovBtn = $id('foldCov');
 const label = e => LABELS[e.role] || e.role || 'control';
 
@@ -128,11 +129,15 @@ const label = e => LABELS[e.role] || e.role || 'control';
 export function renderCoverage(){
   const r = report();
   const pct = percent(r);
-  covPanel.dataset.band = r.total ? band(pct) : '';
   covScore.textContent = r.total ? `${r.used} of ${r.total} controls (${pct}%)` : '';
   covScore.title = r.total ? 'Controls a step has used, of the controls the tests have reached so far' : '';
-  covBar.hidden = !r.total;
-  covBar.firstElementChild.style.width = `${Math.round(r.score * 100)}%`;
+  // The panel's band and bar belong to whichever of the two scores is showing
+  if (covView === 'bugs'){ renderBugs(); }
+  else {
+    covPanel.dataset.band = r.total ? band(pct) : '';
+    covBar.hidden = !r.total;
+    covBar.firstElementChild.style.width = `${Math.round(r.score * 100)}%`;
+  }
   const top = covEl.scrollTop;
   covEl.innerHTML = '';
   if (!r.total){
@@ -209,7 +214,7 @@ function row(e, addable, canAdd, v){
 let folded = false;
 export function setCovFolded(f){
   folded = f;
-  covEl.hidden = f;
+  $id('covBody').hidden = f;
   foldCovBtn.setAttribute('aria-expanded', String(!f));
   foldCovBtn.setAttribute('aria-label', f ? 'Expand the controls' : 'Collapse the controls');
   foldCovBtn.title = f ? 'Show every control on this site' : 'Hide the list of controls';

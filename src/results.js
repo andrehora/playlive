@@ -40,21 +40,36 @@ export function renderResults(tests){
   updateFoldAll();
   syncUI();
 }
-// One button folds or unfolds every test: it offers "Expand all" once everything is folded
+/* One button, three stops: the steps of every test shown, then hidden, then the
+   panel itself down to its one row, which is what gives Coverage the space. The
+   button always says what the next press does. Collapsed, the head still
+   carries the summary, so a run is still readable from one line. */
 export const foldAllBtn = $id('foldAll');
+export let resultsView = 'folded';          // 'expanded' | 'folded' | 'collapsed'
+const NEXT = { expanded: 'folded', folded: 'collapsed', collapsed: 'expanded' };
+const SAYS = {
+  folded: ['Collapse all', 'Hide the steps of every test', 'M7 9l5-5 5 5M7 15l5 5 5-5'],
+  collapsed: ['Collapse the panel', 'Collapse Results to its title', 'M5 12h14'],
+  expanded: ['Expand all', 'Show the steps of every test', 'M7 4l5 5 5-5M7 20l5-5 5 5']
+};
+export function setResultsView(v){
+  resultsView = v;
+  $id('left').dataset.results = v;
+  if (v !== 'collapsed') [...resultsEl.querySelectorAll('.test')].forEach(x => setCollapsed(x, v === 'folded'));
+  updateFoldAll();
+}
 export function updateFoldAll(){
   const secs = [...resultsEl.querySelectorAll('.test')];
-  const allFolded = secs.length > 0 && secs.every(x => x.classList.contains('collapsed'));
-  foldAllBtn.disabled = !secs.length;
-  foldAllBtn.setAttribute('aria-label', allFolded ? 'Expand all' : 'Collapse all');
-  foldAllBtn.title = allFolded ? 'Show the steps of every test' : 'Hide the steps of every test';
-  $id('foldIcon').setAttribute('d', allFolded ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
+  // A fold opened by hand moves the cycle to where the panel actually is
+  if (resultsView !== 'collapsed' && secs.length)
+    resultsView = secs.every(x => x.classList.contains('collapsed')) ? 'folded' : 'expanded';
+  const [label, title, d] = SAYS[NEXT[resultsView]];
+  foldAllBtn.disabled = !secs.length && resultsView !== 'collapsed';
+  foldAllBtn.setAttribute('aria-label', label);
+  foldAllBtn.title = title;
+  $id('foldIcon').setAttribute('d', d);
 }
-foldAllBtn.addEventListener('click', () => {
-  const secs = [...resultsEl.querySelectorAll('.test')];
-  const fold = !secs.every(x => x.classList.contains('collapsed'));
-  secs.forEach(x => setCollapsed(x, fold));
-});
+foldAllBtn.addEventListener('click', () => setResultsView(NEXT[resultsView]));
 // Folded tests stay folded when the list is redrawn (every run and every edit redraws it)
 export const expandedTests = new Set();   // tests start folded; only the ones you open are remembered as open
 export const foldKey = sec => sec.dataset.site + '::' + sec.dataset.title;

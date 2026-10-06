@@ -15,9 +15,19 @@ export const clampLeft = w => Math.round(Math.min(Math.max(w, 360), $id('workspa
 // What the editor may not take: whatever Coverage is currently using, the
 // Results panel's own floor, the gaps, and this panel's toolbar. Neither handle
 // can squeeze a panel away, which is what keeps the desktop page from scrolling.
-export const covPanelEl = () => $id('coverage').parentElement;
+export const covPanelEl = () => $id('coverage').closest('.panel');
 const covH = () => covPanelEl().getBoundingClientRect().height;
-export const clampEditor = h => Math.round(Math.min(Math.max(h, 110), $id('left').clientHeight - covH() - 300));
+// Results collapsed is its one row, and Coverage takes the space it gave up. So
+// the floor the editor must leave below it shrinks to that row plus Coverage's
+// own floor, which is what lets the editor grow into a collapsed Results.
+const collapsedResults = () => $id('left').dataset.results === 'collapsed';
+const resultsFloor = () => collapsedResults()
+  ? Math.round($id('results').closest('.panel').getBoundingClientRect().height)
+  : 200;
+export const clampEditor = h => {
+  const below = (collapsedResults() ? 100 : covH()) + resultsFloor() + 100;
+  return Math.round(Math.min(Math.max(h, 110), $id('left').clientHeight - below));
+};
 // And Coverage may not take what the Tests panel above it and the Results floor
 // below need: the two gaps and that floor are what is left out here.
 export const clampCov = h => {

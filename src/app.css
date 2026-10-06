@@ -134,6 +134,14 @@ body.resizing iframe{pointer-events:none}
 
 /* ---------- Results ---------- */
 .results-panel{flex:1;min-height:200px}
+/* Collapsed, Results is its head and nothing else, and the room it gives up
+   goes to Coverage below it rather than to a gap at the bottom. Its handle has
+   nothing left to split, so it stops taking the pointer but keeps its place:
+   the handles are what space these panels apart. */
+.left[data-results="collapsed"] .results-panel{flex:0 0 auto;min-height:0}
+.left[data-results="collapsed"] #results{display:none}
+.left[data-results="collapsed"] #covResizer{visibility:hidden;pointer-events:none}
+.left[data-results="collapsed"] .coverage-panel{flex:1 1 auto;height:auto}
 #summary{flex:0 1 auto;font-weight:400;font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* The summary is the only head text long enough to wrap the fold button onto its own row,
    so this head keeps one line and the summary gives up its tail instead. */
@@ -163,6 +171,7 @@ body.resizing iframe{pointer-events:none}
 .hist i{width:4px;height:12px;border-radius:2px;background:var(--line)}
 .hist i.h-pass{background:var(--pass)} .hist i.h-fail{background:var(--fail)}
 .sdots{display:inline-flex;flex-wrap:wrap;gap:3px;margin-left:8px;vertical-align:1px;max-width:100%}
+#runDots:empty{display:none}
 .sdots i{width:7px;height:7px;border-radius:50%;background:var(--line);animation:dot-in .18s ease-out}
 .sdots i.run{background:var(--running);animation:dot-in .18s ease-out,pulse 1s ease-in-out .18s infinite}
 .sdots i.ok{background:var(--pass)} .sdots i.bad{background:var(--fail)}
@@ -199,7 +208,9 @@ body.resizing iframe{pointer-events:none}
 .coverage-panel[data-band="ok"]{--cov:var(--pass)}
 .coverage-panel[data-band="warn"]{--cov:var(--warn)}
 .coverage-panel[data-band="bad"]{--cov:var(--fail)}
-#coverage{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.cov-body{flex:1;min-height:0;display:flex;flex-direction:column}
+#coverage,.bug-pane{flex:1;min-height:0;display:flex;flex-direction:column}
+#coverage,#bugs{overflow:auto;overscroll-behavior:contain}
 .covbar{position:absolute;left:0;right:0;bottom:-1px;height:2px}
 .covbar span{display:block;height:100%;width:0;background:var(--cov);transition:width .25s ease}
 #covScore{font-weight:400;font-size:12px;color:var(--cov);white-space:nowrap}
@@ -221,6 +232,32 @@ body.resizing iframe{pointer-events:none}
 .cov-row[data-queued] .cov-m{color:var(--pass)}
 .cov-add{margin-left:auto;flex:none}
 .cov-m + .cov-add{margin-left:8px}
+
+/* ---------- Bugs: the other half of the score ----------
+   Caught is a pass and escaped is a failure, the same three colours as
+   everywhere else, and the dots differ in shape as well: solid for caught,
+   hollow for escaped, ringed for a bug nothing has tried. */
+#bugScore{font-weight:400;font-size:12px;color:var(--cov);white-space:nowrap}
+#bugScore:empty{display:none}
+#bugs{flex:1;min-height:0}
+.bug-top{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);flex:none}
+.bug-hint{font-size:11.5px;color:var(--muted);min-width:0}
+.bugbar #bugbarText{min-width:0;overflow-wrap:anywhere}
+.bug-group{border-bottom:1px solid var(--line)}
+.bug-group:last-child{border-bottom:0}
+.bug-dot{width:9px;height:9px;border-radius:50%;flex:none;border:1.5px solid var(--fail)}
+.bug-group[data-state="unchecked"] .bug-dot{border-color:var(--muted)}
+.bug-group[data-state="stale"] .bug-dot{border-color:var(--warn);background:var(--warn)}
+.bug-group[data-state="caught"] .bug-dot{border-color:var(--pass);background:var(--pass)}
+.bug-row{padding:3px 12px 3px 28px}
+.bug-row:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.bug-row[data-live] .bug-title,.bug-row[data-trying] .bug-title{color:var(--fail)}
+.bug-line{display:flex;align-items:center;gap:8px;min-height:26px}
+.bug-title{font-size:12.5px;min-width:0}
+.bug-m{font-size:11.5px;color:var(--fail);white-space:nowrap;margin-left:auto}
+.bug-m:empty{display:none}
+.bug-m + .bug-btn{margin-left:8px}
+.bug-btn{margin-left:auto;flex:none}
 
 /* ---------- Site panel ---------- */
 .browser{min-height:0}
@@ -267,6 +304,7 @@ body.resizing iframe{pointer-events:none}
 .seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 12px;border-bottom:1px solid var(--line)}
 .snapbar{background:color-mix(in srgb,var(--run) 10%,transparent);color:var(--run)}
+.bugbar{background:color-mix(in srgb,var(--fail) 10%,transparent);color:var(--fail)}
 .recbar{background:color-mix(in srgb,var(--rec) 10%,transparent);color:var(--rec)}
 .recbar::before{content:"●";margin-right:6px;animation:pulse 1.2s ease-in-out infinite}
 .view{position:relative;flex:1;min-height:0;display:flex}
@@ -283,6 +321,7 @@ body.resizing iframe{pointer-events:none}
 /* The markup is editable: a textarea over the highlighted copy, as in the test editor */
 .html-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 10px;border-bottom:1px solid var(--line);background:var(--panel);font:12.5px/1.4 "IBM Plex Sans",system-ui,sans-serif;color:var(--muted)}
 .html-bar-actions{display:flex;align-items:center;gap:6px;flex:none;margin-left:auto}
+.html-bug{color:var(--fail);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .html-body{flex:1;min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr)}
 .html-body:focus-within{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
 .htmlcode,#htmlEdit{position:absolute;inset:0;margin:0;padding:12px 14px;border:0;font:inherit;white-space:pre;tab-size:2;letter-spacing:0}
@@ -293,11 +332,13 @@ body.resizing iframe{pointer-events:none}
 .htmlcode .l.cur{background:color-mix(in srgb,var(--running) 24%,transparent);box-shadow:inset 3px 0 var(--running)}
 .htmlcode .l.ok{background:color-mix(in srgb,var(--pass) 16%,transparent);box-shadow:inset 3px 0 var(--pass)}
 .htmlcode .l.bad{background:color-mix(in srgb,var(--fail) 14%,transparent);box-shadow:inset 3px 0 var(--fail)}
+.htmlcode .l.bug{background:color-mix(in srgb,var(--fail) 14%,transparent);box-shadow:inset 3px 0 var(--fail)}
 /* The action's name on the marked line, like the tag the site view draws */
 .htmlcode .l .tag{display:inline-block;margin-left:10px;padding:0 6px;border-radius:4px;font-style:normal;font-weight:600;font-size:.9em}
 .htmlcode .l.cur .tag{background:var(--running);color:#1f2937}
 .htmlcode .l.ok .tag{background:var(--pass);color:#fff}
 .htmlcode .l.bad .tag{background:var(--fail);color:#fff}
+.htmlcode .l.bug .tag{background:var(--fail);color:#fff}
 .htmlpane .gutter{padding:12px 10px 12px 12px}
 .gutter div.ok{opacity:1;color:var(--pass);font-weight:600}
 iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
@@ -386,15 +427,15 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 
   /* Site panel */
   .browser{height:clamp(360px,70dvh,640px)}
-  /* The head reads as two centred rows: what this page is, then what to do with it */
+  /* The head reads as two rows: what this page is, then what to do with it */
   .site-head{flex-direction:column;align-items:center;gap:8px;padding:10px}
   .site-head h2{justify-content:center;flex-wrap:wrap;row-gap:4px}
   .addr{margin-left:0;width:100%;justify-content:center}
   .site-btn{width:100%;min-width:0}
   .stepper{gap:4px}
   /* The screen-size toggle goes, but Site/HTML stays, at a size worth tapping */
-  .seg{display:none} .view-seg{display:inline-flex}
-  .view-seg button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
+  .seg{display:none} .view-seg,.cov-seg{display:inline-flex}
+  .view-seg button,.cov-seg button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
 
   /* The example list opens as a sheet, so it is reachable wherever the page sits */
   .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(70dvh,560px);border-radius:14px}
@@ -441,6 +482,18 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .site-count{min-width:0;font-size:12.5px}
   .appbar .site-btn{overflow:hidden}
   .site-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* The site panel's head fills its rows the same way. Its controls stop being a
+     row of their own (`display:contents`) so the reload can end the first row
+     beside the page and its category, leaving the whole second to Site/HTML. */
+  .site-head{flex-flow:row wrap;align-items:center}
+  .site-head h2{flex:1 1 auto;flex-wrap:nowrap;justify-content:flex-start;row-gap:0}
+  .site-head .head-sub{flex:1 1 auto;max-width:none}
+  .site-head .cat-badge{margin-left:auto}
+  .addr{display:contents}
+  .site-head #reload{flex:0 0 auto}
+  .site-head .view-seg{flex:1 1 100%}
+  .site-head .view-seg button{flex:1 1 0;min-width:0}
+
   /* Run is the primary target, so it takes whatever room the row has spare */
   .toolbar #run{flex:1 1 auto}
   .toolbar .opts{width:100%;margin-left:0;gap:8px}
