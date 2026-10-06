@@ -43,6 +43,13 @@ test.describe('Site picker', () => {
     await expect(page.locator('#tabs .tab:visible')).toHaveCount(0);
     await expect(page.locator('#popEmpty')).toBeVisible();
 
+    // Each category heads a band in its own accent, so the groups are told apart
+    // by more than a gap.
+    await page.fill('#siteSearch', '');
+    const bands = await page.$$eval('#tabs .pop-cat', hs => hs.map(h => getComputedStyle(h).backgroundColor));
+    expect(bands.every(c => c !== 'rgba(0, 0, 0, 0)')).toBe(true);
+    expect(new Set(bands).size).toBeGreaterThan(1);
+
     await page.fill('#siteSearch', 'coupon');
     await page.click('#tabs .tab[data-site="coupon-code"]');
     await expect(page.locator('#sitePop')).toBeHidden();

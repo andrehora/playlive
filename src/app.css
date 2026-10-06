@@ -244,11 +244,18 @@ body.resizing iframe{pointer-events:none}
 #siteSearch{margin:8px;padding:var(--ctl-pad);min-height:var(--tap);border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);font:inherit;font-size:var(--ctl-font);outline:none}
 #siteSearch:focus{border-color:var(--run)}
 .pop-list{overflow:auto;padding:0 6px 8px;overscroll-behavior:contain}
-.pop-cat{font-size:11.5px;font-weight:600;color:var(--muted);padding:10px 8px 4px;display:flex;align-items:center;gap:7px}
-.pop-cat svg.i{width:14px;height:14px;color:var(--cat,var(--muted))}
+/* The category heads a band in its own accent, the same mix the Site panel's
+   badge uses, so a scroll through a hundred examples reads as sixteen groups.
+   The icon inherits that colour rather than the raw accent, which is what keeps
+   it legible on the tint in both themes. */
+.pop-cat{font-size:11.5px;font-weight:600;color:color-mix(in srgb,var(--cat,var(--muted)) 62%,var(--ink));background:color-mix(in srgb,var(--cat,var(--muted)) 16%,transparent);border-radius:7px;padding:5px 8px;margin:10px 0 4px;display:flex;align-items:center;gap:7px}
+.pop-group:first-child .pop-cat{margin-top:4px}
+.pop-cat svg.i{width:14px;height:14px}
 .pop-list .tab{width:100%;justify-content:flex-start;gap:9px;border:0;border-radius:7px;padding:7px 8px;min-height:var(--tap);background:transparent;font-size:var(--btn-font)}
 .pop-list .tab:hover,.pop-list .tab:focus-visible{background:color-mix(in srgb,var(--ink) 6%,transparent);outline:none}
-.pop-list .tab[aria-pressed="true"]{background:color-mix(in srgb,var(--run) 13%,transparent);font-weight:600}
+/* The example showing is marked by its weight alone: with every category on a
+   band of its own, a second filled block would be one too many. */
+.pop-list .tab[aria-pressed="true"]{font-weight:600}
 .pop-list .tab .tres{margin-left:auto}
 .pop-empty{color:var(--muted);font-size:13px;padding:6px 14px 14px;margin:0}
 .stepper{display:flex;align-items:center;gap:2px}
@@ -391,7 +398,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 
   /* The example list opens as a sheet, so it is reachable wherever the page sits */
   .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(70dvh,560px);border-radius:14px}
-  .pop-cat{padding:12px 8px 4px}
+  .pop-cat{padding:8px}
 
   /* Text that is comfortable at arm's length rather than at desk distance */
   .panel-head h2,.site-head h2{font-size:15px}
