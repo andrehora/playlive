@@ -1,18 +1,16 @@
-flows:
-  groceries:
-    - fill: { label: Title, value: Groceries }
-    - fill: { label: Note, value: "Eggs, spinach, lemons" }
-    - click: { role: button, name: Add note }
-
 test: Adds a note
 steps:
-  - use: groceries
+  - fill: { label: Title, value: Groceries }
+  - fill: { label: Note, value: "Eggs, spinach, lemons" }
+  - click: { role: button, name: Add note }
   - expectText: 1 note
   - expectText: Eggs, spinach, lemons
 
 test: Deletes a note
 steps:
-  - use: groceries
+  - fill: { label: Title, value: Groceries }
+  - fill: { label: Note, value: "Eggs, spinach, lemons" }
+  - click: { role: button, name: Add note }
   - click: { role: button, name: "Delete note: Groceries" }
   - expectText: No notes yet.
 

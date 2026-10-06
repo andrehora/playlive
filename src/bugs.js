@@ -1,5 +1,4 @@
 import { SITES } from '../examples/examples.js';
-import { covBar, covPanel } from './coverage.js';
 import { $id, specEl, summaryEl } from './dom.js';
 import { setBugMark, withBase } from './htmlview.js';
 import { validate } from './parse.js';
@@ -92,20 +91,21 @@ export async function hunt(){
   if (running || recording || hunting) return;
   const site = editorSite;
   const list = await bugsFor(site);
-  if (!list.length){ toast('This example has no bugs to try yet'); return; }
+  if (!list.length){ toast('This example has no mutations to try yet'); return; }
   const v = validate(specEl.value);
   if (v.error){ toast('Fix the problems in the file first'); return; }
-  if (!v.spec || !v.spec.tests.length){ toast('Write a test first: a bug needs a test to catch it'); return; }
+  if (!v.spec || !v.spec.tests.length){ toast('Write a test first: a mutation needs a test to catch it'); return; }
 
   // The tests have to pass against the page as it ships. A suite that is
   // already red would call every bug caught, which would be a lie.
   huntBtn.disabled = true;              // from the click, not from the first redraw
   await repair();
   const base = await run();
-  if (!base || base.stopped) return;
+  if (!base || base.stopped){ renderBugs(); return; }
   if (base.passed < base.ran){
-    summaryEl.textContent = `${base.ran - base.passed} of ${base.ran} tests fail on the page as it is. A bug hunt needs them green first.`;
+    summaryEl.textContent = `${base.ran - base.passed} of ${base.ran} tests fail on the page as it is. A mutation run needs them green first.`;
     summaryEl.className = 'bad';
+    renderBugs();                       // the button was disabled from the click
     return;
   }
 
@@ -136,7 +136,7 @@ export async function hunt(){
     await loadApp();
     syncUI();
     const r = report(site);
-    summaryEl.textContent = `Bug hunt: ${r.caught} of ${r.scored} bugs caught` + (r.escaped ? `, ${r.escaped} through` : '');
+    summaryEl.textContent = `Mutation: ${r.caught} of ${r.scored} caught` + (r.escaped ? `, ${r.escaped} through` : '');
     summaryEl.className = r.escaped ? 'bad' : 'ok';
     renderBugs();
   }
@@ -157,13 +157,18 @@ export function report(site = editorSite){
 export const percent = r => Math.round(r.score * 100);
 export const band = p => p === 100 ? 'ok' : p >= 60 ? 'warn' : 'bad';
 
-/* ---------- The panel ---------- */
+/* ---------- The panel ----------
+   A panel of its own below Coverage, so the two scores read one under the
+   other. It is on screen in Mutation mode and nowhere else, which is why it has no
+   fold of its own: the mode is the fold. */
 export const bugsEl = $id('bugs'), bugScore = $id('bugScore'), bugBar = $id('bugbar');
+export const bugPanel = bugsEl.closest('.panel');   // the band is the panel's, head and bar included
+export const bugMeter = $id('bugMeter');
 export const huntBtn = $id('hunt');
 const GROUPS = [
   ['escaped', 'Escaped', 'The page broke and every test still passed'],
-  ['stale', 'No longer applies', 'The page has changed, so this bug cannot be tried'],
-  ['unchecked', 'Not checked yet', 'No hunt has tried these'],
+  ['stale', 'No longer applies', 'The page has changed, so this mutation cannot be tried'],
+  ['unchecked', 'Not checked yet', 'Nothing has tried these yet'],
   ['caught', 'Caught', 'A test failed, which is a test doing its job']
 ];
 
@@ -176,26 +181,24 @@ export function renderBugs(){
     bugScore.textContent = '';
     huntBtn.disabled = true;
     bugsEl.innerHTML = '';
-    bugsEl.appendChild(note('Reading this example’s bugs…'));
+    bugsEl.appendChild(note('Reading this example’s mutations…'));
     return;
   }
   const r = report();
   const pct = percent(r);
-  if (covView === 'bugs'){
-    covPanel.dataset.band = r.scored ? band(pct) : '';
-    covBar.hidden = !r.scored;
-    covBar.firstElementChild.style.width = `${pct}%`;
-  }
-  bugScore.textContent = r.scored ? `${r.caught} of ${r.scored} bugs caught (${pct}%)` : r.total ? `${r.total} bugs to try` : '';
+  bugPanel.dataset.band = r.scored ? band(pct) : '';
+  bugMeter.hidden = !r.scored;
+  bugMeter.firstElementChild.style.width = `${pct}%`;
+  bugScore.textContent = r.scored ? `${r.caught} of ${r.scored} mutations caught (${pct}%)` : r.total ? `${r.total} mutations` : '';
   bugScore.dataset.band = r.scored ? band(pct) : '';
   huntBtn.disabled = running || recording || hunting || !r.total;
-  huntBtn.textContent = hunting ? 'Hunting…' : r.scored ? 'Check again' : 'Check bugs';
+  huntBtn.textContent = hunting ? 'Running…' : r.scored ? 'Run again' : 'Run mutations';
   // Something always says the page is broken on purpose, so a run nobody meant
   // to make against a broken page cannot be mistaken for the real thing. The
   // markup view already has a row of its own, so the message goes there rather
   // than taking a second one.
   const live = r.items.find(i => i.live);
-  const text = live ? `Bug on the page: ${live.title}` : '';
+  const text = live ? `Mutation on the page: ${live.title}` : '';
   const inHtml = !$id('htmlPane').hidden;
   bugBar.hidden = !live || inHtml;
   $id('bugbarText').textContent = text;
@@ -206,7 +209,7 @@ export function renderBugs(){
   const top = bugsEl.scrollTop;
   bugsEl.innerHTML = '';
   if (!r.total){
-    bugsEl.appendChild(note('This example ships no bugs yet. The ones that do can break their own page a dozen ways and ask whether your tests notice.'));
+    bugsEl.appendChild(note('This example ships no mutations yet. The ones that do can break their own page a dozen ways and ask whether your tests notice.'));
     return;
   }
   for (const [state, title, why] of GROUPS){
@@ -270,22 +273,32 @@ function row(b){
   return li;
 }
 
-/* ---------- Which of the two scores the panel is showing ---------- */
-export const covTitle = $id('covTitle'), covScoreEl = $id('covScore'), bugPane = $id('bugPane');
-export let covView = 'coverage';
-export function setCovView(v){
-  covView = v;
-  covTitle.textContent = v === 'bugs' ? 'Bugs' : 'Coverage';
-  $id('coverage').hidden = v === 'bugs';
-  bugPane.hidden = v !== 'bugs';
-  covScoreEl.hidden = v === 'bugs';
-  bugScore.hidden = v !== 'bugs';
-  document.querySelectorAll('.cov-seg [data-cov]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cov === v)));
-  renderBugs();
-}
-document.querySelectorAll('.cov-seg [data-cov]').forEach(b => b.addEventListener('click', () => setCovView(b.dataset.cov)));
 // The bug message rides whichever row the site panel's view has, so a change of
-// view redraws it. This module listens for itself rather than being called.
+// view redraws it. This module listens for itself rather than being called, and
+// listens for the example changing the same way: the bugs on screen are that
+// example's.
 document.querySelectorAll('.view-seg [data-view]').forEach(b => b.addEventListener('click', () => renderBugs()));
+document.addEventListener('playlive:site', () => renderBugs());
+// And for the runner going busy, so Run mutations greys out with every other
+// control rather than being the one thing a run leaves clickable.
+document.addEventListener('playlive:busy', () => renderBugs());
 huntBtn.addEventListener('click', () => hunt());
+
+/* ---------- Folding: the score stays, the list goes ----------
+   The same stops the other lists have: folded, the panel is its one row and
+   Results takes the room back. The mode is still the only way this panel comes
+   and goes, but a list of a dozen mutations is a list, and a list folds. */
+export const foldBugsBtn = $id('foldBugs');
+let folded = false;
+export function setBugFolded(f){
+  folded = f;
+  bugsEl.hidden = f;
+  $id('left').dataset.bug = f ? 'collapsed' : 'open';
+  foldBugsBtn.setAttribute('aria-expanded', String(!f));
+  foldBugsBtn.setAttribute('aria-label', f ? 'Expand the mutations' : 'Collapse the mutations');
+  foldBugsBtn.title = f ? 'Show every mutation and what the tests made of it' : 'Hide the list of mutations';
+  $id('foldBugsIcon').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
+}
+foldBugsBtn.addEventListener('click', () => setBugFolded(!folded));
+setBugFolded(false);
 [$id('bugbarRepair'), $id('htmlBugRepair')].forEach(b => b.addEventListener('click', () => repair()));

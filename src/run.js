@@ -8,6 +8,8 @@ import { renderHtmlView } from './htmlview.js';
 import { paintHistory, recordHistory } from './history.js';
 import { validate } from './parse.js';
 import { closePicker, setView, siteBtn } from './picker.js';
+import { renderCreate } from './create.js';
+import { renderSmells } from './smells.js';
 import { markStep, renderResults } from './results.js';
 import { loadApp, pageErrors, persist } from './sites.js';
 import { TIMEOUT, editorSite, hunting, lastEl, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from './state.js';
@@ -22,6 +24,14 @@ export function withUnique(step, unique){
   if (out.target) out.target = Object.fromEntries(Object.entries(out.target).map(([k, v]) => [k, r(v)]));
   return out;
 }
+// The circles are laid out before the run starts, one hollow one per step of
+// the repetition, and fill in as the run reaches them: the head shows how long
+// the run is as well as how far it has got. stepsBase is where the test about
+// to run begins in that row, so a test that fails part way leaves the steps it
+// never reached hollow without pushing the ones after it out of place.
+let stepsBase = 0;
+const dots = (box, n) => { box.innerHTML = '<i class="todo"></i>'.repeat(n); };
+
 export let nextResolve = null;
 // Step by step: the Run button turns into Next step and waits for a click (or Ctrl/⌘+Enter)
 export function waitNext(){ return new Promise(res => { nextResolve = res; syncUI(); runBtn.focus({ preventScroll: true }); }); }
@@ -33,8 +43,8 @@ export async function runTest(t, sec, opts){
   setView(editorSite);
   await loadApp();                            // every test starts from a fresh page
   const items = [...sec.querySelectorAll('li')];
-  const sdots = sec.querySelector('.sdots'); sdots.innerHTML = '';   // one small circle per step, added as each step starts
-  // The same circles pile up in the panel head, one per step of the whole run,
+  const sdots = sec.querySelector('.sdots'); dots(sdots, t.steps.length);   // one small circle per step
+  // The same circles run along the panel head, one per step of the whole run,
   // so a collapsed panel still shows how far it has got.
   const headDots = $id('runDots');
   const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);   // the value of ${unique} for this run
@@ -58,9 +68,10 @@ export async function runTest(t, sec, opts){
   for (let i = 0; i < t.steps.length; i++){
     const li = items[i]; li.className = 'running';
     setCurrentLine(lineForStep(specEl.value, t.steps[i].src));   // the editor always follows the step
-    const dot = document.createElement('i'); dot.className = 'run'; sdots.appendChild(dot);
+    const dot = sdots.children[i] || sdots.appendChild(document.createElement('i'));
+    const hdot = headDots.children[stepsBase + i] || headDots.appendChild(document.createElement('i'));
+    dot.className = hdot.className = 'run';
     sdots.title = `Step ${i + 1} of ${t.steps.length}`;
-    const hdot = document.createElement('i'); hdot.className = 'run'; headDots.appendChild(hdot);
     followInResults(li);
     setLastEl(null);
     const step = withUnique(t.steps[i], unique);
@@ -118,10 +129,14 @@ export async function run(only){
   const started = performance.now();
   let records = [];
   const total = (only !== undefined ? 1 : spec.tests.length) * reps;
+  // Where each test's steps start in the head's row of circles, and how many
+  // circles one repetition needs.
+  const starts = []; let stepsTotal = 0;
+  spec.tests.forEach((t, i) => { starts[i] = stepsTotal; if (only === undefined || i === only) stepsTotal += t.steps.length; });
   let done = 0;
   setProgress(0);
   for (let rep = 1; rep <= reps && !stopRequested; rep++){
-    $id('runDots').innerHTML = '';
+    dots($id('runDots'), stepsTotal);
     renderResults(spec.tests);
     resultsEl.scrollTop = 0;
     syncUI();
@@ -132,6 +147,7 @@ export async function run(only){
       if (stopRequested){ sections[i].dataset.state = 'notrun'; continue; }
       summaryEl.className = '';
       summaryEl.textContent = `Running ${done + 1} of ${total}` + (reps > 1 ? ` · repetition ${rep} of ${reps}` : '');
+      stepsBase = starts[i];
       const r = await runTest(spec.tests[i], sections[i], spec);
       setProgress(++done / total);
       if (!stopRequested){ tally[i].runs++; if (r.ok) tally[i].pass++; }
@@ -176,6 +192,9 @@ export function syncUI(){
   [siteBtn, $id('prevSite'), $id('nextSite'), ...tabsEl.querySelectorAll('button')].forEach(b => b.disabled = busy);
   if (busy) closePicker();
   resultsEl.querySelectorAll('.run-one').forEach(b => b.disabled = busy);
+  // Panels that are only there in some modes keep their own controls in step
+  // with the runner: they listen rather than being reached into from here.
+  document.dispatchEvent(new CustomEvent('playlive:busy'));
 }
 
 export function preview(){
@@ -184,6 +203,8 @@ export function preview(){
   if (v.spec){ renderResults(v.spec.tests); errorEl.textContent = ''; setFileStatus(v); }
   else if (!recording){ errorEl.textContent = v.error; setFileStatus(v); }
   renderCoverage();                 // whether a step can be added depends on the file parsing
+  renderSmells();                   // and the smells are read from the file itself
+  renderCreate();                   // as is how much of this example you have written
   summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
   $id('runDots').innerHTML = '';
 }

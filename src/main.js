@@ -1,5 +1,5 @@
 import { SITES, SITE_IDS } from '../examples/examples.js';
-import { bugsFor, clearBugs, hunt, inject, renderBugs, repair, report as bugReport, setCovView } from './bugs.js';
+import { bugsFor, clearBugs, hunt, inject, renderBugs, repair, report as bugReport, setBugFolded } from './bugs.js';
 import { clearCatalog, harvest, snapshot } from './catalog.js';
 import { clearCoverage, report } from './coverage.js';
 import { closeCompletion, completion, context, suggest } from './complete.js';
@@ -9,14 +9,18 @@ import { toCypress, toPlaywright } from './exports.js';
 import { applyHtml, htmlDirty, htmlEdit, revertHtml } from './htmlview.js';
 import { query } from './find.js';
 import { HIST, runHistory } from './history.js';
+import { layout } from './layout.js';
+import { setMode } from './modes.js';
 import { validate } from './parse.js';
 import { renderTabs, selectSite, setView } from './picker.js';
+import { createSkeleton, report as createReport, setCreateFolded, titlesOf } from './create.js';
+import { found as smellFound, scanSites, report as smellReport, setSmellFolded, setSmellView, smellView, smelly } from './smells.js';
 import { startRecording, stopRecording } from './recorder.js';
 import { expandedTests } from './results.js';
 import { nextResolve, preview, releaseNext, run, syncUI } from './run.js';
-import { copyLink, shareUrl, siteFromHash, syncUrl } from './share.js';
-import { SITE_KEYS, STORE, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './sites.js';
-import { clearBugHtml, clearEditedHtml, editorSite, previewTimer, recording, running, setEditorSite, setPreviewTimer, setStopRequested } from './state.js';
+import { copyLink, modeFromHash, shareUrl, siteFromHash, syncUrl } from './share.js';
+import { CREATE, SITE_KEYS, STORE, createTests, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './sites.js';
+import { clearBugHtml, clearEditedHtml, editorSite, mode, previewTimer, recording, running, setEditorSite, setPreviewTimer, setStopRequested } from './state.js';
 import { STATUS, paintTabs, setProgress, siteStatus, toast } from './ui.js';
 import './dialog.js';          // registers the export dialog and its Copy button
 import './complete.js';       // registers the editor's suggestion list
@@ -53,6 +57,7 @@ export async function resetAll(){
     clearBugs(id);               // and a bug score was about a hunt of those tests
     clearBugHtml(id);            // and no bug is left on any page
     delete savedTests[id];
+    delete createTests[id];      // and what you had written of this example yourself
     if (window.__trMem) delete window.__trMem[id];
   }
   for (const k of keys){
@@ -62,8 +67,8 @@ export async function resetAll(){
   // the runner's own data about every site
   for (const o of [siteKeys, runHistory, siteStatus]) for (const k of Object.keys(o)) delete o[k];
   expandedTests.clear();
-  try { for (const k of [STORE, SITE_KEYS, HIST, STATUS]) localStorage.removeItem(k); } catch {}
-  specEl.value = await exampleTests(site);
+  try { for (const k of [STORE, CREATE, SITE_KEYS, HIST, STATUS]) localStorage.removeItem(k); } catch {}
+  specEl.value = mode === 'create' ? await createSkeleton(site) : await exampleTests(site);
   errorEl.textContent = ''; summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
   // deliberately no persist(): after Reset nothing of ours is in storage until you type
   setView(site); paintTabs(); preview(); renderBugs(); loadApp(); syncUI();
@@ -85,9 +90,13 @@ const linked = siteFromHash();
 if (linked) setEditorSite(linked);
 renderTabs();
 setView(editorSite);
+// The link's mode wins over the one this browser remembers: a link is someone
+// saying what to do, and it is applied before the file loads, because which
+// file the editor holds is the mode's to say.
+setMode(modeFromHash() || layout.mode || 'explore', { initial: true });
 syncUrl(editorSite);
-specEl.value = await testsFor(editorSite);
-setCovView('coverage');          // the panel starts on the score it has always shown
+specEl.value = await testsFor(editorSite) ?? await createSkeleton(editorSite);
+renderBugs();
 preview(); loadApp(); syncUI();
 // On a narrow screen the panels stack, so a screenful of YAML would push the
 // site and its results off the bottom: the code starts folded and the Tests
@@ -99,8 +108,14 @@ window.playlive = {
   selectSite, validate, toPlaywright, toCypress, SITES, SITE_IDS,
   catalog: { harvest, snapshot, clear: clearCatalog },
   coverage: { report, clear: clearCoverage },
-  bugs: { report: bugReport, list: bugsFor, hunt, inject, repair, view: setCovView, render: renderBugs },
-  share: { copy: copyLink, url: shareUrl, linked: siteFromHash },
+  bugs: { report: bugReport, list: bugsFor, hunt, inject, repair, render: renderBugs, fold: setBugFolded },
+  modes: { set: setMode, get: () => mode },
+  smells: {
+    report: smellReport, fold: setSmellFolded, scan: scanSites, sites: () => [...smelly],
+    view: setSmellView, viewing: smellView, found: id => smellFound.get(id) || []
+  },
+  create: { report: createReport, fold: setCreateFolded, skeleton: createSkeleton, titles: titlesOf },
+  share: { copy: copyLink, url: shareUrl, linked: siteFromHash, linkedMode: modeFromHash },
   complete: { suggest, context, showing: completion, close: closeCompletion },
   html: { markup: () => htmlEdit.value, apply: applyHtml, revert: revertHtml, edited: () => htmlDirty() },
   query

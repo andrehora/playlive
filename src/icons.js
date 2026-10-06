@@ -24,11 +24,14 @@ const PATHS = {
   Learning: '<path d="M2.5 9L12 4.5 21.5 9 12 13.5 2.5 9z"/>'
     + '<path d="M6.5 11.3V16c0 1.6 2.5 2.9 5.5 2.9s5.5-1.3 5.5-2.9v-4.7"/>',
   Games: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M9 9h.01M12 12h.01M15 15h.01"/>',
-  // The catch-all gets the catch-all icon.
-  Misc: '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/>'
+  // No category falls back to this one: it is what a theme added to the manifest
+  // alone is drawn with until it is given an icon of its own.
+  fallback: '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/>',
+  // A run that will not hold still: a trace that spikes where the others are flat.
+  Flaky: '<path d="M3 12h3.5l2.5-6.5L13 18l2.5-6 1.5 3H21"/>',
 };
 
-// A category with no icon of its own falls back to Misc's rather than drawing
-// nothing, so a theme added to the manifest alone still looks finished.
+// A category with no icon of its own falls back to the neutral one rather than
+// drawing nothing, so a theme added to the manifest alone still looks finished.
 export const catIconSvg = cat =>
-  `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${PATHS[cat] || PATHS.Misc}</svg>`;
+  `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${PATHS[cat] || PATHS.fallback}</svg>`;

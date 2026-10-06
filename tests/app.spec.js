@@ -282,6 +282,96 @@ test.describe('Running', () => {
     await expect(page.locator('#error')).toContainText('needs a value');
   });
 
+  // Flows were a step list a test pulled in with "- use:". They are gone, so a
+  // file that still has one is told where those steps go instead of failing
+  // with "unknown setting".
+  test('a file written with flows says they have been removed', async ({ page }) => {
+    await openApp(page, { site: 'contact-form' });
+    await page.fill('#spec', [
+      'flows:',
+      '  open:',
+      '    - click: { role: button, name: Open form }',
+      '',
+      'test: Uses a flow',
+      'steps:',
+      '  - use: open',
+      '  - expectText: Your name',
+      ''
+    ].join('\n'));
+    await expect(page.locator('#error')).toContainText('"flows:" has been removed');
+    await expect(page.locator('#error')).toContainText('beforeEach');
+
+    // And without the settings block, the step itself says the same thing
+    await page.fill('#spec', [
+      'test: Uses a flow',
+      'steps:',
+      '  - use: open',
+      ''
+    ].join('\n'));
+    await expect(page.locator('#error')).toContainText('"use:" and "flows:" have been removed');
+    await page.click('#run');
+    await expect(page.locator('#summary')).toHaveText('');
+  });
+
+  // A number that moves is not a reason to leave it unchecked: expectTextInRange
+  // says the range it should stay inside, which is how a flaky "7 hours left"
+  // becomes a test that is true at every hour.
+  test('expectTextInRange checks the number beside the text', async ({ page }) => {
+    await openApp(page, { site: 'click-counter' });
+    await setSpeed(page, 'fast');
+    await page.fill('#spec', [
+      'test: Counts into the range',
+      'steps:',
+      '  - click: { role: button, name: Increment }',
+      '  - click: { role: button, name: Increment }',
+      '  - expectTextInRange: { text: "Count:", min: 1, max: 5 }',
+      ''
+    ].join('\n'));
+    const res = await runAll(page);
+    expect(res.state, describeFailures(res)).toBe('ok');
+    // The step says what it is checking, in the words the file used.
+    await expect(page.locator('#results .steps li .desc').last())
+      .toHaveText('Expect a number between 1 and 5 beside “Count:”');
+  });
+
+  test('a number outside the range fails, and the message says what the page says', async ({ page }) => {
+    await openApp(page, { site: 'click-counter' });
+    await setSpeed(page, 'fast');
+    await page.fill('#spec', [
+      'test: Counts past the range',
+      'steps:',
+      '  - click: { role: button, name: Increment }',
+      '  - expectTextInRange: { text: "Count:", min: 5, max: 9, timeout: 500 }',
+      ''
+    ].join('\n'));
+    const res = await runAll(page);
+    expect(res.state).toBe('bad');
+    expect(res.tests[0].error).toContain('The page says 1, which is outside 5 to 9');
+  });
+
+  // The range is two numbers and a piece of text, and every way of getting that
+  // wrong says how to put it right.
+  test('expectTextInRange explains a range it cannot use', async ({ page }) => {
+    await openApp(page, { site: 'click-counter' });
+    const ok = 'test: T\nsteps:\n  - click: { role: button, name: Increment }\n';
+    // The box is cleared between tries, so each message is this spec's own.
+    const saysAbout = async (spec, want) => {
+      await page.fill('#spec', ok);
+      await expect(page.locator('#error')).toHaveText('');
+      await page.fill('#spec', spec);
+      await expect(page.locator('#error')).toContainText(want);
+    };
+    await saysAbout('test: T\nsteps:\n  - expectTextInRange: Count\n', 'needs text and a range');
+    await saysAbout('test: T\nsteps:\n  - expectTextInRange: { text: "Count:" }\n',
+      '"min" and "max" must be numbers');
+    await saysAbout('test: T\nsteps:\n  - expectTextInRange: { min: 1, max: 5 }\n',
+      'needs the text to find the number by');
+    await saysAbout('test: T\nsteps:\n  - expectTextInRange: { text: "Count:", min: 9, max: 1 }\n',
+      '"min" is more than "max"');
+    await saysAbout('test: T\nsteps:\n  - expectTextInRange: { text: "Count:", min: 1, max: 5, to: 10 }\n',
+      'takes text, min, max and timeout');
+  });
+
   test('a failing step is explained, later steps are skipped, and the summary is red', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'fast');
@@ -369,6 +459,29 @@ test.describe('Running', () => {
     await page.click('#stop');
     await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
     await expect(page.locator('#run .lbl')).toHaveText('Run');
+  });
+
+  test('the head lays out a circle for every step and fills them as the run goes', async ({ page }) => {
+    await openApp(page, { site: 'contact-form' });
+    const all = await page.locator('#results .steps li').count();   // every step of the run
+    expect(await page.evaluate(() => getComputedStyle(document.getElementById('runDots'), '::before').content)).toContain('Steps:');
+    await setSpeed(page, 'step');
+    await page.click('#run');
+
+    // They are all there from the start, hollow until the run reaches them, so
+    // the row says how long the run is as well as how far it has got.
+    await expect(page.locator('#runDots i')).toHaveCount(all);
+    for (const n of [1, 2, 3]){
+      await expect(page.locator('#runDots i:not(.todo)')).toHaveCount(n);
+      await expect(page.locator('#runDots i.todo')).toHaveCount(all - n);
+      await page.click('#run');
+    }
+
+    // Stopped part way, the steps nobody reached stay hollow rather than going.
+    await page.click('#stop');
+    await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
+    await expect(page.locator('#runDots i')).toHaveCount(all);
+    expect(await page.locator('#runDots i.todo').count()).toBeGreaterThan(0);
   });
 
   test('Repeat runs the tests several times and reports every run', async ({ page }) => {
@@ -506,6 +619,37 @@ test.describe('HTML view', () => {
     await page.click('.view-seg [data-view="site"]');
     await expect(page.locator('#htmlPane')).toBeHidden();
     await expect(page.frameLocator('#app').locator('h1')).toBeVisible();
+  });
+});
+
+// Writing the step is the exercise, so the file cannot be copied out of one
+// example and into another, or pasted in from somewhere else. Export is the
+// deliberate way out.
+test.describe('Copy and paste', () => {
+  test('the editor refuses copy, cut, paste and a dropped selection', async ({ page }) => {
+    await openApp(page, { site: 'contact-form' });
+    const before = await page.inputValue('#spec');
+
+    for (const [type, says] of [['copy', 'Copying the tests is off'], ['cut', 'Cutting the tests is off'],
+      ['paste', 'Pasting into the tests is off'], ['drop', 'Dropping text into the tests is off']]){
+      const prevented = await page.evaluate(type => {
+        const e = type === 'drop'
+          ? new DragEvent('drop', { bubbles: true, cancelable: true })
+          : new ClipboardEvent(type, { bubbles: true, cancelable: true });
+        document.getElementById('spec').dispatchEvent(e);
+        return e.defaultPrevented;
+      }, type);
+      expect(prevented, `${type} should be refused`).toBe(true);
+      // A line saying why, rather than a control that quietly does nothing.
+      await expect(page.locator('#toast')).toContainText(says);
+    }
+    expect(await page.inputValue('#spec')).toBe(before);
+
+    // The export dialog still hands the tests over, because that is a press on
+    // a button that says what it is handing you.
+    await page.click('#export');
+    await expect(page.locator('#dlgCopy')).toBeVisible();
+    await page.keyboard.press('Escape');
   });
 });
 

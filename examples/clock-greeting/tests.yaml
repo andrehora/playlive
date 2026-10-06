@@ -1,0 +1,13 @@
+test: Shows lucky number 4
+steps:
+  - expectText: Your lucky number is 4
+
+test: Lucky number changes
+steps:
+  - expectText: Your lucky number is 4
+  - click: { role: button, name: Draw again }
+  - expectNoText: Your lucky number is 4
+
+test: Shows today's date
+steps:
+  - expectText: Today is 6 October

@@ -27,7 +27,7 @@ export function renderResults(tests){
       const li = document.createElement('li');
       li.innerHTML = `<span class="dot" aria-hidden="true"></span><span class="desc"></span><span class="ms"></span>`;
       const desc = li.querySelector('.desc');
-      if (s.from){ const f = document.createElement('span'); f.className = 'flow-tag'; f.textContent = s.from; desc.appendChild(f); }
+      if (s.from){ const f = document.createElement('span'); f.className = 'from-tag'; f.textContent = s.from; desc.appendChild(f); }
       desc.appendChild(document.createTextNode(describeStep(s)));
       li.__site = site;
       li.addEventListener('click', () => showSnapshot(li));
@@ -48,9 +48,9 @@ export const foldAllBtn = $id('foldAll');
 export let resultsView = 'folded';          // 'expanded' | 'folded' | 'collapsed'
 const NEXT = { expanded: 'folded', folded: 'collapsed', collapsed: 'expanded' };
 const SAYS = {
-  folded: ['Collapse all', 'Hide the steps of every test', 'M7 9l5-5 5 5M7 15l5 5 5-5'],
+  folded: ['Collapse all', 'Hide the steps of every test', 'M7 4l5 5 5-5M7 20l5-5 5 5'],
   collapsed: ['Collapse the panel', 'Collapse Results to its title', 'M5 12h14'],
-  expanded: ['Expand all', 'Show the steps of every test', 'M7 4l5 5 5-5M7 20l5-5 5 5']
+  expanded: ['Expand all', 'Show the steps of every test', 'M7 9l5-5 5 5M7 15l5 5 5-5']
 };
 export function setResultsView(v){
   resultsView = v;

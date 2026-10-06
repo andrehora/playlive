@@ -19,5 +19,9 @@ export function paintHistory(sec){
   h.forEach(v => { const i = document.createElement('i'); i.className = v ? 'h-pass' : 'h-fail'; box.appendChild(i); });
   const passes = h.filter(Boolean).length;
   box.title = h.length ? `Passed ${passes} of the last ${h.length} runs` : '';
-  sec.querySelector('.flaky').hidden = !(h.length >= 2 && passes > 0 && passes < h.length);
+  // A test that is failing now is failing, not flaky: the badge is for one that
+  // passes and fails without being changed, and saying it of a red test only
+  // argues with the failure the user is already looking at.
+  const mixed = h.length >= 2 && passes > 0 && passes < h.length;
+  sec.querySelector('.flaky').hidden = !mixed || sec.dataset.state === 'failed';
 }

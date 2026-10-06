@@ -26,3 +26,16 @@ steps:
   - click: { role: button, name: Score for Harbour }
   - click: { role: button, name: Reset scores }
   - expectText: Nobody has scored yet.
+
+# Deliberately smelly: Smells mode's example of an Eager Test. Four scores,
+# four checks, one title — and a red row can only name the first of them.
+test: Plays a match from the first score to the reset
+steps:
+  - click: { role: button, name: Score for Foxes }
+  - expectText: "Leading: Foxes with 2"
+  - click: { role: button, name: Score for Tide }
+  - expectText: "Tied at 2: Foxes and Tide"
+  - click: { role: button, name: Score for Tide }
+  - expectText: "Leading: Tide with 4"
+  - click: { role: button, name: Reset scores }
+  - expectText: Nobody has scored yet.

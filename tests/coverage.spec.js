@@ -28,7 +28,7 @@ async function runSteps(page, steps){
 
 test.describe('Coverage', () => {
   test('counts every control and credits the ones a run used', async ({ page }) => {
-    const { errors } = await openApp(page, { site: SITE });
+    const { errors } = await openApp(page, { site: SITE, mode: 'coverage' });
     await setSpeed(page, 'fast');
 
     // Before anything runs, the page has been read but nothing is used.
@@ -57,7 +57,7 @@ test.describe('Coverage', () => {
   });
 
   test('a step credits the element it landed on, however the target is written', async ({ page }) => {
-    await openApp(page, { site: SITE });
+    await openApp(page, { site: SITE, mode: 'coverage' });
     await setSpeed(page, 'fast');
     // "- click: Apply" is the bare-text shorthand: it finds the same button the
     // catalog lists as { role: button, name: Apply }, so it credits that entry.
@@ -69,7 +69,7 @@ test.describe('Coverage', () => {
   });
 
   test('a full run forgets the run before it', async ({ page }) => {
-    await openApp(page, { site: SITE });
+    await openApp(page, { site: SITE, mode: 'coverage' });
     await setSpeed(page, 'fast');
     await runAll(page);
     expect((await report(page)).used).toBe(2);
@@ -88,7 +88,7 @@ test.describe('Coverage', () => {
   test('the score reads in the app’s own three colours', async ({ page }) => {
     // Shopping cart adds three things to a cart and never presses Checkout, so
     // it lands in the middle band.
-    await openApp(page, { site: 'shopping-cart' });
+    await openApp(page, { site: 'shopping-cart', mode: 'coverage' });
     await setSpeed(page, 'fast');
     await runAll(page);
     const r = await report(page);
@@ -99,7 +99,7 @@ test.describe('Coverage', () => {
   });
 
   test('a control a test only asserts is not a control it uses', async ({ page }) => {
-    await openApp(page, { site: SITE });
+    await openApp(page, { site: SITE, mode: 'coverage' });
     await setSpeed(page, 'fast');
     await runSteps(page, ['expectVisible: { role: button, name: Apply }']);
     const r = await report(page);
@@ -116,7 +116,7 @@ test.describe('Coverage', () => {
   });
 
   test('an untested control gets a test of its own', async ({ page }) => {
-    await openApp(page, { site: SITE });
+    await openApp(page, { site: SITE, mode: 'coverage' });
     await setSpeed(page, 'fast');
     await runSteps(page, ['fill: { label: Coupon code, value: save10 }']);
 
@@ -148,7 +148,7 @@ test.describe('Coverage', () => {
   });
 
   test('it writes the first test of an empty file too', async ({ page }) => {
-    await openApp(page, { site: SITE });
+    await openApp(page, { site: SITE, mode: 'coverage' });
     await setSpeed(page, 'fast');
     await page.fill('#spec', '');
 
@@ -166,7 +166,7 @@ test.describe('Coverage', () => {
 
   test('a select says how many of its options a test has picked', async ({ page }) => {
     // Address form has a Country select, and one of its tests picks one country.
-    await openApp(page, { site: 'address-form' });
+    await openApp(page, { site: 'address-form', mode: 'coverage' });
     await setSpeed(page, 'fast');
     await runAll(page);
     const sel = (await report(page)).items.find(i => i.kind === 'select');
@@ -178,7 +178,7 @@ test.describe('Coverage', () => {
   });
 
   test('Reset clears the score with everything else', async ({ page }) => {
-    await openApp(page, { site: SITE });
+    await openApp(page, { site: SITE, mode: 'coverage' });
     await setSpeed(page, 'fast');
     await runAll(page);
     expect((await report(page)).used).toBe(2);
@@ -195,7 +195,7 @@ test.describe('Coverage', () => {
 
   test('its own handle resizes the panel, and the size is remembered', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 1000 });
-    await openApp(page, { site: SITE });
+    await openApp(page, { site: SITE, mode: 'coverage' });
     const height = () => page.locator('.coverage-panel').boundingBox().then(b => Math.round(b.height));
     const fits = () => page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight);
 
@@ -222,8 +222,81 @@ test.describe('Coverage', () => {
     expect((await page.locator('.results-panel').boundingBox()).height).toBeGreaterThanOrEqual(130);
   });
 
+  test('its handle still resizes the panel when Results is collapsed', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await openApp(page, { site: SITE, mode: 'coverage' });
+    const height = () => page.locator('.coverage-panel').boundingBox().then(b => Math.round(b.height));
+    const editor = () => page.locator('#editor').boundingBox().then(b => Math.round(b.height));
+    const fits = () => page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight);
+
+    await page.click('#foldAll');                      // folded -> collapsed
+    await expect(page.locator('#results')).toBeHidden();
+    await expect(page.locator('#covResizer')).toBeVisible();
+
+    // Nothing below Results left to split, so the room comes from the editor
+    // above it. The handle still means the same thing: Coverage's top edge.
+    const before = await height(), wasEditor = await editor();
+    await page.focus('#covResizer');
+    for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowUp');
+    expect(await height()).toBeGreaterThan(before);
+    expect(await editor()).toBeLessThan(wasEditor);
+    expect(await fits()).toBeLessThanOrEqual(1);
+
+    // However far it is dragged, the editor keeps its floor and the page
+    // still does not scroll.
+    for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowUp');
+    expect(await editor()).toBeGreaterThanOrEqual(110);
+    expect(await fits()).toBeLessThanOrEqual(1);
+
+    // And a double-click puts it back, like the other two handles.
+    await page.dblclick('#covResizer');
+    expect(await editor()).toBe(wasEditor);
+    expect(await height()).toBe(before);
+  });
+
+  test('folded, the panel is its one row and Results takes the space back', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await openApp(page, { site: SITE, mode: 'coverage' });
+    const panel = () => page.locator('.coverage-panel').boundingBox().then(b => Math.round(b.height));
+    const results = () => page.locator('.results-panel').boundingBox().then(b => Math.round(b.height));
+    const head = () => page.locator('.coverage-panel .panel-head').boundingBox().then(b => Math.round(b.height));
+
+    const wasPanel = await panel(), wasResults = await results();
+    await page.click('#foldCov');
+    await expect(page.locator('#covBody')).toBeHidden();
+
+    // No blank panel left behind: what it gave up goes to Results above it.
+    expect(await panel()).toBeLessThanOrEqual(await head() + 2);
+    expect(await panel()).toBeLessThan(wasPanel);
+    expect(await results()).toBeGreaterThan(wasResults);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight))
+      .toBeLessThanOrEqual(1);
+
+    // Its handle has no height left to set, so it stops taking the pointer.
+    await expect(page.locator('#covResizer')).toBeHidden();
+
+    // With Results collapsed too there is no list left to take the room, so the
+    // editor takes it rather than leaving the column half empty.
+    const editor = () => page.locator('#editor').boundingBox().then(b => Math.round(b.height));
+    const wasEditor = await editor();
+    await page.click('#foldAll');
+    await expect(page.locator('#results')).toBeHidden();
+    expect(await editor()).toBeGreaterThan(wasEditor);
+    const bottom = await page.locator('.coverage-panel').boundingBox().then(b => b.y + b.height);
+    const column = await page.locator('#left').boundingBox().then(b => b.y + b.height);
+    expect(Math.abs(bottom - column)).toBeLessThanOrEqual(2);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight))
+      .toBeLessThanOrEqual(1);
+    await page.click('#foldAll'); await page.click('#foldAll');   // back to folded
+
+    // Unfolded, the panel is the size it was.
+    await page.click('#foldCov');
+    await expect(page.locator('#covBody')).toBeVisible();
+    expect(await panel()).toBe(wasPanel);
+  });
+
   test('the panel folds and keeps the page from scrolling', async ({ page }) => {
-    await openApp(page, { site: SITE });
+    await openApp(page, { site: SITE, mode: 'coverage' });
     await expect(page.locator('#coverage')).toBeVisible();
     expect(await page.evaluate(() => getComputedStyle(document.getElementById('coverage')).overflowY))
       .toMatch(/auto|scroll/);

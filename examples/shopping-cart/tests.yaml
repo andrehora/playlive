@@ -13,3 +13,15 @@ steps:
   - expectText: "Cart: 1 item"
   - expectText: "Total: $5.00"
 
+# Deliberately smelly: a third Eager Test. Every line of the shop's behaviour
+# proved under one title, so what broke is never what the row says.
+test: Fills the cart one product at a time
+steps:
+  - click: { role: button, name: Add Coffee beans to cart }
+  - expectText: "Cart: 1 item"
+  - click: { role: button, name: Add Green tea to cart }
+  - expectText: "Cart: 2 items"
+  - click: { role: button, name: Add Dark chocolate to cart }
+  - expectText: "Total: $25.50"
+  - click: { role: button, name: Checkout }
+  - expectText: "Order placed! 3 items, $25.50."

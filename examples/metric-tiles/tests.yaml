@@ -15,3 +15,15 @@ steps:
   - select: { label: Currency, value: EUR }
   - expectText: "Revenue · €11,408"
   - expectText: "Orders · 318"
+
+# Deliberately smelly: a second Assertion Roulette. Six checks over three
+# tiles, before and after the comparison, under one title.
+test: Checks every tile before and after comparing
+steps:
+  - expectText: "Revenue · $12,400"
+  - expectText: "Orders · 318"
+  - expectText: "Refunds · 7"
+  - check: { label: Compare to last week }
+  - expectText: "Revenue · $12,400 · +8% vs last week"
+  - expectText: "Orders · 318 · -3% vs last week"
+  - expectText: "Refunds · 7 · 0% vs last week"

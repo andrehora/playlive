@@ -21,3 +21,15 @@ steps:
   - click: { role: button, name: Mark incident resolved }
   - select: { label: Show, value: Only problems }
   - expectText: Nothing is having trouble.
+
+# Deliberately smelly: Smells mode's example of Assertion Roulette. Six checks
+# in a row, none of which says why it is there; when one goes red you are left
+# reading the list to work out which claim mattered.
+test: Reads the whole page in one go
+steps:
+  - expectText: 1 service having trouble
+  - expectText: "Website · Operational"
+  - expectText: "API · Degraded"
+  - expectText: "Email delivery · Operational"
+  - expectText: "Dashboards · Operational"
+  - expectVisible: { role: button, name: Mark incident resolved }

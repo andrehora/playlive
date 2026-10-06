@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-mode="explore">
 
 <head>
   <meta charset="utf-8">
@@ -23,6 +23,18 @@
         </svg></span>
       <span class="brand-name">Playlive</span>
     </a>
+    <div class="seg mode-seg" role="group" aria-label="Mode">
+      <button type="button" data-mode="explore" aria-pressed="true"
+        title="Explore the examples: write tests and watch them run">Explore</button>
+      <button type="button" data-mode="create" aria-pressed="false"
+        title="Write this example's tests yourself, from their titles alone">Create</button>
+      <button type="button" data-mode="coverage" aria-pressed="false"
+        title="Also ask how much of each page the tests reach">Coverage</button>
+      <button type="button" data-mode="mutation" aria-pressed="false"
+        title="Also break each page on purpose and ask whether the tests notice">Mutation</button>
+      <button type="button" data-mode="smells" aria-pressed="false"
+        title="Read the tests themselves and name what is wrong with them">Smells</button>
+    </div>
     <div class="picker">
       <button id="siteBtn" type="button" class="site-btn" aria-haspopup="true" aria-expanded="false"
         aria-controls="sitePop" title="Choose an example site"><span class="swatch" id="siteSwatch"
@@ -131,9 +143,9 @@
           <h2>Results <span id="summary" aria-live="polite"></span><span id="runDots" class="sdots"
               aria-hidden="true"></span></h2>
           <div class="head-actions">
-            <button id="foldAll" type="button" class="ghost icon-btn" aria-label="Collapse all"><svg class="i"
+            <button id="foldAll" type="button" class="ghost icon-btn" aria-label="Collapse the panel"><svg class="i"
                 viewBox="0 0 24 24" aria-hidden="true">
-                <path id="foldIcon" d="M7 9l5-5 5 5M7 15l5 5 5-5" />
+                <path id="foldIcon" d="M5 12h14" />
               </svg></button>
           </div>
           <div class="progress" id="progress" hidden><span></span></div>
@@ -144,15 +156,8 @@
         aria-label="Resize the coverage panel" tabindex="0" title="Drag to resize, double-click to reset"></div>
       <section class="panel coverage-panel">
         <div class="panel-head">
-          <h2><span id="covTitle">Coverage</span> <span id="covScore" aria-live="polite"></span> <span id="bugScore"
-              aria-live="polite" hidden></span></h2>
+          <h2>Coverage <span id="covScore" aria-live="polite"></span></h2>
           <div class="head-actions">
-            <div class="seg cov-seg" role="group" aria-label="What to measure">
-              <button type="button" data-cov="coverage" aria-pressed="true"
-                title="Which of this page's controls the tests use">Coverage</button>
-              <button type="button" data-cov="bugs" aria-pressed="false"
-                title="Which bugs the tests would catch">Bugs</button>
-            </div>
             <button id="foldCov" type="button" class="ghost icon-btn" aria-expanded="true" aria-controls="covBody"><svg
                 class="i" viewBox="0 0 24 24" aria-hidden="true">
                 <path id="foldCovIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
@@ -162,15 +167,58 @@
         </div>
         <div class="cov-body" id="covBody">
           <div id="coverage"></div>
-          <div class="bug-pane" id="bugPane" hidden>
-            <div class="bug-top">
-              <button id="hunt" type="button" class="primary small"
-                title="Break the page one way at a time and run the tests against each">Check bugs</button>
-              <span class="bug-hint">Each bug is a real mistake someone could make. Do your tests notice?</span>
+        </div>
+      </section>
+      <div class="resizer row-resizer" id="bugResizer" role="separator" aria-orientation="horizontal"
+        aria-label="Resize the mutation panel" tabindex="0" title="Drag to resize, double-click to reset"></div>
+      <section class="panel bugs-panel">
+        <div class="panel-head">
+          <h2>Mutation <span id="bugScore" aria-live="polite"></span></h2>
+          <div class="head-actions">
+            <button id="hunt" type="button" class="primary small"
+              title="Break the page one way at a time and run the tests against each">Run mutations</button>
+            <button id="foldBugs" type="button" class="ghost icon-btn" aria-expanded="true"
+              aria-controls="bugs"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+                <path id="foldBugsIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
+              </svg></button>
+          </div>
+          <div class="covbar" id="bugMeter" hidden><span></span></div>
+        </div>
+        <div id="bugs"></div>
+      </section>
+      <div class="resizer row-resizer" id="smellResizer" role="separator" aria-orientation="horizontal"
+        aria-label="Resize the test smells panel" tabindex="0" title="Drag to resize, double-click to reset"></div>
+      <section class="panel smells-panel">
+        <div class="panel-head">
+          <h2>Test smells <span id="smellScore" aria-live="polite"></span></h2>
+          <div class="head-actions">
+            <div class="seg smell-seg" role="group" aria-label="What to list">
+              <button type="button" data-smellview="file" title="What the tests on screen smell of">This file</button>
+              <button type="button" data-smellview="all"
+                title="Every smell the app looks for, and the examples that have one">All smells</button>
             </div>
-            <div id="bugs"></div>
+            <button id="foldSmells" type="button" class="ghost icon-btn" aria-expanded="true"
+              aria-controls="smells"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+                <path id="foldSmellsIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
+              </svg></button>
           </div>
         </div>
+        <div id="smells"></div>
+      </section>
+      <div class="resizer row-resizer" id="createResizer" role="separator" aria-orientation="horizontal"
+        aria-label="Resize the create panel" tabindex="0" title="Drag to resize, double-click to reset"></div>
+      <section class="panel create-panel">
+        <div class="panel-head">
+          <h2>Create <span id="createScore" aria-live="polite"></span></h2>
+          <div class="head-actions">
+            <button id="foldCreate" type="button" class="ghost icon-btn" aria-expanded="true"
+              aria-controls="create"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+                <path id="foldCreateIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
+              </svg></button>
+          </div>
+          <div class="covbar" id="createBar" hidden><span></span></div>
+        </div>
+        <div id="create"></div>
       </section>
     </div>
     <div class="resizer col-resizer" id="colResizer" role="separator" aria-orientation="vertical"

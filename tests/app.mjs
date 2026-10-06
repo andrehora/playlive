@@ -15,15 +15,20 @@ export async function siteIds(){
   return SITE_IDS;
 }
 
+// The manifest itself, for tests that ask what a site is rather than which exist.
+export async function manifest(){
+  const { SITES } = await import(pathToFileURL(resolve(ROOT, 'examples/examples.js')).href);
+  return SITES;
+}
+
 // The display name of a site, read from the manifest.
 export async function siteName(id){
-  const { SITES } = await import(pathToFileURL(resolve(ROOT, 'examples/examples.js')).href);
-  return SITES[id].name;
+  return (await manifest())[id].name;
 }
 
 // Loads the app and starts collecting errors from the page that hosts it.
 // The iframe's own errors are collected by the app and surfaced as warnings.
-export async function openApp(page, { site, hash = '' } = {}){
+export async function openApp(page, { site, hash = '', mode } = {}){
   const errors = [];
   page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
   page.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text()}`); });
@@ -34,6 +39,9 @@ export async function openApp(page, { site, hash = '' } = {}){
   await page.waitForFunction(() => typeof window.playlive?.selectSite === 'function');
   await expect(page.locator('#results .test').first()).toBeVisible();
   if (site) await selectSite(page, site);
+  // The app opens in Explore, which has no Coverage or Bugs panel: a test that
+  // reads one says which mode it is about.
+  if (mode) await setMode(page, mode);
   return { errors };
 }
 
@@ -47,6 +55,13 @@ export async function selectSite(page, id){
 
 export async function setSpeed(page, value){
   await page.selectOption('#speed', value);
+}
+
+// The mode is chosen in the app bar, and it is what decides which panels the
+// left column has: Bug mode is the one that brings the Bugs panel in.
+export async function setMode(page, value){
+  await page.click(`.mode-seg [data-mode="${value}"]`);
+  await expect(page.locator(`.mode-seg [data-mode="${value}"]`)).toHaveAttribute('aria-pressed', 'true');
 }
 
 // Presses Run and waits for the run to finish (the button comes back).

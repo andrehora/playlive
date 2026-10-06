@@ -1,16 +1,13 @@
-flows:
-  request:
-    - fill: { label: Email, value: ana@example.test }
-    - click: { role: button, name: Send reset link }
-
 test: Sends a reset link
 steps:
-  - use: request
+  - fill: { label: Email, value: ana@example.test }
+  - click: { role: button, name: Send reset link }
   - expectText: If an account exists for ana@example.test, we sent a reset link.
 
 test: Can send the link again
 steps:
-  - use: request
+  - fill: { label: Email, value: ana@example.test }
+  - click: { role: button, name: Send reset link }
   - click: { role: button, name: Send again }
   - expectText: We sent another link to ana@example.test.
 

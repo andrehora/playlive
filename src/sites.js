@@ -4,11 +4,17 @@ import { renderCoverage } from './coverage.js';
 import { frame, specEl } from './dom.js';
 import { attachRecorder } from './recorder.js';
 import { hideSnapshot } from './snapshots.js';
-import { bugHtml, currentSite, editedHtml, editorSite } from './state.js';
+import { bugHtml, currentSite, editedHtml, editorSite, mode } from './state.js';
 
 /* ---------- Sites and saved tests (kept in this browser between visits) ---------- */
 
 export const savedTests = {};             // only the sites visited in this browser
+// Create mode asks you to write the example's tests yourself, so it holds a
+// different file for the same site. Two buffers, one editor: which one is
+// showing is the mode's business, and everything that reads or writes the
+// editor goes through bufferFor so neither can overwrite the other.
+export const createTests = {};
+export const bufferFor = (m = mode) => (m === 'create' ? createTests : savedTests);
 export const exampleCache = {};
 // The tests that ship with a site, fetched once and kept for Reset
 export async function exampleTests(id){
@@ -20,8 +26,16 @@ export async function exampleTests(id){
   }
   return exampleCache[id];
 }
-// What the editor should show for a site: your saved copy, or the shipped tests
-export const testsFor = async id => savedTests[id] ?? await exampleTests(id);
+// What the editor should show for a site in the mode it is in: your saved copy,
+// or — outside Create, where only you can fill the file — the shipped tests.
+export async function testsFor(id, m = mode){
+  const kept = bufferFor(m)[id];
+  if (kept !== undefined) return kept;
+  return m === 'create' ? null : await exampleTests(id);
+}
+// Put what the editor holds back where this mode keeps it. Called before the
+// editor is handed to another site or another mode.
+export const stashEditor = (id = editorSite, m = mode) => { bufferFor(m)[id] = specEl.value; };
 // The site's markup as it ships, fetched once: what a bug patch is applied to
 export const sourceCache = {};
 export async function pageSource(id){
@@ -34,17 +48,24 @@ export async function pageSource(id){
   return sourceCache[id];
 }
 export const STORE = 'live-test-runner';
+export const CREATE = 'live-test-runner:create';
 try {
   const d = JSON.parse(localStorage.getItem(STORE) || 'null');
   if (d && d.savedTests){
     for (const k of Object.keys(SITES)) if (typeof d.savedTests[k] === 'string') savedTests[k] = d.savedTests[k];
   }
 } catch {}
+try {
+  const d = JSON.parse(localStorage.getItem(CREATE) || 'null');
+  if (d) for (const k of Object.keys(SITES)) if (typeof d[k] === 'string') createTests[k] = d[k];
+} catch {}
 export function persist(){
-  savedTests[editorSite] = specEl.value;
+  stashEditor();
   // The example visited last is deliberately not kept: opening the page with no
-  // hash starts at the first example, so only the tests are stored.
+  // hash starts at the first example, so only the tests are stored. What you
+  // write in Create is yours too, and is kept beside them under its own key.
   try { localStorage.setItem(STORE, JSON.stringify({ savedTests })); } catch {}
+  try { localStorage.setItem(CREATE, JSON.stringify(createTests)); } catch {}
 }
 
 // examples/hooks.js, which every example page loads, reports the storage keys the

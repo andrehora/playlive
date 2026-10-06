@@ -1,9 +1,10 @@
 import { SITES, SITE_IDS } from '../examples/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
+import { createSkeleton } from './create.js';
 import { catIconSvg } from './icons.js';
 import { preview } from './run.js';
 import { syncUrl } from './share.js';
-import { loadApp, persist, savedTests, testsFor } from './sites.js';
+import { loadApp, persist, stashEditor, testsFor } from './sites.js';
 import { editorSite, previewTimer, recording, running, setCurrentSite, setEditorSite } from './state.js';
 import { paintTabs } from './ui.js';
 
@@ -46,23 +47,42 @@ export function setView(id){
   cat.lastChild.textContent = SITES[id].category;
   cat.style.setProperty('--cat', SITES[id].accent);
   siteBtn.title = `${SITES[id].category}: ${SITES[id].name}. Choose another example`;
-  $id('siteCount').textContent = `${SITE_IDS.indexOf(id) + 1} of ${SITE_IDS.length}`;
+  setCount(id);
   paintTabs();
 }
+// "2 of 100", or of however many the mode is offering
+function setCount(id){
+  const list = listed(), i = list.indexOf(id);
+  $id('siteCount').textContent = `${i + 1} of ${list.length}`;
+}
+// Every example, in every mode. Smells mode once narrowed this to the examples
+// that have a smell, which hid the ones worth comparing them with: an example
+// whose tests are clean is the answer to the one that is not, and a list that
+// changes length when the mode changes is a list you cannot keep your place in.
+// The All smells tab in the panel is where "which examples have one" is
+// answered now, and it names them.
+export const listed = () => SITE_IDS;
 export function filterSites(q){
   q = q.trim().toLowerCase();
+  const inList = new Set(listed());
   let shown = 0;
   tabsEl.querySelectorAll('.pop-group').forEach(g => {
     const catHit = g.querySelector('.pop-cat').textContent.toLowerCase().includes(q);
     let any = false;
     g.querySelectorAll('.tab').forEach(b => {
-      const hit = !q || catHit || SITES[b.dataset.site].name.toLowerCase().includes(q) || b.dataset.site.includes(q);
+      const hit = inList.has(b.dataset.site)
+        && (!q || catHit || SITES[b.dataset.site].name.toLowerCase().includes(q) || b.dataset.site.includes(q));
       b.hidden = !hit; if (hit){ any = true; shown++; }
     });
     g.hidden = !any;
   });
+  $id('popEmpty').textContent = 'No examples match.';
   $id('popEmpty').hidden = shown > 0;
 }
+// The count and the stepper follow the list, and the mode no longer changes
+// what is in it; this is here for the modes that may yet.
+const relist = () => { setCount(editorSite); if (!sitePop.hidden) filterSites(siteSearch.value); };
+document.addEventListener('playlive:mode', relist);
 export function openPicker(){
   sitePop.hidden = false; siteBtn.setAttribute('aria-expanded', 'true');
   siteSearch.value = ''; filterSites('');
@@ -92,8 +112,10 @@ sitePop.addEventListener('keydown', e => {
 });
 export function stepSite(d){
   if (running || recording) return;
-  const i = SITE_IDS.indexOf(editorSite);
-  selectSite(SITE_IDS[(i + d + SITE_IDS.length) % SITE_IDS.length]);
+  const list = listed();
+  if (list.length < 2) return;
+  const i = list.indexOf(editorSite);
+  selectSite(list[(i + d + list.length) % list.length]);
 }
 $id('prevSite').addEventListener('click', () => stepSite(-1));
 $id('nextSite').addEventListener('click', () => stepSite(1));
@@ -102,12 +124,15 @@ export async function selectSite(id){
   // A pending save from the editor belongs to the site we are leaving, and the
   // tests below are fetched, so it has to be settled before the site changes.
   clearTimeout(previewTimer);
-  savedTests[editorSite] = specEl.value;
+  stashEditor();
   // The URL changes with the visible example, before the fetch below, so the
   // address bar is never a step behind what the app bar says.
   setEditorSite(id); setView(id); syncUrl(id);
-  specEl.value = await testsFor(id);
+  specEl.value = await testsFor(id) ?? await createSkeleton(id);
   errorEl.textContent = '';
+  // Mutations belong to the example, and in Mutation mode the panel is on screen the
+  // whole time: it is told the example changed rather than being reached into.
+  document.dispatchEvent(new CustomEvent('playlive:site'));
   persist(); preview(); loadApp();
   resultsEl.scrollTop = 0; specEl.scrollTop = 0;
 }

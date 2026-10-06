@@ -29,6 +29,19 @@ export function mouse(el, type){
   el.dispatchEvent(new W.MouseEvent(type, { bubbles: true, cancelable: true, view: W }));
 }
 
+// The first number on the first visible line that holds the text, with any
+// thousands separators taken out: "Ends in 7 hours" beside "Ends in" is 7, and
+// a line with no number at all is NaN. The exporters read the page the same way.
+export function numberBeside(text){
+  const body = doc() && doc().body;
+  if (!body) return NaN;
+  const line = body.innerText.split('\n').find(l => norm(l).includes(norm(text)));
+  const m = line && line.replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+  return m ? Number(m[0]) : NaN;
+}
+const inRange = (n, s) => !Number.isNaN(n) && n >= s.min && n <= s.max;
+const describeRange = s => `a number between ${s.min} and ${s.max} beside “${s.text}”`;
+
 export const ACTIONS = {
   async click(s){
     const el = await find(s.target);
@@ -66,6 +79,22 @@ export const ACTIONS = {
     try { await waitFor(() => doc() && doc().body && norm(doc().body.innerText).includes(norm(s.text)), `the text “${s.text}”`); }
     catch (e) { if (stopRequested) throw e; throw new Error(e.message + (closestText(s.text) || slowHint()), { cause: e }); }
     const el = query({ text: s.text })[0]; if (el){ setLastEl(el); await highlight(el, 'expectText', '#1F8A55'); }
+  },
+  // A number that moves is not a reason to leave it unchecked: a count, a
+  // countdown or a total has a range it should stay inside, and a test that
+  // says so is stable without being blind. The line the number sits on is the
+  // page's own text, so what the test names is what a person would read.
+  async expectTextInRange(s){
+    try { await waitFor(() => inRange(numberBeside(s.text), s), `${describeRange(s)}`); }
+    catch (e){
+      if (stopRequested) throw e;
+      const n = numberBeside(s.text);
+      const why = Number.isNaN(n)
+        ? closestText(s.text) || slowHint()
+        : `. The page says ${n}, which is outside ${s.min} to ${s.max}`;
+      throw new Error(e.message + why, { cause: e });
+    }
+    const el = query({ text: s.text })[0]; if (el){ setLastEl(el); await highlight(el, 'expectTextInRange', '#1F8A55'); }
   },
   async expectNoText(s){
     await sleep(150);

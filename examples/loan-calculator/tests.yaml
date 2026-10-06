@@ -1,9 +1,3 @@
-flows:
-  calculate:
-    - fill: { label: Loan amount, value: "${amount}" }
-    - fill: { label: "Interest rate (%)", value: "${rate}" }
-    - select: { label: Term, value: "${term}" }
-    - click: { role: button, name: Calculate }
 vars:
   amount: 200000
   rate: 5
@@ -11,14 +5,20 @@ vars:
 
 test: 30-year loan
 steps:
-  - use: calculate
+  - fill: { label: Loan amount, value: "${amount}" }
+  - fill: { label: "Interest rate (%)", value: "${rate}" }
+  - select: { label: Term, value: "${term}" }
+  - click: { role: button, name: Calculate }
   - expectText: "Monthly payment: $1,073.64"
 
 test: 15-year loan costs less in total
 vars:
   term: 15 years
 steps:
-  - use: calculate
+  - fill: { label: Loan amount, value: "${amount}" }
+  - fill: { label: "Interest rate (%)", value: "${rate}" }
+  - select: { label: Term, value: "${term}" }
+  - click: { role: button, name: Calculate }
   - expectText: "Monthly payment: $1,581.59 · Total paid: $284,685.71"
 
 test: Zero interest
@@ -27,7 +27,10 @@ vars:
   rate: 0
   term: 20 years
 steps:
-  - use: calculate
+  - fill: { label: Loan amount, value: "${amount}" }
+  - fill: { label: "Interest rate (%)", value: "${rate}" }
+  - select: { label: Term, value: "${term}" }
+  - click: { role: button, name: Calculate }
   - expectText: "Monthly payment: $500.00"
 
 test: The amount is required

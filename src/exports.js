@@ -20,6 +20,16 @@ export function toPlaywright(spec){
       case 'uncheck': return `await ${loc(s.target)}.uncheck(${to});`;
       case 'wait': return `await page.waitForTimeout(${s.ms});`;
       case 'expectText': return `await expect(page.getByText(${q(s.text)}).first()).toBeVisible(${to});`;
+      // The runner reads the first number on the page's first line holding the
+      // text, so the export reads the page that way too rather than trusting a
+      // locator to hold still.
+      case 'expectTextInRange': return `await expect.poll(async () => { const l = (await page.locator('body')`
+        + `.innerText()).split('\\n').find(t => t.includes(${q(s.text)})); const m = l && l.replace(/,/g, '')`
+        + `.match(/-?\\d+(?:\\.\\d+)?/); return m ? Number(m[0]) : NaN; }${s.timeout ? `, ${to}` : ''})`
+        + `.toBeGreaterThanOrEqual(${s.min});\n    await expect.poll(async () => { const l = (await page`
+        + `.locator('body').innerText()).split('\\n').find(t => t.includes(${q(s.text)})); const m = l && l`
+        + `.replace(/,/g, '').match(/-?\\d+(?:\\.\\d+)?/); return m ? Number(m[0]) : NaN; }`
+        + `${s.timeout ? `, ${to}` : ''}).toBeLessThanOrEqual(${s.max});`;
       case 'expectNoText': return `await expect(page.getByText(${q(s.text)})).toHaveCount(0${opt});`;
       case 'expectVisible': return `await expect(${loc(s.target)}).toBeVisible(${to});`;
     }
@@ -63,6 +73,11 @@ export function toCypress(spec){
       case 'uncheck': return `${loc(s.target, s)}.uncheck();`;
       case 'wait': return `cy.wait(${s.ms});`;
       case 'expectText': { const o = opt(s); return `cy.contains(${q(s.text)}${o ? ', ' + o : ''}).should('be.visible');`; }
+      // should(fn) retries, so the range is checked the way the runner waits
+      case 'expectTextInRange': return `cy.get('body'${s.timeout ? `, { timeout: ${s.timeout} }` : ''})`
+        + `.invoke('prop', 'innerText').should(text => { const l = String(text).split('\\n')`
+        + `.find(t => t.includes(${q(s.text)})); const m = l && l.replace(/,/g, '').match(/-?\\d+(?:\\.\\d+)?/); `
+        + `expect(m ? Number(m[0]) : NaN).to.be.within(${s.min}, ${s.max}); });`;
       // innerText ignores hidden elements, like the runner does
       case 'expectNoText': return `cy.get('body'${s.timeout ? `, { timeout: ${s.timeout} }` : ''}).invoke('prop', 'innerText').should('not.include', ${q(s.text)});`;
       case 'expectVisible': return `${loc(s.target, s)}.should('be.visible');`;

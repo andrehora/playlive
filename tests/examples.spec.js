@@ -1,13 +1,16 @@
 // Every example site's own tests must pass, run through the real app.
 // This is the check AGENTS.md asks for before any change is finished.
 import { test, expect } from '@playwright/test';
-import { describeFailures, openApp, runAll, setSpeed, siteIds, RUN_TIMEOUT } from './app.mjs';
+import { describeFailures, manifest, openApp, runAll, setSpeed, siteIds, RUN_TIMEOUT } from './app.mjs';
 
 const ids = await siteIds();
+const SITES = await manifest();
 
-// Flaky app fails some of the time on purpose, so running it would make this
-// suite flaky too. It is still covered by the export tests.
-const SKIP = new Set(['flaky-app']);
+// The Flaky examples fail some of the time on purpose — that is the whole
+// theme — so running them would make this suite flaky too. The category is
+// what says so, rather than a list kept by hand beside it; they are still
+// covered by the export tests and by the smells corpus.
+const SKIP = new Set(ids.filter(id => SITES[id].category === 'Flaky'));
 
 test.describe('Example sites', () => {
   test('index.html defines every example exactly once', async ({ page }) => {

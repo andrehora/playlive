@@ -2,6 +2,7 @@ import { STEP_OPTS } from './parse.js';
 import { ACTIONS } from './actions.js';
 import { $id, errorEl, specEl } from './dom.js';
 import { completionOpen } from './state.js';
+import { toast } from './ui.js';
 
 /* ---------- Editor: syntax highlighting, line numbers, error lines ---------- */
 export const hlEl = $id('hl'), gutterEl = $id('gutter');
@@ -72,7 +73,7 @@ export function errorLinesFor(msg, text){
   return out;
 }
 export let edText = null, errLines = new Set(), curLine = -1;
-// Find the editor line of a step from where it was defined: a test's steps, a flow, or beforeEach
+// Find the editor line of a step from where it was defined: a test's steps or beforeEach
 export function lineForStep(text, src){
   if (!src) return -1;
   const lines = text.split('\n');
@@ -103,14 +104,6 @@ export function lineForStep(text, src){
   if (src.label === 'beforeEach'){
     const k = lines.findIndex((l, i) => head(i) && /^beforeEach\s*:/.test(l));
     return k < 0 ? -1 : nthItem(k, src.i);
-  }
-  if ((m = /^Flow "(.+)"$/.exec(src.label))){
-    const f = lines.findIndex((l, i) => head(i) && /^flows\s*:/.test(l)); if (f < 0) return -1;
-    for (let i = f + 1; i < lines.length; i++){
-      const l = lines[i]; if (blank(l)) continue;
-      if (indent(l) === 0) break;
-      if (new RegExp('^\\s+' + m[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*:').test(l)) return nthItem(i, src.i);
-    }
   }
   return -1;
 }
@@ -144,6 +137,10 @@ let specFolded = false;
 export function setSpecFolded(folded){
   specFolded = folded;
   editorEl.hidden = folded;
+  // The layout reads the column's folds off #left, the way it reads the other
+  // two: with the code hidden, the room it gave up goes to a list rather than
+  // stretching Results past its own rows.
+  $id('left').dataset.spec = folded ? 'collapsed' : 'open';
   foldSpecBtn.setAttribute('aria-expanded', String(!folded));
   foldSpecBtn.setAttribute('aria-label', folded ? 'Expand all' : 'Collapse all');
   foldSpecBtn.title = folded ? 'Show the code of every test' : 'Hide the code of every test';
@@ -151,6 +148,26 @@ export function setSpecFolded(folded){
   if (!folded) renderEditor(true);   // the tick skips a hidden editor, so redraw on the way back
 }
 foldSpecBtn.addEventListener('click', () => setSpecFolded(!specFolded));
+
+/* ---------- The editor does not copy or paste ----------
+   Writing the step is the exercise. A file that can be copied from one example
+   into another, or pasted in from somewhere else, turns every mode into a
+   shuffling of text that teaches nothing — Create most of all, where the
+   answer is one mode away on purpose. So copy, cut, paste and a dropped
+   selection are all turned down here, with a line saying why rather than a
+   control that quietly does nothing. Export is still the way out: it is a
+   deliberate press on a button that says what it is handing you.
+   The tests and the recorder write the file through its value, not through the
+   clipboard, so none of this is in their way. */
+const REFUSED = {
+  copy: 'Copying the tests is off here: reading them and writing them is the exercise.',
+  cut: 'Cutting the tests is off here: reading them and writing them is the exercise.',
+  paste: 'Pasting into the tests is off here. Type the step, or press Ctrl+Space for the suggestions.',
+  drop: 'Dropping text into the tests is off here. Type the step, or press Ctrl+Space for the suggestions.'
+};
+for (const [type, msg] of Object.entries(REFUSED)){
+  specEl.addEventListener(type, e => { e.preventDefault(); toast(msg); });
+}
 // Programmatic edits (recorder, site switch, reset) are picked up here too
 (function tick(){ if (!specFolded) renderEditor(); requestAnimationFrame(tick); })();
 // Whatever lands in the error box also marks the matching lines
@@ -161,15 +178,22 @@ new MutationObserver(() => {
   renderEditor(true);
 })
   .observe(errorEl, { childList: true, characterData: true, subtree: true });
-// Clicking a problem jumps to its line
-errorEl.addEventListener('click', () => {
-  if (!errLines.size) return;
+// Go to a line and select it: what clicking a problem does, and what a panel
+// that names a line does too.
+export function jumpToLine(line){
+  if (!(line >= 0)) return;
   setSpecFolded(false);   // there is no line to jump to while the code is hidden
-  const line = Math.min(...errLines), lines = specEl.value.split('\n');
+  const lines = specEl.value.split('\n');
+  if (line >= lines.length) return;
   const pos = lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0);
   specEl.focus({ preventScroll: true });
   specEl.setSelectionRange(pos + lines[line].search(/\S|$/), pos + lines[line].length);
   specEl.scrollTop = Math.max(0, line * lineH() - specEl.clientHeight / 3);
+}
+// Clicking a problem jumps to its line
+errorEl.addEventListener('click', () => {
+  if (!errLines.size) return;
+  jumpToLine(Math.min(...errLines));
 });
 // Tab inserts two spaces instead of leaving the editor
 specEl.addEventListener('keydown', e => {

@@ -14,6 +14,7 @@ export let currentSite = SITE_IDS[0];      // the site showing on the right
 export let editorSite = SITE_IDS[0];       // the site whose tests are in the editor, the first example unless a link names another
 export let lastEl = null;                  // the element the current step acted on
 export let completionOpen = false;         // the autocomplete list is showing, so it owns Tab and Enter
+export let mode = 'explore';               // which panels the left column has, and which file the editor holds
 export const editedHtml = {};              // site -> markup applied in the HTML view, until Reset
 export let hunting = false;                // a bug hunt is running the tests against a broken page
 export const bugHtml = {};                 // site -> the page with one bug patched in, while it is injected
@@ -27,6 +28,9 @@ export const setCurrentSite = v => { currentSite = v; };
 export const setEditorSite = v => { editorSite = v; };
 export const setLastEl = v => { lastEl = v; };
 export const setCompletionOpen = v => { completionOpen = v; };
+// modes.js owns what changing it does; the value lives here because the editor,
+// the picker and the sites all have to read it without importing a panel.
+export const setAppMode = v => { mode = v; };
 export const setHunting = v => { hunting = v; };
 export const setBugHtml = (site, markup) => { bugHtml[site] = markup; };
 export const clearBugHtml = site => { delete bugHtml[site]; };

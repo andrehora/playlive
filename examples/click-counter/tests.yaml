@@ -16,3 +16,12 @@ test: Cannot go below zero
 steps:
   - click: { role: button, name: Decrement }
   - expectText: "Count can't go below 0."
+
+# Deliberately smelly: this is Smells mode's example of an Unknown Test. It
+# clicks three times and never says what should have happened, so the only way
+# it can fail is by crashing.
+test: Clicks the button a few times
+steps:
+  - click: { role: button, name: Increment }
+  - click: { role: button, name: Increment }
+  - click: { role: button, name: Increment }

@@ -25,9 +25,7 @@ const KINDS = {
   expectVisible: ['click', 'field', 'select', 'toggle', 'other']
 };
 const TARGET_KEYS = ['role', 'name', 'label', 'placeholder', 'text'];
-// Built on first use: ACTIONS sits in a module that this one's importers also reach
-let actionKeys = null;
-const actions = () => (actionKeys ||= [...Object.keys(ACTIONS), 'use']);
+const actions = () => Object.keys(ACTIONS);
 
 /* ---------- Reading the line under the caret ---------- */
 // The last comma that is not inside quotes, so { name: "a, b" } stays one part
@@ -55,7 +53,7 @@ function parseParts(inner){
   }
   return parts;
 }
-// The keys of a block written as "name:" lines, used for vars and flows
+// The keys of a block written as "name:" lines, which is how vars are written
 function blockKeys(text, name){
   const lines = text.split('\n'), out = [];
   for (let i = 0; i < lines.length; i++){
@@ -72,7 +70,7 @@ function blockKeys(text, name){
   }
   return [...new Set(out)];
 }
-export const fileInfo = text => ({ vars: blockKeys(text, 'vars'), flows: blockKeys(text, 'flows') });
+export const fileInfo = text => ({ vars: blockKeys(text, 'vars') });
 
 export function context(text, caret){
   const ls = text.lastIndexOf('\n', caret - 1) + 1;
@@ -179,12 +177,17 @@ function itemsFor(ctx, cat, file){
     case 'var':
       return [...file.vars, 'unique'].map(v => item(v + '}', v, v === 'unique' ? 'new on every run' : 'variable'));
     case 'action':
-      return actions().map(a => item((ctx.dash ? '- ' : '') + a + (ctx.bare ? ': ' : ''), a, a === 'use' ? 'a flow' : 'action'));
+      return actions().map(a => item((ctx.dash ? '- ' : '') + a + (ctx.bare ? ': ' : ''), a, 'action'));
     case 'top':
       return topItems(ctx);
     case 'key': {
       // Only the slots this site's own elements are described by: a field that
       // has a label is not worth offering a "role:" for
+      // The range check has keys of its own rather than a target's
+      if (ctx.action === 'expectTextInRange'){
+        return ['text', 'min', 'max', 'timeout'].filter(k => ctx.parts[k] === undefined)
+          .map(k => item(k + ': ', k, 'range'));
+      }
       const used = new Set(entriesFor(cat, ctx.action).flatMap(e => Object.keys(e.parts)));
       const found = TARGET_KEYS.filter(k => used.has(k));
       const keys = [...(found.length ? found : TARGET_KEYS), ...(['fill', 'select'].includes(ctx.action) ? ['value'] : []), 'timeout'];
@@ -194,9 +197,13 @@ function itemsFor(ctx, cat, file){
       return valueItems(ctx, cat);
     case 'arg': {
       const a = ctx.action;
-      if (a === 'use') return file.flows.map(f => item(f, f, 'flow'));
       if (a === 'wait') return ['500', '1000', '2000'].map(v => item(v, v, 'ms'));
       if (a === 'expectText' || a === 'expectNoText') return textItems(cat);
+      // One line to edit rather than four to type: the page's own text, with a
+      // range around it to replace.
+      if (a === 'expectTextInRange'){
+        return textItems(cat).map(i => ({ ...i, insert: `{ text: ${i.insert}, min: 0, max: 10 }` }));
+      }
       return targetItems(cat, a);
     }
   }

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Clock greeting</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#b91c1c}</style>
+</head>
+<body>
+<h1 id="hello"></h1>
+<p id="lucky"></p>
+<p id="today"></p>
+<button id="again" type="button">Draw again</button>
+
+<script>
+// Three lines, none of them the same twice: the greeting turns over at noon and
+// at six, the date turns over at midnight, and the number is drawn on load and
+// again on every click.
+const now=new Date(),h=now.getHours();
+const draw=()=>{$('lucky').textContent='Your lucky number is '+(1+Math.floor(Math.random()*6));};
+$('hello').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Hello')+', Ana';
+draw();
+$('today').textContent='Today is '+now.toLocaleDateString('en-GB',{day:'numeric',month:'long'});
+$('again').onclick=draw;
+</script>
+</body>
+</html>

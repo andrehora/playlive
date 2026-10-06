@@ -32,7 +32,7 @@ test.describe('What autocomplete offers', () => {
     const acts = await at(page, `${head}  - `);
     expect(acts.what).toBe('action');
     expect(inserts(acts)).toContain('click: ');
-    expect(inserts(acts)).toContain('use: ');
+    expect(inserts(acts)).not.toContain('use: ');     // flows are gone, and so is the step that pulled one in
 
     // Login has two buttons and two fields: click sees the buttons, fill the fields
     expect(inserts(await at(page, `${head}  - click: `)))
@@ -77,7 +77,7 @@ test.describe('What autocomplete offers', () => {
     expect(values.map(v => v.replace(/^"|"$/g, ''))).toEqual(first.options);
   });
 
-  test('the text on the page, the file’s variables and its flows', async ({ page }) => {
+  test('the text on the page and the file’s variables', async ({ page }) => {
     await openApp(page, { site: 'login' });
     await ready(page, 'login');
     const texts = inserts(await at(page, `${head}  - expectText: `));
@@ -85,8 +85,6 @@ test.describe('What autocomplete offers', () => {
 
     expect(inserts(await at(page, 'vars:\n  email: a@b.c\n' + head + '  - fill: { label: Email, value: "${')))
       .toEqual(['email}', 'unique}']);
-    expect(inserts(await at(page, 'flows:\n  signIn:\n    - click: Log in\n' + head + '  - use: ')))
-      .toEqual(['signIn']);
     expect(inserts(await at(page, 'fa'))[0]).toBe('failOnPageErrors: ');   // a loose match may follow it
   });
 

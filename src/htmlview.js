@@ -148,14 +148,17 @@ export function renderHtmlView(state, action){
   const isBug = i => !!bugMark && lines[i].includes(bugMark.hit) && !bugMark.src.includes(lines[i].trim());
   paint(lines,
     i => i === cur ? ' ' + mark : isBug(i) ? ' bug' : '',
-    i => i === cur ? tag : isBug(i) ? '<i class="tag">bug</i>' : '');
+    i => i === cur ? tag : isBug(i) ? '<i class="tag">mutation</i>' : '');
   if (cur !== undefined) followLine(cur);
   else { const first = lines.findIndex((_, i) => isBug(i)); if (first >= 0) followLine(first); }
 }
-// The coloured copy under the textarea, and the line numbers beside it
-function paint(lines, cls = () => '', after = () => ''){
-  htmlCode.innerHTML = lines.map((l, i) => `<span class="l${cls(i)}">${hlMarkupLine(l) || ' '}${after(i)}</span>`).join('');
-  htmlGutter.innerHTML = lines.map((_, i) => `<div${cls(i) ? ` class="${cls(i).trim()}"` : ''}>${i + 1}</div>`).join('');
+// The coloured copy under the textarea, and the line numbers beside it. The
+// label takes the place of its line's number rather than sitting in the
+// markup: the gutter is already a lane down the left, so the name reads where
+// the eye starts and the code it names never shifts to make room for it.
+function paint(lines, cls = () => '', label = () => ''){
+  htmlCode.innerHTML = lines.map((l, i) => `<span class="l${cls(i)}">${hlMarkupLine(l) || ' '}</span>`).join('');
+  htmlGutter.innerHTML = lines.map((_, i) => `<div${cls(i) ? ` class="${cls(i).trim()}"` : ''}>${label(i) || i + 1}</div>`).join('');
   syncHtmlScroll();
 }
 // Keep the line the run is on in view, without ever scrolling the page

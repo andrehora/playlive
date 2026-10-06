@@ -1,4 +1,3 @@
-import { covView, renderBugs } from './bugs.js';
 import { catalogs, keyFor } from './catalog.js';
 import { $id, specEl } from './dom.js';
 import { validate } from './parse.js';
@@ -15,8 +14,9 @@ import { toast } from './ui.js';
    What counts is measured as the run happens, never by reading the file. The
    element a step landed on is credited under the very key the catalog lists it
    under, so "- click: Apply" credits the entry written { role: button, name:
-   "Apply" } with no second matching rule to keep in step with find.js. Flows,
-   beforeEach and ${unique} come free, because a step is credited after it ran.
+   "Apply" } with no second matching rule to keep in step with find.js. What
+   beforeEach does and ${unique} come free, because a step is credited after it
+   ran.
 
    Like the catalog, it is never stored: a score describes the run you watched.  */
 
@@ -131,13 +131,9 @@ export function renderCoverage(){
   const pct = percent(r);
   covScore.textContent = r.total ? `${r.used} of ${r.total} controls (${pct}%)` : '';
   covScore.title = r.total ? 'Controls a step has used, of the controls the tests have reached so far' : '';
-  // The panel's band and bar belong to whichever of the two scores is showing
-  if (covView === 'bugs'){ renderBugs(); }
-  else {
-    covPanel.dataset.band = r.total ? band(pct) : '';
-    covBar.hidden = !r.total;
-    covBar.firstElementChild.style.width = `${Math.round(r.score * 100)}%`;
-  }
+  covPanel.dataset.band = r.total ? band(pct) : '';
+  covBar.hidden = !r.total;
+  covBar.firstElementChild.style.width = `${Math.round(r.score * 100)}%`;
   const top = covEl.scrollTop;
   covEl.innerHTML = '';
   if (!r.total){
@@ -210,11 +206,16 @@ function row(e, addable, canAdd, v){
   return li;
 }
 
-/* ---------- Folding: the score stays, the list goes ---------- */
+/* ---------- Folding: the score stays, the list goes ----------
+   Folded, the panel is its one row and the space it gave up goes to Results,
+   rather than staying behind as a blank panel. The layout reads the state off
+   #left the way it reads the Results fold, and its clamps measure what the
+   panel is actually using, so the editor follows without being told. */
 let folded = false;
 export function setCovFolded(f){
   folded = f;
   $id('covBody').hidden = f;
+  $id('left').dataset.cov = f ? 'collapsed' : 'open';
   foldCovBtn.setAttribute('aria-expanded', String(!f));
   foldCovBtn.setAttribute('aria-label', f ? 'Expand the controls' : 'Collapse the controls');
   foldCovBtn.title = f ? 'Show every control on this site' : 'Hide the list of controls';

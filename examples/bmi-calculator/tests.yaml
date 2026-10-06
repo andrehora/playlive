@@ -25,3 +25,13 @@ test: Missing numbers are refused
 steps:
   - click: { role: button, name: Work it out }
   - expectText: Enter a height and a weight above zero.
+
+# A healthy BMI is a range rather than a number, so the test says the range.
+# expectTextInRange reads the first number on the line holding the text, which
+# is what keeps this true for any height and weight inside it.
+test: A healthy reading lands inside the healthy range
+steps:
+  - fill: { label: Height in cm, value: "175" }
+  - fill: { label: Weight in kg, value: "70" }
+  - click: { role: button, name: Work it out }
+  - expectTextInRange: { text: BMI, min: 18.5, max: 24.9 }

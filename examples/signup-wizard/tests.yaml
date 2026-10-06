@@ -1,28 +1,24 @@
 vars:
   name: Ana Souza
   email: ana@orbit.test
-flows:
-  details:
-    - fill: { label: Full name, value: "${name}" }
-    - fill: { label: Email, value: "${email}" }
-    - click: { role: button, name: Next }
+beforeEach:
+  - fill: { label: Full name, value: "${name}" }
+  - fill: { label: Email, value: "${email}" }
+  - click: { role: button, name: Next }
 
 test: Step 1 needs a valid email
 vars:
   email: ana-at-orbit
 steps:
-  - use: details
   - expectText: Enter your name and a valid email.
 
 test: Terms must be accepted
 steps:
-  - use: details
   - click: { role: button, name: Next }
   - expectText: Please accept the terms.
 
 test: Sign up for the Pro plan
 steps:
-  - use: details
   - select: { label: Plan, value: Pro }
   - check: { label: I accept the terms }
   - click: { role: button, name: Next }
