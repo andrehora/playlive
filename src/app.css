@@ -3,7 +3,7 @@
   --run:#2563EB; --on-run:#FFF; --running:#EAB308; --running-ink:#8A6100; --pass:#1F8A55; --fail:#C2412D; --warn:#9A6700; --rec:#D92D20;
   --syn-key:#6D28D9; --syn-act:#B45309; --syn-str:#15803D; --syn-var:#BE185D; --syn-com:#8A93A3; --syn-num:#0E7490;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
-  --left-w:480px; --editor-h:36vh;
+  --left-w:480px; --editor-h:36vh; --cov-h:20vh;
   /* Control sizing, mobile first. These are the touch-sized values; the
      min-width:901px block near the bottom compacts them for a mouse. */
   --tap:44px; --btn-font:15px; --btn-pad:11px 14px; --btn-r:10px;
@@ -191,6 +191,37 @@ body.resizing iframe{pointer-events:none}
 .warn::before{content:"⚠ "}
 .empty{padding:28px 18px;color:var(--muted);font-size:13px;text-align:center}
 
+/* ---------- Coverage: the controls the tests reach ----------
+   The score reads in the app's own colours: green for every control covered,
+   yellow from 60%, red below it. The three states also differ in shape, solid,
+   ringed and hollow, so the list does not rely on colour alone. */
+.coverage-panel{flex:0 1 auto;min-height:0;--cov:var(--muted)}
+.coverage-panel[data-band="ok"]{--cov:var(--pass)}
+.coverage-panel[data-band="warn"]{--cov:var(--warn)}
+.coverage-panel[data-band="bad"]{--cov:var(--fail)}
+#coverage{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.covbar{position:absolute;left:0;right:0;bottom:-1px;height:2px}
+.covbar span{display:block;height:100%;width:0;background:var(--cov);transition:width .25s ease}
+#covScore{font-weight:400;font-size:12px;color:var(--cov);white-space:nowrap}
+#covScore:empty{display:none}
+.cov-note{margin:0;padding:18px 14px;color:var(--muted);font-size:12.5px}
+.cov-group{border-bottom:1px solid var(--line)}
+.cov-group:last-child{border-bottom:0}
+.cov-head{display:flex;align-items:center;gap:7px;padding:8px 12px 6px;font-size:12px;font-weight:600}
+.cov-dot{width:9px;height:9px;border-radius:50%;flex:none;border:1.5px solid var(--fail)}
+.cov-group[data-state="checked"] .cov-dot{border-color:var(--warn)}
+.cov-group[data-state="used"] .cov-dot{border-color:var(--pass);background:var(--pass)}
+.cov-n{font:11.5px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:0 6px}
+.cov-list{list-style:none;margin:0;padding:0 0 8px}
+.cov-row{display:flex;align-items:center;gap:8px;padding:3px 12px 3px 28px;min-height:26px}
+.cov-row:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.cov-k{font-size:11px;color:var(--muted);flex:none;min-width:48px}
+.cov-t{font:12px/1.4 "IBM Plex Mono",ui-monospace,monospace;min-width:0;overflow-wrap:anywhere}
+.cov-m{font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:auto}
+.cov-row[data-queued] .cov-m{color:var(--pass)}
+.cov-add{margin-left:auto;flex:none}
+.cov-m + .cov-add{margin-left:8px}
+
 /* ---------- Site panel ---------- */
 .browser{min-height:0}
 .head-sub{color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:22ch}
@@ -308,13 +339,23 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   main{flex:1;min-height:560px;grid-template-rows:minmax(0,1fr)}
   .left{min-height:0}
   .tests-panel{flex:none}
+  /* Three panels share this column, so the editor starts a little shorter than
+     it did with two and the two lists below split what is left, Results taking
+     the larger share. Neither can be squeezed away: the floors here are what
+     keeps the page itself from ever scrolling. No resizer sits between them,
+     so the gap is a margin. */
+  :root{--editor-h:30vh}
+  .results-panel{flex:1 1 130px;min-height:130px}
+  /* Its own handle sets the height, and Results takes whatever is left over.
+     It still gives way when the window is short, down to the floor below. */
+  .coverage-panel{flex:0 1 auto;height:var(--cov-h);min-height:100px}
   .site-btn{padding:7px 10px}
 }
 /* ---------- Narrow screens: one column, site right after the editor ---------- */
 @media (max-width:900px){
   main{grid-template-columns:minmax(0,1fr);gap:12px;padding:10px max(10px,env(safe-area-inset-right,0px)) 14px max(10px,env(safe-area-inset-left,0px))}
   .left{display:contents}
-  .tests-panel{order:1} .browser{order:2} .results-panel{order:3}
+  .tests-panel{order:1} .browser{order:2} .results-panel{order:3} .coverage-panel{order:4}
   .resizer{display:none}
   .appbar{flex-wrap:wrap;row-gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
   .tagline{display:none}
@@ -365,6 +406,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 
   /* Results: roomier rows, and the list scrolls inside its own panel */
   #results{max-height:70dvh}
+  #coverage{max-height:46dvh}
   .test-head{gap:6px;padding:6px 8px}
   .steps li{padding:6px 10px 6px 16px}
   .warn{padding:2px 12px 4px 30px}

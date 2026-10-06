@@ -139,6 +139,21 @@
         </div>
         <div id="results"></div>
       </section>
+      <div class="resizer row-resizer" id="covResizer" role="separator" aria-orientation="horizontal"
+        aria-label="Resize the coverage panel" tabindex="0" title="Drag to resize, double-click to reset"></div>
+      <section class="panel coverage-panel">
+        <div class="panel-head">
+          <h2>Coverage <span id="covScore" aria-live="polite"></span></h2>
+          <div class="head-actions">
+            <button id="foldCov" type="button" class="ghost icon-btn" aria-expanded="true" aria-controls="coverage"><svg
+                class="i" viewBox="0 0 24 24" aria-hidden="true">
+                <path id="foldCovIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
+              </svg></button>
+          </div>
+          <div class="covbar" id="covBar" hidden><span></span></div>
+        </div>
+        <div id="coverage"></div>
+      </section>
     </div>
     <div class="resizer col-resizer" id="colResizer" role="separator" aria-orientation="vertical"
       aria-label="Resize the panels" tabindex="0" title="Drag to resize, double-click to reset"></div>

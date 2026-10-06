@@ -8,10 +8,23 @@ export const rootStyle = document.documentElement.style;
 export function applyLayout(){
   if (layout.leftW) rootStyle.setProperty('--left-w', layout.leftW + 'px'); else rootStyle.removeProperty('--left-w');
   if (layout.editorH) rootStyle.setProperty('--editor-h', layout.editorH + 'px'); else rootStyle.removeProperty('--editor-h');
+  if (layout.covH) rootStyle.setProperty('--cov-h', layout.covH + 'px'); else rootStyle.removeProperty('--cov-h');
 }
 export function saveLayout(){ try { localStorage.setItem(LAYOUT, JSON.stringify(layout)); } catch {} }
 export const clampLeft = w => Math.round(Math.min(Math.max(w, 360), $id('workspace').clientWidth * 0.62));
-export const clampEditor = h => Math.round(Math.min(Math.max(h, 110), $id('left').clientHeight - 320));
+// What the editor may not take: whatever Coverage is currently using, the
+// Results panel's own floor, the gaps, and this panel's toolbar. Neither handle
+// can squeeze a panel away, which is what keeps the desktop page from scrolling.
+export const covPanelEl = () => $id('coverage').parentElement;
+const covH = () => covPanelEl().getBoundingClientRect().height;
+export const clampEditor = h => Math.round(Math.min(Math.max(h, 110), $id('left').clientHeight - covH() - 300));
+// And Coverage may not take what the Tests panel above it and the Results floor
+// below need: the two gaps and that floor are what is left out here.
+export const clampCov = h => {
+  const tests = document.querySelector('.tests-panel').getBoundingClientRect().height;
+  const room = $id('left').clientHeight - tests - 24 - 130;
+  return Math.round(Math.min(Math.max(h, 100), Math.max(100, room)));
+};
 export function makeResizer(handle, onDrag, onKey, prop){
   handle.addEventListener('pointerdown', e => {
     e.preventDefault(); handle.setPointerCapture(e.pointerId);
@@ -30,6 +43,10 @@ makeResizer($id('colResizer'),
   e => { layout.leftW = clampLeft(e.clientX - $id('left').getBoundingClientRect().left - 6); },
   k => { const w = $id('left').clientWidth; if (k === 'ArrowLeft') return layout.leftW = clampLeft(w - 24); if (k === 'ArrowRight') return layout.leftW = clampLeft(w + 24); },
   'leftW');
+makeResizer($id('covResizer'),
+  e => { layout.covH = clampCov($id('left').getBoundingClientRect().bottom - e.clientY - 6); },
+  k => { const h = covH(); if (k === 'ArrowUp') return layout.covH = clampCov(h + 24); if (k === 'ArrowDown') return layout.covH = clampCov(h - 24); },
+  'covH');
 makeResizer($id('rowResizer'),
   e => { layout.editorH = clampEditor(e.clientY - $id('editor').getBoundingClientRect().top - 6); },
   k => { const h = $id('editor').clientHeight; if (k === 'ArrowUp') return layout.editorH = clampEditor(h - 24); if (k === 'ArrowDown') return layout.editorH = clampEditor(h + 24); },

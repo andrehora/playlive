@@ -1,5 +1,6 @@
 import { SITES } from '../examples/examples.js';
 import { harvest } from './catalog.js';
+import { renderCoverage } from './coverage.js';
 import { frame, specEl } from './dom.js';
 import { attachRecorder } from './recorder.js';
 import { hideSnapshot } from './snapshots.js';
@@ -54,9 +55,9 @@ export function loadApp(){
   const site = currentSite;
   return new Promise(res => {
     frame.onload = () => {
-      attachRecorder(); harvest(site);
+      attachRecorder(); harvest(site); renderCoverage();
       // A page that fills itself in after load is read again a moment later
-      setTimeout(() => { if (currentSite === site) harvest(site); }, 250);
+      setTimeout(() => { if (currentSite === site){ harvest(site); renderCoverage(); } }, 250);
       res();
     };
     frame.removeAttribute('srcdoc');          // a snapshot may have been showing

@@ -39,9 +39,20 @@ export function targetFor(el){
 }
 export function addStep(yamlStep){
   const ind = '  ';
+  if (specEl.value && !specEl.value.endsWith('\n')) specEl.value += '\n';   // a step always starts its own line
   specEl.value += yamlStep.split('\n').map(l => ind + l).join('\n') + '\n';
   specEl.scrollTop = specEl.scrollHeight;
   recCount++; persist(); preview();
+}
+// A whole test at the end of the file. The Coverage panel writes one of these
+// for a control nothing reaches: such a control needs a test of its own, not a
+// step bolted onto whatever test happens to be last.
+export function addTest(title, steps){
+  const text = specEl.value.replace(/\s*$/, '');
+  const block = `test: ${yq(title)}\nsteps:\n` + steps.map(s => '  ' + s).join('\n') + '\n';
+  specEl.value = (text ? text + '\n\n' : '') + block;
+  specEl.scrollTop = specEl.scrollHeight;
+  persist(); preview();
 }
 export function attachRecorder(){
   const d = doc(); if (!d || d.__recorder) return;

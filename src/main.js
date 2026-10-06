@@ -1,5 +1,6 @@
 import { SITES, SITE_IDS } from '../examples/examples.js';
 import { clearCatalog, harvest, snapshot } from './catalog.js';
+import { clearCoverage, report } from './coverage.js';
 import { closeCompletion, completion, context, suggest } from './complete.js';
 import { $id, errorEl, recordBtn, reloadBtn, resetBtn, runBtn, specEl, speedMode, stopBtn, summaryEl } from './dom.js';
 import { setSpecFolded } from './editor.js';
@@ -46,6 +47,7 @@ export async function resetAll(){
     for (const k of siteKeys[id] || []) keys.add(k);
     for (const k of SITES[id].storageKeys || []) keys.add('local:' + k);
     clearCatalog(id);            // what a page offers depends on the data it kept
+    clearCoverage(id);           // and the score was about a run of that page
     clearEditedHtml(id);         // and on the markup, which goes back to the file
     delete savedTests[id];
     if (window.__trMem) delete window.__trMem[id];
@@ -92,6 +94,7 @@ if (matchMedia('(max-width:900px)').matches) setSpecFolded(true);
 window.playlive = {
   selectSite, validate, toPlaywright, toCypress, SITES, SITE_IDS,
   catalog: { harvest, snapshot, clear: clearCatalog },
+  coverage: { report, clear: clearCoverage },
   share: { copy: copyLink, url: shareUrl, linked: siteFromHash },
   complete: { suggest, context, showing: completion, close: closeCompletion },
   html: { markup: () => htmlEdit.value, apply: applyHtml, revert: revertHtml, edited: () => htmlDirty() },

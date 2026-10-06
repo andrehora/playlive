@@ -1,5 +1,6 @@
 import { ACTIONS } from './actions.js';
 import { harvest } from './catalog.js';
+import { clearCoverage, markTested, renderCoverage } from './coverage.js';
 import { $id, KEY, errorEl, recBar, recordBtn, reloadBtn, resetBtn, resultsEl, runBtn, specEl, speed, speedMode, stopBtn, summaryEl, tabsEl } from './dom.js';
 import { lineForStep, setCurrentLine, setFileStatus } from './editor.js';
 import { describeStep, followInResults } from './find.js';
@@ -9,7 +10,7 @@ import { validate } from './parse.js';
 import { closePicker, setView, siteBtn } from './picker.js';
 import { markStep, renderResults } from './results.js';
 import { loadApp, pageErrors, persist } from './sites.js';
-import { TIMEOUT, editorSite, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from './state.js';
+import { TIMEOUT, editorSite, lastEl, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from './state.js';
 import { setProgress, setSiteStatus } from './ui.js';
 import { sleep } from './util.js';
 
@@ -58,15 +59,20 @@ export async function runTest(t, sec, opts){
     sdots.title = `Step ${i + 1} of ${t.steps.length}`;
     followInResults(li);
     setLastEl(null);
+    const step = withUnique(t.steps[i], unique);
     setStepTimeout(t.steps[i].timeout || TIMEOUT);
     try {
       if (speedMode() === 'step'){ await waitNext(); if (stopRequested) throw new Error('Stopped by user'); }
       const s0 = performance.now();
-      await ACTIONS[t.steps[i].action](withUnique(t.steps[i], unique));
+      await ACTIONS[step.action](step);
+      // The element the step landed on is what it covered. Only a step that
+      // passed counts: a click that never landed has used nothing.
+      markTested(editorSite, lastEl, step.action, step.value);
       collectErrors(i + 1);
       harvest();                                // the step may have revealed a new screen
       markStep(li, 'passed'); dot.className = 'ok';
-      renderHtmlView('passed', t.steps[i].action);  // the HTML view follows the element the step touched
+      renderHtmlView('passed', step.action);  // the HTML view follows the element the step touched
+      renderCoverage();
       li.querySelector('.ms').textContent = `${Math.round(performance.now() - s0)} ms`;
       await sleep(speed().step);
     } catch (e) {
@@ -74,6 +80,7 @@ export async function runTest(t, sec, opts){
       harvest();
       markStep(li, 'failed'); dot.className = 'bad';
       renderHtmlView('failed', t.steps[i].action);
+      renderCoverage();
       const err = document.createElement('span'); err.className = 'err'; err.textContent = e.message;
       li.querySelector('.desc').appendChild(err);
       items.slice(i + 1).forEach(x => x.className = 'skipped');
@@ -97,6 +104,8 @@ export async function run(only){
   if (error){ errorEl.textContent = error; return; }
   persist();
   setStopRequested(false); setRunning(true);
+  // A full run's score is that run's; running one test adds to what is there.
+  if (only === undefined) clearCoverage(editorSite);
   const reps = Number($id('repeat').value) || 1;
   const tally = spec.tests.map(() => ({ pass: 0, runs: 0 }));
   const started = performance.now();
@@ -137,7 +146,7 @@ export async function run(only){
   setProgress(stopRequested ? null : 1, allOk ? 'ok' : 'bad');
   if (!stopRequested && only === undefined) setSiteStatus(editorSite, allOk);
   if (!stopRequested && passed < ran){ const f = resultsEl.querySelector('li.failed'); if (f) followInResults(f); }
-  setRunning(false); setCurrentLine(-1); syncUI();
+  setRunning(false); setCurrentLine(-1); syncUI(); renderCoverage();
 }
 
 export function syncUI(){
@@ -165,5 +174,6 @@ export function preview(){
   const v = validate(specEl.value);
   if (v.spec){ renderResults(v.spec.tests); errorEl.textContent = ''; setFileStatus(v); }
   else if (!recording){ errorEl.textContent = v.error; setFileStatus(v); }
+  renderCoverage();                 // whether a step can be added depends on the file parsing
   summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
 }

@@ -36,24 +36,34 @@ function kindOf(el, role){
 }
 const optionsOf = el => [...el.options].map(o => clean(o.textContent) || o.value).filter(Boolean);
 
-function addEl(cat, el){
+// How an element is listed: what a step would do with it, the target a test
+// would write, and the key that joins the two. Coverage credits a step with
+// this same key, so what a run touched and what the catalog offers cannot
+// drift apart.
+export function entryFor(el){
   const role = roleOf(el);
-  const kind = kindOf(el, role); if (!kind) return;
-  const parts = targetParts(el); if (!parts) return;
-  const target = renderTarget(parts), key = `${kind} ${target}`;
+  const kind = kindOf(el, role); if (!kind) return null;
+  const parts = targetParts(el); if (!parts) return null;
+  const target = renderTarget(parts);
+  return { kind, target, parts, role, key: `${kind} ${target}` };
+}
+export const keyFor = el => { const e = entryFor(el); return e ? e.key : null; };
+
+function addEl(cat, el){
+  const base = entryFor(el); if (!base) return;
   const vis = visible(el);
-  const prev = cat.get(key);
+  const prev = cat.get(base.key);
   if (prev){
     prev.vis = prev.vis || vis; prev.hits++;
     // A select can be refilled as the page runs, so its options accumulate
-    if (kind === 'select') for (const o of optionsOf(el)) if (!prev.options.includes(o)) prev.options.push(o);
+    if (prev.kind === 'select') for (const o of optionsOf(el)) if (!prev.options.includes(o)) prev.options.push(o);
     return;
   }
   // hits counts the harvests that saw it: a button that is always there outranks
   // a label the page wore for a moment, like a button reading “Checking…”
-  const entry = { kind, target, parts, role, vis, hits: 1 };
-  if (kind === 'select') entry.options = optionsOf(el);
-  cat.set(key, entry);
+  const entry = { ...base, vis, hits: 1 };
+  if (base.kind === 'select') entry.options = optionsOf(el);
+  cat.set(base.key, entry);
 }
 
 // Text a person would write in expectText: leaves only, so "Welcome back" is
