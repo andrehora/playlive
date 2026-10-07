@@ -2,7 +2,7 @@
 
 https://andrehora.github.io/playlive/
 
-Playlive runs end-to-end tests live in the browser.
+Playlive runs live tests in the browser.
 Write tests in a small YAML format.
 
 ## Running it
