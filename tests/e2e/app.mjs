@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect } from '@playwright/test';
 
-const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
+const ROOT = resolve(fileURLToPath(import.meta.url), '../../..');
 
 export const RUN_TIMEOUT = 180_000;   // a whole site's example tests, at Fast speed
 

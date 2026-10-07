@@ -15,8 +15,6 @@ export function normalizeStep(raw, n){
   const keys = Object.keys(raw).filter(k => k !== 'value' && k !== 'timeout');
   if (keys.length !== 1) throw `${n}: use exactly one action per step (found: ${keys.join(', ') || 'none'}).`;
   const action = keys[0];
-  // "use:" named a flow. Flows are gone: the steps are written where they run.
-  if (action === 'use') throw `${n}: "use:" and "flows:" have been removed. Write the steps out here, or under "beforeEach:" if every test needs them.`;
   if (!ACTIONS[action]) throw `${n}: unknown action "${action}". Allowed: ${Object.keys(ACTIONS).join(', ')}.`;
   let arg = raw[action];
   // The value goes with the target it fills: "- fill: { label: Email, value: ana@example.test }"
@@ -99,7 +97,6 @@ export function expandSteps(list, label, vars, problems, from){
 }
 export function parseTest(raw, label, file){
   if (!isMap(raw)) throw [`${label}: write "test: <title>" with a "steps:" list below it.`];
-  if (raw.name !== undefined && raw.test === undefined) throw [`${label}: use "test:" for the title instead of "name:".`];
   if (raw.vars !== undefined && !isMap(raw.vars)) throw [`${label}: "vars:" must be name: value pairs.`];
   if (!Array.isArray(raw.steps) || !raw.steps.length) throw [`${label}: needs a "steps:" list with at least one step.`];
   const vars = { ...file.vars, ...(raw.vars || {}) };
@@ -109,9 +106,6 @@ export function parseTest(raw, label, file){
   return { title: raw.test != null ? String(raw.test) : label, steps };
 }
 export const SETTINGS = ['vars', 'beforeEach', 'failOnPageErrors'];
-// "site:" used to name the site a file belonged to. The selected site says that
-// now, so older files still parse and the line is simply ignored.
-const LEGACY = ['site', 'tests'];
 // A file is: optional settings, then one block per test. Every block starts with
 // "test:" at the beginning of a line, so tests are written directly, with no list around them.
 export function validate(text){
@@ -126,20 +120,13 @@ export function validate(text){
   if (head.error) return head;
   const y = head.y;
   if (!isMap(y)) return { error: 'Start with settings like "vars:", then write each test as "test: <title>" followed by "steps:".' };
-  // "flows:" held step lists that tests pulled in with "- use:". Both are gone:
-  // a step is written where it runs, and shared openings go in "beforeEach:".
-  if (y.flows !== undefined) return { error: '"flows:" has been removed. Write a flow\'s steps into the tests that used it, or under "beforeEach:" if every test needs them.' };
-  let rawTests = [];
-  if (Array.isArray(y.tests)) rawTests = y.tests;          // older files with a "tests:" list still work
-  else {
-    if (y.steps !== undefined) return { error: 'Every "steps:" list needs a "test: <title>" line right above it.' };
-    const unknown = Object.keys(y).filter(k => !SETTINGS.includes(k) && !LEGACY.includes(k));
-    if (unknown.length) return { error: `Unknown setting "${unknown[0]}" before the first test. Settings are: ${SETTINGS.join(', ')}. Each test starts with "test:".` };
-  }
+  if (y.steps !== undefined) return { error: 'Every "steps:" list needs a "test: <title>" line right above it.' };
+  const unknown = Object.keys(y).filter(k => !SETTINGS.includes(k));
+  if (unknown.length) return { error: `Unknown setting "${unknown[0]}" before the first test. Settings are: ${SETTINGS.join(', ')}. Each test starts with "test:".` };
   if (y.vars !== undefined && !isMap(y.vars)) return { error: '"vars:" must be name: value pairs, e.g. "email: ana@example.test".' };
   if (y.beforeEach !== undefined && !Array.isArray(y.beforeEach)) return { error: '"beforeEach:" must be a list of steps that run at the start of every test.' };
   const file = { vars: y.vars || {}, beforeEach: y.beforeEach || [] };
-  const problems = [];
+  const rawTests = [], problems = [];
   starts.forEach((from, k) => {
     const r = load(from, starts[k + 1] ?? lines.length);
     if (r.error) problems.push(r.error); else rawTests.push(r.y);

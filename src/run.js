@@ -157,11 +157,12 @@ export async function run(only){
   const secs = ((performance.now() - started) / 1000).toFixed(1);
   const ran = records.length, passed = records.filter(r => r.ok).length;
   const noun = n => n === 1 ? 'test' : 'tests';
-  const flaky = spec.tests.filter((t, i) => tally[i].runs > 1 && tally[i].pass > 0 && tally[i].pass < tally[i].runs);
   if (stopRequested){ summaryEl.textContent = `Stopped. ${passed} of ${ran} ${noun(ran)} passed.`; summaryEl.className = 'bad'; }
   else if (reps > 1){
     const totalRuns = tally.reduce((a, t) => a + t.runs, 0), totalPass = tally.reduce((a, t) => a + t.pass, 0);
-    summaryEl.textContent = `${totalPass} of ${totalRuns} runs passed over ${reps} repetitions (${secs}s)` + (flaky.length ? `. Flaky: ${flaky.map(t => `“${t.title}”`).join(', ')}` : '');
+    // The summary counts the runs and names no test, like every other thing it
+    // says: which test went both ways is the row's own badge to carry.
+    summaryEl.textContent = `${totalPass} of ${totalRuns} runs passed over ${reps} repetitions (${secs}s)`;
     summaryEl.className = totalPass === totalRuns ? 'ok' : 'bad';
   }
   else if (passed === ran){ summaryEl.textContent = `${ran === 1 ? 'The test' : `All ${ran} tests`} passed in ${secs}s`; summaryEl.className = 'ok'; }

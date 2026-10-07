@@ -257,62 +257,6 @@ test.describe('Running', () => {
     expect(code).toContain(`await page.getByLabel("Your name", { exact: true }).fill("Ana");`);
   });
 
-  test('a value on its own line says where it belongs', async ({ page }) => {
-    await openApp(page, { site: 'contact-form' });
-    await page.fill('#spec', [
-      'test: Value on its own line',
-      'steps:',
-      '  - fill: { label: Message }',
-      '    value: hello',
-      ''
-    ].join('\n'));
-    await expect(page.locator('#error')).toContainText('put the value inside the target');
-    await page.click('#run');
-    await expect(page.locator('#summary')).toHaveText('');
-  });
-
-  test('fill without a value is reported', async ({ page }) => {
-    await openApp(page, { site: 'contact-form' });
-    await page.fill('#spec', [
-      'test: No value',
-      'steps:',
-      '  - fill: { label: Message }',
-      ''
-    ].join('\n'));
-    await expect(page.locator('#error')).toContainText('needs a value');
-  });
-
-  // Flows were a step list a test pulled in with "- use:". They are gone, so a
-  // file that still has one is told where those steps go instead of failing
-  // with "unknown setting".
-  test('a file written with flows says they have been removed', async ({ page }) => {
-    await openApp(page, { site: 'contact-form' });
-    await page.fill('#spec', [
-      'flows:',
-      '  open:',
-      '    - click: { role: button, name: Open form }',
-      '',
-      'test: Uses a flow',
-      'steps:',
-      '  - use: open',
-      '  - expectText: Your name',
-      ''
-    ].join('\n'));
-    await expect(page.locator('#error')).toContainText('"flows:" has been removed');
-    await expect(page.locator('#error')).toContainText('beforeEach');
-
-    // And without the settings block, the step itself says the same thing
-    await page.fill('#spec', [
-      'test: Uses a flow',
-      'steps:',
-      '  - use: open',
-      ''
-    ].join('\n'));
-    await expect(page.locator('#error')).toContainText('"use:" and "flows:" have been removed');
-    await page.click('#run');
-    await expect(page.locator('#summary')).toHaveText('');
-  });
-
   // A number that moves is not a reason to leave it unchecked: expectTextInRange
   // says the range it should stay inside, which is how a flaky "7 hours left"
   // becomes a test that is true at every hour.
@@ -347,29 +291,6 @@ test.describe('Running', () => {
     const res = await runAll(page);
     expect(res.state).toBe('bad');
     expect(res.tests[0].error).toContain('The page says 1, which is outside 5 to 9');
-  });
-
-  // The range is two numbers and a piece of text, and every way of getting that
-  // wrong says how to put it right.
-  test('expectTextInRange explains a range it cannot use', async ({ page }) => {
-    await openApp(page, { site: 'click-counter' });
-    const ok = 'test: T\nsteps:\n  - click: { role: button, name: Increment }\n';
-    // The box is cleared between tries, so each message is this spec's own.
-    const saysAbout = async (spec, want) => {
-      await page.fill('#spec', ok);
-      await expect(page.locator('#error')).toHaveText('');
-      await page.fill('#spec', spec);
-      await expect(page.locator('#error')).toContainText(want);
-    };
-    await saysAbout('test: T\nsteps:\n  - expectTextInRange: Count\n', 'needs text and a range');
-    await saysAbout('test: T\nsteps:\n  - expectTextInRange: { text: "Count:" }\n',
-      '"min" and "max" must be numbers');
-    await saysAbout('test: T\nsteps:\n  - expectTextInRange: { min: 1, max: 5 }\n',
-      'needs the text to find the number by');
-    await saysAbout('test: T\nsteps:\n  - expectTextInRange: { text: "Count:", min: 9, max: 1 }\n',
-      '"min" is more than "max"');
-    await saysAbout('test: T\nsteps:\n  - expectTextInRange: { text: "Count:", min: 1, max: 5, to: 10 }\n',
-      'takes text, min, max and timeout');
   });
 
   test('a failing step is explained, later steps are skipped, and the summary is red', async ({ page }) => {

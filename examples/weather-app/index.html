@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weather app</title>
+<script src="../hooks.js"></script>
+<link rel="stylesheet" href="../site.css">
+<style>:root{--accent:#b91c1c}</style>
+</head>
+<body>
+<h1>Weather in Lisbon</h1>
+<p id="today"></p>
+<p id="now"></p>
+<p id="wind"></p>
+<button id="again" type="button">Refresh</button>
+
+<script>
+// temperature ranges: 0 to 30
+// wind ranges: 5 to 100
+// Usually the reading it sent last time, about one in four something else.
+const pick=(lo,hi)=>lo+Math.floor(Math.random()*(hi-lo+1));
+const usually=(v,lo,hi)=>Math.random()<0.75?v:pick(lo,hi);
+const read=()=>{
+  $('now').textContent='Temperature now: '+usually(22,0,30);
+  $('wind').textContent='Wind '+usually(12,5,100)+' km/h';
+};
+$('today').textContent='Today is '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long'});
+read();
+$('again').onclick=read;
+</script>
+</body>
+</html>

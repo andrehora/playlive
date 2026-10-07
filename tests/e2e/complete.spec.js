@@ -1,5 +1,7 @@
-// Autocomplete in the editor: what it offers, and that everything it offers is
-// something this site can really do.
+// Autocomplete in the editor. What it offers for a given caret is read in
+// tests/unit/complete.test.mjs, against a page built for the purpose; what is
+// left here is the half that needs a browser — the hundred real pages, and the
+// list on screen owning its keys.
 import { test, expect } from '@playwright/test';
 import { openApp, selectSite, siteIds } from './app.mjs';
 
@@ -14,88 +16,6 @@ async function ready(page, id){
   }, id);
   await page.evaluate(() => window.playlive.catalog.harvest());
 }
-// suggest() at the end of the given text, as a plain object
-function at(page, text, caret){
-  return page.evaluate(([t, c]) => {
-    const r = window.playlive.complete.suggest(t, c ?? t.length);
-    return r && { what: r.what, word: r.word, from: r.from, to: r.to, items: r.items };
-  }, [text, caret]);
-}
-const head = 'test: t\nsteps:\n';
-const inserts = r => (r ? r.items.map(i => i.insert) : []);
-
-test.describe('What autocomplete offers', () => {
-  test('the actions, and then only the targets that action can use', async ({ page }) => {
-    await openApp(page, { site: 'login' });
-    await ready(page, 'login');
-
-    const acts = await at(page, `${head}  - `);
-    expect(acts.what).toBe('action');
-    expect(inserts(acts)).toContain('click: ');
-    expect(inserts(acts)).not.toContain('use: ');     // flows are gone, and so is the step that pulled one in
-
-    // Login has two buttons and two fields: click sees the buttons, fill the fields
-    expect(inserts(await at(page, `${head}  - click: `)))
-      .toEqual(['{ role: button, name: Log in }', '{ role: button, name: Log out }']);
-    expect(inserts(await at(page, `${head}  - fill: `)))
-      .toEqual(['{ label: Email, value: "" }', '{ label: Password, value: "" }']);
-    // Nothing on this page can be checked or chosen from, so nothing is offered
-    expect(await at(page, `${head}  - check: `)).toBeNull();
-    expect(await at(page, `${head}  - select: `)).toBeNull();
-  });
-
-  test('a filled field lands valid, with the caret inside the quotes', async ({ page }) => {
-    await openApp(page, { site: 'login' });
-    await ready(page, 'login');
-    const r = await at(page, `${head}  - fill: `);
-    const it = r.items[0];
-    expect(it.insert).toBe('{ label: Email, value: "" }');
-    expect(it.insert[it.caret - 1]).toBe('"');
-    expect(it.insert[it.caret]).toBe('"');
-    const { error } = await page.evaluate(y => window.playlive.validate(y), `${head}  - fill: ${it.insert}\n`);
-    expect(error).toBeUndefined();
-  });
-
-  test('one slot at a time, narrowed by what the braces already say', async ({ page }) => {
-    await openApp(page, { site: 'login' });
-    await ready(page, 'login');
-    expect(inserts(await at(page, `${head}  - click: { role: `))).toEqual(['button']);
-    expect(inserts(await at(page, `${head}  - click: { role: button, name: `))).toEqual(['Log in', 'Log out']);
-    // A field is described by its label here, so "role:" is not worth offering
-    expect(inserts(await at(page, `${head}  - fill: { `))).toEqual(['label: ', 'value: ', 'timeout: ']);
-  });
-
-  test('a select offers its own options, and only its own', async ({ page }) => {
-    await openApp(page, { site: 'address-form' });
-    await ready(page, 'address-form');
-    const whole = inserts(await at(page, `${head}  - select: `));
-    expect(whole.length).toBeGreaterThan(1);
-    expect(whole.every(s => s.includes('value:'))).toBe(true);
-    const cat = await page.evaluate(() => window.playlive.catalog.snapshot());
-    const first = cat.select[0];
-    const values = inserts(await at(page, `${head}  - select: { ${first.target.slice(2, -2)}, value: `));
-    expect(values.map(v => v.replace(/^"|"$/g, ''))).toEqual(first.options);
-  });
-
-  test('the text on the page and the file’s variables', async ({ page }) => {
-    await openApp(page, { site: 'login' });
-    await ready(page, 'login');
-    const texts = inserts(await at(page, `${head}  - expectText: `));
-    expect(texts).toContain('Customer portal');
-
-    expect(inserts(await at(page, 'vars:\n  email: a@b.c\n' + head + '  - fill: { label: Email, value: "${')))
-      .toEqual(['email}', 'unique}']);
-    expect(inserts(await at(page, 'fa'))[0]).toBe('failOnPageErrors: ');   // a loose match may follow it
-  });
-
-  test('says nothing where nothing can be suggested', async ({ page }) => {
-    await openApp(page, { site: 'login' });
-    await ready(page, 'login');
-    expect(await at(page, 'test: ')).toBeNull();                      // a title is the writer's own words
-    expect(await at(page, `${head}  - click: { role: button, name: Nothing like this`)).toBeNull();
-    expect(await at(page, '# a comment')).toBeNull();
-  });
-});
 
 test.describe('Every site', () => {
   test('only ever suggests steps that parse and resolve', async ({ page }) => {
@@ -106,9 +26,8 @@ test.describe('Every site', () => {
       await ready(page, id);
       const problems = await page.evaluate(() => {
         const bad = [];
-        const site = window.playlive.SITE_IDS.find(i => document.getElementById('app').src.includes(`examples/${i}/`));
         for (const action of ['click', 'fill', 'select', 'check', 'uncheck', 'expectVisible', 'expectText']){
-          const yaml = `site: ${site}\ntest: t\nsteps:\n  - ${action}: `;
+          const yaml = `test: t\nsteps:\n  - ${action}: `;
           const r = window.playlive.complete.suggest(yaml, yaml.length);
           for (const it of (r ? r.items : [])){
             const full = yaml + it.insert + '\n';

@@ -9,7 +9,7 @@ export const hlEl = $id('hl'), gutterEl = $id('gutter');
 export const escH = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 // Built on first use: ACTIONS lives in a module that imports this one back
 let actionKeys = null;
-export const isAction = key => (actionKeys ||= new Set([...Object.keys(ACTIONS), 'use'])).has(key);
+export const isAction = key => (actionKeys ||= new Set(Object.keys(ACTIONS))).has(key);
 export function hlValue(v){
   const re = /("(?:[^"\\]|\\.)*"?|'(?:[^']|'')*'?|\$\{\w+\}|[{}[\],]|[A-Za-z_][\w-]*(?=:(?:\s|$))|\b\d+(?:\.\d+)?\b)/g;
   let out = '', last = 0, m;

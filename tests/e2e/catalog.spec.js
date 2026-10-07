@@ -1,5 +1,7 @@
-// The site catalog: what autocomplete is allowed to suggest. Every entry has to
-// be something the site really has, and something the YAML format accepts.
+// The site catalog against the real pages. How an element is listed and keyed
+// is read in tests/unit/catalog.test.mjs; what needs a browser is this — that
+// every one of the hundred example pages, with its own scripts run, offers
+// only targets that exist and parse, and that a run adds the screens it opens.
 import { test, expect } from '@playwright/test';
 import { openApp, runAll, selectSite, setSpeed, siteIds } from './app.mjs';
 
@@ -56,18 +58,6 @@ test.describe('Site catalog', () => {
       expect(counts.texts, `${id}: no text to assert on was found`).toBeGreaterThan(0);
     }
     expect(errors).toEqual([]);
-  });
-
-  test('knows the parts of a target, not just its text', async ({ page }) => {
-    await openApp(page, { site: 'login' });
-    await frameReady(page, 'login');
-    const cat = await page.evaluate(() => window.playlive.catalog.harvest());
-    expect(cat.site).toBe('login');
-    expect(cat.field.map(e => e.target)).toContain('{ label: Email }');
-    expect(cat.field.find(e => e.target === '{ label: Email }').parts).toEqual({ label: 'Email' });
-    expect(cat.click.some(e => e.parts.role === 'button')).toBe(true);
-    expect(cat.roles).toContain('button');
-    expect(cat.roles).toContain('textbox');
   });
 
   test('a run reveals screens the first page does not show', async ({ page }) => {

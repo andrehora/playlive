@@ -1,6 +1,7 @@
-// UI coverage: of the controls a site offers, which ones the tests actually use.
-// The score is measured while the run happens, so these tests run something and
-// then read the panel and the report side by side.
+// UI coverage against a watched run. What a step credits and how the score
+// bands are read in tests/unit/coverage.test.mjs; the score is measured while
+// the run happens, so what is left here runs something and then reads the
+// panel and the report side by side.
 import { test, expect } from '@playwright/test';
 import { openApp, runAll, setSpeed } from './app.mjs';
 
@@ -98,23 +99,6 @@ test.describe('Coverage', () => {
     await expect(page.locator('#covScore')).toHaveText(/\(\d\d%\)$/);
   });
 
-  test('a control a test only asserts is not a control it uses', async ({ page }) => {
-    await openApp(page, { site: SITE, mode: 'coverage' });
-    await setSpeed(page, 'fast');
-    await runSteps(page, ['expectVisible: { role: button, name: Apply }']);
-    const r = await report(page);
-    const apply = r.items.find(i => i.target === APPLY);
-    expect(apply.state).toBe('checked');
-    expect(apply.actions).toEqual(['expectVisible']);
-    expect(r.used).toBe(0);
-    expect(r.checked).toBe(1);
-    // It reads as its own group, so the gap is named rather than coloured.
-    expect(await rows(page)).toEqual([
-      { state: 'untested', n: '1', targets: [FIELD] },
-      { state: 'checked', n: '1', targets: [APPLY] }
-    ]);
-  });
-
   test('an untested control gets a test of its own', async ({ page }) => {
     await openApp(page, { site: SITE, mode: 'coverage' });
     await setSpeed(page, 'fast');
@@ -162,19 +146,6 @@ test.describe('Coverage', () => {
     await expect(page.locator('#error')).toHaveText('');
     const res = await runAll(page);
     expect(res.state).toBe('ok');
-  });
-
-  test('a select says how many of its options a test has picked', async ({ page }) => {
-    // Address form has a Country select, and one of its tests picks one country.
-    await openApp(page, { site: 'address-form', mode: 'coverage' });
-    await setSpeed(page, 'fast');
-    await runAll(page);
-    const sel = (await report(page)).items.find(i => i.kind === 'select');
-    expect(sel.state).toBe('used');
-    expect(sel.options.length).toBeGreaterThan(1);
-    expect(sel.picked).toEqual(['United Kingdom']);
-    const notes = await page.$$eval('.cov-m', ms => ms.map(m => m.textContent));
-    expect(notes).toContain(`picked 1 of ${sel.options.length} options`);
   });
 
   test('Reset clears the score with everything else', async ({ page }) => {

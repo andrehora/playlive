@@ -1,0 +1,15 @@
+# temperature ranges: 0 to 30
+# wind ranges: 5 to 100
+
+test: Shows the temperature now
+steps:
+  - expectText: "Temperature now: 22"
+
+test: Refresh takes a new reading
+steps:
+  - click: { role: button, name: Refresh }
+  - expectText: Wind 12 km/h
+
+test: Shows today's date
+steps:
+  - expectText: Today is 6 October

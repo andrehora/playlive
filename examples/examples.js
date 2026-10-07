@@ -103,7 +103,7 @@ export const SITES = {
   "score-board": { name: "Scoreboard", category: "Games", host: "localhost:3097", accent: "#9f1239" },
   "tic-tac-toe": { name: "Tic tac toe", category: "Games", host: "localhost:3098", accent: "#9f1239" },
   "word-scramble": { name: "Word scramble", category: "Games", host: "localhost:3099", accent: "#9f1239" },
-  "clock-greeting": { name: "Clock greeting", category: "Flaky", host: "localhost:3100", accent: "#b91c1c" },
+  "weather-app": { name: "Weather app", category: "Flaky", host: "localhost:3100", accent: "#b91c1c" },
 };
 
 export const SITE_IDS = Object.keys(SITES);

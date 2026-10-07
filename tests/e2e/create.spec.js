@@ -1,11 +1,11 @@
 // Create: the example's tests, taken away and handed back as titles to write.
-// The mode holds a file of its own, so most of these are about the two files
-// never treading on each other.
+// What marks a title done is read in tests/unit/create.test.mjs; what is left
+// here is the mode holding a file of its own, and the two files never treading
+// on each other.
 import { test, expect } from '@playwright/test';
 import { openApp, setMode, selectSite } from './app.mjs';
 
 const SITE = 'address-form';
-const report = page => page.evaluate(() => window.playlive.create.report());
 const spec = page => page.inputValue('#spec');
 
 test.describe('Create', () => {
@@ -28,87 +28,6 @@ test.describe('Create', () => {
     await expect(page.locator('.create-group[data-state="todo"] .create-row')).toHaveCount(3);
     await expect(page.locator('#create .cov-note')).toHaveCount(0);   // the list is the panel
     expect(errors).toEqual([]);
-  });
-
-  test('a title is done on its exact name and the example\u2019s own checks', async ({ page }) => {
-    await openApp(page, { site: 'click-counter', mode: 'create' });
-    await expect(page.locator('#createScore')).toHaveText('0 of 3 done');
-
-    await page.fill('#spec', [
-      // The brief nobody has answered keeps its comment, as the mode wrote it.
-      '# Uses a bigger step', '',
-      // The example's own check, reached by a route of its own: what the test
-      // proves is fixed, the steps that get there are not.
-      'test: Counts up',
-      'steps:',
-      '  - select: { label: Step, value: 3 }',
-      '  - click: { role: button, name: Increment }',
-      '  - expectText: "Count: 3"', '',
-      // The right steps under a title the example does not have: the panel is
-      // matching briefs, so a near miss is not an answer to one.
-      'test: Counts down',
-      'steps:',
-      '  - click: { role: button, name: Decrement }',
-      '  - expectText: "Count can\'t go below 0."', '',
-      // The right title, checking something the example does not check.
-      'test: Cannot go below zero',
-      'steps:',
-      '  - click: { role: button, name: Decrement }',
-      '  - expectText: "Count: 0"'
-    ].join('\n'));
-
-    await expect(page.locator('#createScore')).toHaveText('1 of 3 done');
-    // The three parts read as a board: what is left, what is under way, what is done.
-    expect(await page.$$eval('.create-group .cov-title', g => g.map(x => x.textContent)))
-      .toEqual(['TODO', 'DOING', 'DONE']);
-    await expect.poll(async () => (await report(page)).items.map(i => [i.title, i.state])).toEqual([
-      ['Counts up', 'done'],
-      ['Uses a bigger step', 'todo'],
-      ['Cannot go below zero', 'nocheck']
-    ]);
-
-    // A row goes to its line: its comment while it is still to write.
-    await page.locator('.create-group[data-state="todo"] .create-line').click();
-    expect(await page.evaluate(() => {
-      const t = document.getElementById('spec');
-      return t.value.slice(t.selectionStart, t.selectionEnd);
-    })).toBe('# Uses a bigger step');
-
-    // Make the check the one the example makes and it is done, with nothing run.
-    await page.fill('#spec', (await page.inputValue('#spec')).replace('"Count: 0"', '"Count can\'t go below 0."'));
-    await expect(page.locator('#createScore')).toHaveText('2 of 3 done');
-  });
-
-  // The example's own file is the answer key, so it has to score full marks —
-  // every one of the hundred, or the rule is asking for something unreachable.
-  test('every example\u2019s own tests are a full answer to its own briefs', async ({ page }) => {
-    await openApp(page, { site: SITE, mode: 'create' });
-    const short = await page.evaluate(async () => {
-      const out = [];
-      for (const id of window.playlive.SITE_IDS){
-        const text = await (await fetch(`examples/${id}/tests.yaml`)).text();
-        await window.playlive.create.skeleton(id);         // warms the shipped file
-        const r = window.playlive.create.report(text, id);
-        if (!r.total) out.push(`${id}: no titles`);
-        else if (r.done !== r.total) out.push(`${id}: ${r.done} of ${r.total}`);
-      }
-      return out;
-    });
-    expect(short).toEqual([]);
-  });
-
-  test('a check inherited from beforeEach does not count as the test\u2019s own', async ({ page }) => {
-    await openApp(page, { site: 'click-counter', mode: 'create' });
-    await page.fill('#spec', [
-      'beforeEach:',
-      '  - expectText: "Count: 3"', '',
-      'test: Counts up',
-      'steps:',
-      '  - click: { role: button, name: Increment }'
-    ].join('\n'));
-    // It runs inside the test, but it is not what the test claims.
-    await expect(page.locator('#createScore')).toHaveText('0 of 3 done');
-    expect((await report(page)).items[0].state).toBe('nocheck');
   });
 
   test('neither file treads on the other, across modes, sites and a reload', async ({ page }) => {
@@ -174,18 +93,4 @@ test.describe('Create', () => {
     expect(await h('.create-panel')).toBe(wasPanel);
   });
 
-  // A brief is "prove this", so a test that checks nothing is not one. It is
-  // also how the answer key can hold the Unknown Tests Smells mode needs to
-  // point at without failing its own briefs.
-  test('a test that checks nothing is not a brief', async ({ page }) => {
-    await openApp(page, { site: 'click-counter', mode: 'create' });
-    // The example ships four tests, the last of which deliberately checks nothing.
-    await expect(page.locator('#createScore')).toHaveText('0 of 3 done');
-    await expect(page.locator('#spec'))
-      .toHaveValue('# Counts up\n\n# Uses a bigger step\n\n# Cannot go below zero\n');
-    expect(await page.evaluate(() => window.playlive.create.titles([
-      'test: Proves something', 'steps:', '  - expectText: hi', '',
-      'test: Proves nothing', 'steps:', '  - click: { role: button, name: Increment }'
-    ].join('\n')))).toEqual(['Proves something']);
-  });
 });
