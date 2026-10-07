@@ -23,7 +23,7 @@ tests/e2e/                Playwright, driving the real app
 tests/server.mjs          Static server for both suites
 ```
 
-Modules, roughly in dependency order: `dom` · `state` · `util` · `icons` · `sites` · `find` · `actions` · `parse` · `history` · `snapshots` · `htmlview` · `results` · `run` · `recorder` · `catalog` · `coverage` · `bugs` · `create` · `smells` · `complete` · `exports` · `dialog` · `picker` · `share` · `editor` · `ui` · `layout` · `modes` · `main`.
+Modules, roughly in dependency order: `dom` · `state` · `util` · `icons` · `sites` · `find` · `actions` · `parse` · `history` · `snapshots` · `htmlview` · `results` · `run` · `recorder` · `catalog` · `coverage` · `bugs` · `create` · `smells` · `complete` · `exports` · `dialog` · `picker` · `share` · `lessons` · `editor` · `ui` · `layout` · `modes` · `main`.
 
 ### Module rules (no bundler)
 
@@ -159,6 +159,7 @@ Rules:
 - **Mutation** (`bugs.js`, called "bugs" in code, "Mutation" on screen; don't rename): `{ id, title, find, replace }` patches applied to the page source and served as `srcdoc`. It refuses to start unless the suite is green. Each `find` must match **exactly once**. A site with bugs needs `bugs: true` in the manifest. `hunting` keeps hunt results out of history, status and coverage.
 - **Create** (`create.js`): the editor starts with only the example's test titles as comments. It keeps its own file per site (`createTests`, stored under `:create`); always go through `testsFor`/`stashEditor`. A title is done when a test with that exact title makes every check the original makes in its own steps. Tests with no checks aren't offered. **Decided:** the titles are the whole brief.
 - **Smells** (`smells.js`): reads the file, not a run. Unknown Test (no own check), Eager Test (≥ `EAGER` = 4 assertion phases), Assertion Roulette (> `ROULETTE` = 5 checks), Magic Value (same `fill`/`select` value on more than one line), Duplication of Setup (every test opens with the same steps). **Decided:** a smell stays silent when unsure, and one with no line to jump to isn't shown. Seven example tests are deliberately smelly and commented so. Adding a smell means an entry in `SMELLS`, a rule in `report`, tests for what it catches and what it must not, and an example that has it.
+- **Lessons** (`lessons.js`): an ordered path through the examples. Each lesson is `{ site, mode, title, goal, tip }` in `LESSONS`; it shows first in the example list and as a bar above the site. A lesson is done when its grader announces `playlive:graded` (`{ site, mode, done }`) and stays done. Only the done ids are stored (`:lessons`), and **Reset** clears them. Today only Create announces, so only Create lessons exist.
 - **HTML view** (`htmlview.js`): live markup, re-read after every step, with the step's line marked and the action name in the gutter. Editable; **Save** makes it the site's page (`editedHtml`, never stored).
 - **The test editor refuses copy, cut, paste and drop** (`REFUSED` in `editor.js`). **Decided:** writing the steps is the exercise. Export is the way out.
 - **Autocomplete** (`complete.js`): `context()` reads the caret, `itemsFor()` fills from the catalog. It only offers what the action can act on.
@@ -166,7 +167,7 @@ Rules:
 
 ## Storage
 
-Keys (no version suffix): `live-test-runner`, `:create`, `:history`, `:status`, `:site-keys`, `:layout`. Wrap every access in `try/catch` and read defensively. **Never stored:** the catalog, scores, anything about bugs, edited markup, the smells tab.
+Keys (no version suffix): `live-test-runner`, `:create`, `:history`, `:status`, `:site-keys`, `:layout`, `:lessons`. Wrap every access in `try/catch` and read defensively. **Never stored:** the catalog, scores, anything about bugs, edited markup, the smells tab.
 
 ## Known limits
 

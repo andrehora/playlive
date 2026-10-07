@@ -4,7 +4,7 @@ import { ASSERTIONS } from './parse.js';
 import { validate } from './parse.js';
 import { preview } from './run.js';
 import { exampleCache, exampleTests, persist, stashEditor, testsFor } from './sites.js';
-import { editorSite } from './state.js';
+import { editorSite, mode } from './state.js';
 
 /* ---------- Create: write the example's tests yourself ----------
 
@@ -144,6 +144,11 @@ export function renderCreate(){
     return;
   }
   const pct = Math.round(r.score * 100);
+  // Outside Create the editor holds the shipped tests, which answer every brief
+  // by definition, so only a file written here is announced.
+  if (mode === 'create'){
+    document.dispatchEvent(new CustomEvent('playlive:graded', { detail: { site: r.site, mode, done: r.done === r.total } }));
+  }
   createPanel.dataset.band = band(pct);
   createScore.textContent = r.done === r.total
     ? `All ${r.total} ${r.total === 1 ? 'test' : 'tests'} written`

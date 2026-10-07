@@ -2,6 +2,7 @@ import { SITES, SITE_IDS } from '../examples/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
 import { createSkeleton } from './create.js';
 import { catIconSvg } from './icons.js';
+import { lessonGroup, renderLessons } from './lessons.js';
 import { preview } from './run.js';
 import { syncUrl } from './share.js';
 import { loadApp, persist, stashEditor, testsFor } from './sites.js';
@@ -14,6 +15,8 @@ export const siteBtn = $id('siteBtn'), sitePop = $id('sitePop'), siteSearch = $i
 siteSearch.placeholder = 'Search examples';
 export function renderTabs(){
   tabsEl.innerHTML = '';
+  // The lessons lead: they are where to start when you do not know where to.
+  tabsEl.appendChild(lessonGroup());
   for (const cat of CATEGORIES){
     const group = document.createElement('div'); group.className = 'pop-group';
     const head = document.createElement('div'); head.className = 'pop-cat';
@@ -32,7 +35,7 @@ export function renderTabs(){
     }
     tabsEl.appendChild(group);
   }
-  paintTabs();
+  paintTabs(); renderLessons();
 }
 export function setView(id){
   setCurrentSite(id);
@@ -69,9 +72,12 @@ export function filterSites(q){
   tabsEl.querySelectorAll('.pop-group').forEach(g => {
     const catHit = g.querySelector('.pop-cat').textContent.toLowerCase().includes(q);
     let any = false;
-    g.querySelectorAll('.tab').forEach(b => {
-      const hit = inList.has(b.dataset.site)
-        && (!q || catHit || SITES[b.dataset.site].name.toLowerCase().includes(q) || b.dataset.site.includes(q));
+    g.querySelectorAll('.tab, .lesson').forEach(b => {
+      // A lesson is found by its title; an example by its name or id.
+      const hit = b.dataset.lesson
+        ? !q || catHit || b.querySelector('.tname').textContent.toLowerCase().includes(q)
+        : inList.has(b.dataset.site)
+          && (!q || catHit || SITES[b.dataset.site].name.toLowerCase().includes(q) || b.dataset.site.includes(q));
       b.hidden = !hit; if (hit){ any = true; shown++; }
     });
     g.hidden = !any;
@@ -99,7 +105,7 @@ siteBtn.addEventListener('click', () => sitePop.hidden ? openPicker() : closePic
 siteSearch.addEventListener('input', () => filterSites(siteSearch.value));
 document.addEventListener('pointerdown', e => { if (!sitePop.hidden && !e.target.closest('.picker')) closePicker(); });
 sitePop.addEventListener('keydown', e => {
-  const items = [...tabsEl.querySelectorAll('.tab:not([hidden])')].filter(b => !b.closest('.pop-group').hidden);
+  const items = [...tabsEl.querySelectorAll('.lesson:not([hidden]), .tab:not([hidden])')].filter(b => !b.closest('.pop-group').hidden);
   if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closePicker(true); }
   else if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
     if (!items.length) return;

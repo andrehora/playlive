@@ -10,6 +10,7 @@ import { applyHtml, htmlDirty, htmlEdit, revertHtml } from './htmlview.js';
 import { query } from './find.js';
 import { HIST, runHistory } from './history.js';
 import { layout } from './layout.js';
+import { LESSONS, LESSONS_KEY, clearLessons, lessonsDone, startLesson } from './lessons.js';
 import { setMode } from './modes.js';
 import { validate } from './parse.js';
 import { renderTabs, selectSite, setView } from './picker.js';
@@ -67,7 +68,8 @@ export async function resetAll(){
   // the runner's own data about every site
   for (const o of [siteKeys, runHistory, siteStatus]) for (const k of Object.keys(o)) delete o[k];
   expandedTests.clear();
-  try { for (const k of [STORE, CREATE, SITE_KEYS, HIST, STATUS]) localStorage.removeItem(k); } catch {}
+  clearLessons();              // and the path starts again from lesson 1
+  try { for (const k of [STORE, CREATE, SITE_KEYS, HIST, STATUS, LESSONS_KEY]) localStorage.removeItem(k); } catch {}
   specEl.value = mode === 'create' ? await createSkeleton(site) : await exampleTests(site);
   errorEl.textContent = ''; summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
   // deliberately no persist(): after Reset nothing of ours is in storage until you type
@@ -114,6 +116,7 @@ window.playlive = {
     report: smellReport, fold: setSmellFolded, scan: scanSites, sites: () => [...smelly],
     view: setSmellView, viewing: smellView, found: id => smellFound.get(id) || []
   },
+  lessons: { list: LESSONS, done: () => [...lessonsDone], start: id => startLesson(LESSONS.find(l => l.id === id)) },
   create: { report: createReport, fold: setCreateFolded, skeleton: createSkeleton, titles: titlesOf },
   share: { copy: copyLink, url: shareUrl, linked: siteFromHash, linkedMode: modeFromHash },
   complete: { suggest, context, showing: completion, close: closeCompletion },

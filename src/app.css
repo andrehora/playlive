@@ -413,12 +413,13 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .pop-cat{font-size:11.5px;font-weight:600;color:color-mix(in srgb,var(--cat,var(--muted)) 62%,var(--ink));background:color-mix(in srgb,var(--cat,var(--muted)) 16%,transparent);border-radius:7px;padding:5px 8px;margin:10px 0 4px;display:flex;align-items:center;gap:7px}
 .pop-group:first-child .pop-cat{margin-top:4px}
 .pop-cat svg.i{width:14px;height:14px}
-.pop-list .tab{width:100%;justify-content:flex-start;gap:9px;border:0;border-radius:7px;padding:7px 8px;min-height:var(--tap);background:transparent;font-size:var(--btn-font)}
-.pop-list .tab:hover,.pop-list .tab:focus-visible{background:color-mix(in srgb,var(--ink) 6%,transparent);outline:none}
+.pop-list .tab,.pop-list .lesson{width:100%;justify-content:flex-start;gap:9px;border:0;border-radius:7px;padding:7px 8px;min-height:var(--tap);background:transparent;font-size:var(--btn-font)}
+.pop-list .tab:hover,.pop-list .tab:focus-visible,.pop-list .lesson:hover,.pop-list .lesson:focus-visible{background:color-mix(in srgb,var(--ink) 6%,transparent);outline:none}
 /* The example showing is marked by its weight alone: with every category on a
    band of its own, a second filled block would be one too many. */
-.pop-list .tab[aria-pressed="true"]{font-weight:600}
-.pop-list .tab .tres{margin-left:auto}
+.pop-list .tab[aria-pressed="true"],.pop-list .lesson[aria-pressed="true"]{font-weight:600}
+.pop-list .tab .tres,.pop-list .lesson .tres{margin-left:auto}
+.lnum{min-width:1.5em;color:var(--muted);font-variant-numeric:tabular-nums}
 .pop-empty{color:var(--muted);font-size:13px;padding:6px 14px 14px;margin:0}
 .stepper{display:flex;align-items:center;gap:2px}
 .site-count{font-size:var(--small-font);color:var(--muted);font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
@@ -435,6 +436,12 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 12px;border-bottom:1px solid var(--line)}
 .snapbar{background:color-mix(in srgb,var(--run) 10%,transparent);color:var(--run)}
 .bugbar{background:color-mix(in srgb,var(--fail) 10%,transparent);color:var(--fail)}
+/* A lesson is a place to be, not a progress meter, so the bar stays neutral
+   until its goal is met and then takes the pass colour. */
+.lessonbar{background:var(--panel-2);color:var(--ink)}
+.lessonbar[data-state="done"]{background:color-mix(in srgb,var(--pass) 10%,transparent)}
+.lessonbar #lessonText{min-width:0;overflow-wrap:anywhere}
+.lessonbar button{flex:none}
 .recbar{background:color-mix(in srgb,var(--rec) 10%,transparent);color:var(--rec)}
 .recbar::before{content:"●";margin-right:6px;animation:pulse 1.2s ease-in-out infinite}
 .view{position:relative;flex:1;min-height:0;display:flex}
