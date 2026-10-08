@@ -12,7 +12,7 @@ steps:
   - expectText: "Shipping: Free"
   - expectText: "Total: $60.00"
 
-test: Expired and unknown codes
+test: SUMMER20 has expired and BOGUS is unknown
 steps:
   - fill: { label: Coupon code, value: SUMMER20 }
   - click: { role: button, name: Apply }

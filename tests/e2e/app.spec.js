@@ -257,10 +257,10 @@ test.describe('Running', () => {
     expect(code).toContain(`await page.getByLabel("Your name", { exact: true }).fill("Ana");`);
   });
 
-  // A number that moves is not a reason to leave it unchecked: expectTextInRange
+  // A number that moves is not a reason to leave it unchecked: expectNumber
   // says the range it should stay inside, which is how a flaky "7 hours left"
   // becomes a test that is true at every hour.
-  test('expectTextInRange checks the number beside the text', async ({ page }) => {
+  test('expectNumber checks the number beside the text', async ({ page }) => {
     await openApp(page, { site: 'click-counter' });
     await setSpeed(page, 'fast');
     await page.fill('#spec', [
@@ -268,7 +268,7 @@ test.describe('Running', () => {
       'steps:',
       '  - click: { role: button, name: Increment }',
       '  - click: { role: button, name: Increment }',
-      '  - expectTextInRange: { text: "Count:", min: 1, max: 5 }',
+      '  - expectNumber: { text: "Count:", min: 1, max: 5 }',
       ''
     ].join('\n'));
     const res = await runAll(page);
@@ -285,7 +285,7 @@ test.describe('Running', () => {
       'test: Counts past the range',
       'steps:',
       '  - click: { role: button, name: Increment }',
-      '  - expectTextInRange: { text: "Count:", min: 5, max: 9, timeout: 500 }',
+      '  - expectNumber: { text: "Count:", min: 5, max: 9, timeout: 500 }',
       ''
     ].join('\n'));
     const res = await runAll(page);
@@ -543,16 +543,23 @@ test.describe('HTML view', () => {
   });
 });
 
-// Writing the step is the exercise, so the file cannot be copied out of one
-// example and into another, or pasted in from somewhere else. Export is the
-// deliberate way out.
+// Writing the step is the exercise, so nothing can be pasted in from somewhere
+// else. Taking the tests out is fine.
 test.describe('Copy and paste', () => {
-  test('the editor refuses copy, cut, paste and a dropped selection', async ({ page }) => {
+  test('the editor allows copy and cut but refuses paste and a dropped selection', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     const before = await page.inputValue('#spec');
 
-    for (const [type, says] of [['copy', 'Copying the tests is off'], ['cut', 'Cutting the tests is off'],
-      ['paste', 'Pasting into the tests is off'], ['drop', 'Dropping text into the tests is off']]){
+    for (const type of ['copy', 'cut']){
+      const prevented = await page.evaluate(type => {
+        const e = new ClipboardEvent(type, { bubbles: true, cancelable: true });
+        document.getElementById('spec').dispatchEvent(e);
+        return e.defaultPrevented;
+      }, type);
+      expect(prevented, `${type} should be allowed`).toBe(false);
+    }
+
+    for (const [type, says] of [['paste', 'Pasting into the tests is off'], ['drop', 'Dropping text into the tests is off']]){
       const prevented = await page.evaluate(type => {
         const e = type === 'drop'
           ? new DragEvent('drop', { bubbles: true, cancelable: true })
@@ -566,8 +573,6 @@ test.describe('Copy and paste', () => {
     }
     expect(await page.inputValue('#spec')).toBe(before);
 
-    // The export dialog still hands the tests over, because that is a press on
-    // a button that says what it is handing you.
     await page.click('#export');
     await expect(page.locator('#dlgCopy')).toBeVisible();
     await page.keyboard.press('Escape');

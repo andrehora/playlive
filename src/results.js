@@ -58,18 +58,20 @@ export function setResultsView(v){
   if (v !== 'collapsed') [...resultsEl.querySelectorAll('.test')].forEach(x => setCollapsed(x, v === 'folded'));
   updateFoldAll();
 }
+// With no tests there are no steps to show or hide, so the button only opens
+// and collapses the panel (Create starts like this: titles as comments).
+const nextView = () => (resultsEl.querySelector('.test') || resultsView === 'collapsed' ? NEXT[resultsView] : 'collapsed');
 export function updateFoldAll(){
   const secs = [...resultsEl.querySelectorAll('.test')];
   // A fold opened by hand moves the cycle to where the panel actually is
   if (resultsView !== 'collapsed' && secs.length)
     resultsView = secs.every(x => x.classList.contains('collapsed')) ? 'folded' : 'expanded';
-  const [label, title, d] = SAYS[NEXT[resultsView]];
-  foldAllBtn.disabled = !secs.length && resultsView !== 'collapsed';
+  const [label, title, d] = SAYS[nextView()];
   foldAllBtn.setAttribute('aria-label', label);
   foldAllBtn.title = title;
   $id('foldIcon').setAttribute('d', d);
 }
-foldAllBtn.addEventListener('click', () => setResultsView(NEXT[resultsView]));
+foldAllBtn.addEventListener('click', () => setResultsView(nextView()));
 // Folded tests stay folded when the list is redrawn (every run and every edit redraws it)
 export const expandedTests = new Set();   // tests start folded; only the ones you open are remembered as open
 export const foldKey = sec => sec.dataset.site + '::' + sec.dataset.title;

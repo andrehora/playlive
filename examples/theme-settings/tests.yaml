@@ -3,7 +3,7 @@ steps:
   - check: { label: Dark }
   - expectText: "Preview: Dark theme, medium text"
 
-test: Changes the text size
+test: Changes the text size to large
 steps:
   - select: { label: Text size, value: Large }
   - expectText: "Preview: Light theme, large text"

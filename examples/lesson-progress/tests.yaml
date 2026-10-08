@@ -3,7 +3,7 @@ steps:
   - expectText: "0 of 3 lessons done · 0%"
   - expectNoText: Course complete.
 
-test: Marking one lesson moves the progress
+test: Marking Finding elements done moves the progress
 steps:
   - click: { role: button, name: Mark done Finding elements }
   - expectText: "1 of 3 lessons done · 33%"

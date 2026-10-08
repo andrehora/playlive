@@ -1,4 +1,4 @@
-test: Online a note saves straight away
+test: Online, Buy stamps saves straight away
 steps:
   - expectText: Online · everything is saved
   - fill: { label: Note, value: Buy stamps }
@@ -11,7 +11,7 @@ steps:
   - expectText: You are offline. Changes are kept on this device until you reconnect.
   - expectText: Offline · 0 notes waiting
 
-test: Notes written offline wait their turn
+test: Call the vet written offline waits its turn
 steps:
   - click: { role: button, name: Go offline }
   - fill: { label: Note, value: Call the vet }
@@ -19,7 +19,7 @@ steps:
   - expectText: "Call the vet · waiting"
   - expectText: Offline · 1 note waiting
 
-test: Reconnecting syncs what was waiting
+test: Reconnecting syncs Call the vet
 steps:
   - click: { role: button, name: Go offline }
   - fill: { label: Note, value: Call the vet }

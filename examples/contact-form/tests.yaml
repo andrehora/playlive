@@ -1,7 +1,7 @@
 beforeEach:
   - click: { role: button, name: Open form }
 
-test: Contact form sends a message
+test: Contact form sends a message from Ana
 steps:
   - fill: { label: Your name, value: Ana }
   - fill: { label: Message, value: hello }

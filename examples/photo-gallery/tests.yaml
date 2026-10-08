@@ -10,7 +10,7 @@ steps:
   - expectText: Photo 5 of 5
   - expectText: Forest path
 
-test: Jumps with a thumbnail
+test: Jumps to City at night with a thumbnail
 steps:
   - click: { role: button, name: Show City at night }
   - expectText: Photo 3 of 5

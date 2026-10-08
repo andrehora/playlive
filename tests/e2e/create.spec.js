@@ -9,6 +9,25 @@ const SITE = 'address-form';
 const spec = page => page.inputValue('#spec');
 
 test.describe('Create', () => {
+  test('Results drops the shipped tests, and empty it still collapses and opens again', async ({ page }) => {
+    await openApp(page, { site: SITE });
+    await expect(page.locator('#results .test')).toHaveCount(3);
+    // The titles alone do not parse, but the last list was the shipped tests:
+    // the answers, step by step. They go rather than stay.
+    await setMode(page, 'create');
+    await expect(page.locator('#results .test')).toHaveCount(0);
+    const results = () => page.locator('#left').getAttribute('data-results');
+    const fold = page.locator('#foldAll');
+
+    // There are no steps to fold, so every press goes between open and collapsed
+    for (let i = 0; i < 4; i++){
+      await expect(fold).toBeEnabled();
+      const before = await results();
+      await fold.click();
+      expect(await results()).toBe(before === 'collapsed' ? 'expanded' : 'collapsed');
+    }
+  });
+
   test('the editor is the titles as comments, and the panel says how many', async ({ page }) => {
     const { errors } = await openApp(page, { site: SITE });
     const shipped = await spec(page);
@@ -22,11 +41,15 @@ test.describe('Create', () => {
     await expect(page.locator('.smells-panel')).toBeHidden();
 
     // The titles, as comments, and nothing else: no steps, no settings.
-    await expect(page.locator('#spec')).toHaveValue('# Saves a US address\n\n# The postal field follows the country\n\n# Rejects a short ZIP code\n');
+    await expect(page.locator('#spec')).toHaveValue('# Saves a US address\n\n# The postal field becomes Postcode for the UK\n\n# Rejects a short ZIP code\n');
     await expect(page.locator('#createScore')).toHaveText('0 of 3 done');
     await expect(page.locator('.create-group[data-state="todo"] .cov-title')).toHaveText('TODO');
     await expect(page.locator('.create-group[data-state="todo"] .create-row')).toHaveCount(3);
     await expect(page.locator('#create .cov-note')).toHaveCount(0);   // the list is the panel
+    // Nothing written yet is a start, not a problem: no red count, and the hint in grey
+    await expect(page.locator('#fileStatus')).toHaveText('No tests');
+    await expect(page.locator('#fileStatus')).not.toHaveClass(/bad/);
+    await expect(page.locator('#error')).toHaveClass(/hint/);
     expect(errors).toEqual([]);
   });
 
@@ -49,7 +72,7 @@ test.describe('Create', () => {
 
     // Another example starts from its own titles, and coming back keeps the draft.
     await selectSite(page, 'click-counter');
-    await expect(page.locator('#spec')).toHaveValue('# Counts up\n\n# Uses a bigger step\n\n# Cannot go below zero\n');
+    await expect(page.locator('#spec')).toHaveValue('# Three clicks count up to 3\n\n# A step of 5 counts to 10 in two clicks\n\n# Cannot go below zero\n');
     await selectSite(page, SITE);
     await expect(page.locator('#spec')).toHaveValue(draft);
 
@@ -69,7 +92,7 @@ test.describe('Create', () => {
 
     await page.click('#reset');
     // Back to the titles, with nothing of ours left in storage.
-    await expect(page.locator('#spec')).toHaveValue('# Saves a US address\n\n# The postal field follows the country\n\n# Rejects a short ZIP code\n');
+    await expect(page.locator('#spec')).toHaveValue('# Saves a US address\n\n# The postal field becomes Postcode for the UK\n\n# Rejects a short ZIP code\n');
     await expect(page.locator('#createScore')).toHaveText('0 of 3 done');
     expect(await page.evaluate(() => Object.keys(localStorage)
       .filter(k => k.startsWith('live-test-runner') && k !== 'live-test-runner:layout'))).toEqual([]);

@@ -1,4 +1,4 @@
-test: One payer, two people owe
+test: Ana pays $30 and Ben and Cleo owe her $10 each
 steps:
   - fill: { label: Description, value: Dinner }
   - fill: { label: Amount, value: 30 }
@@ -8,7 +8,7 @@ steps:
   - expectText: Ben owes Ana $10.00
   - expectText: Cleo owes Ana $10.00
 
-test: Two payers
+test: Ana and Ben each pay $30 and Cleo owes them both
 steps:
   - fill: { label: Description, value: Dinner }
   - fill: { label: Amount, value: 30 }

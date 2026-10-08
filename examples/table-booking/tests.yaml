@@ -1,4 +1,4 @@
-test: Books a table
+test: "Books a table for 4 at 19:30"
 steps:
   - select: { label: Time, value: "19:30" }
   - fill: { label: Guests, value: 4 }

@@ -1,4 +1,4 @@
-test: Searching narrows the list
+test: Searching coffee narrows the list
 steps:
   - expectText: 5 transactions
   - fill: { label: Search, value: coffee }

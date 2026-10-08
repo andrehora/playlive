@@ -1,4 +1,4 @@
-test: Submits the survey
+test: Submits cooking rarely and loving Japanese
 steps:
   - check: { label: Rarely }
   - select: { label: Favorite cuisine, value: Japanese }

@@ -1,4 +1,4 @@
-test: A transfer moves money between accounts
+test: A $50 transfer moves money from Checking to Savings
 steps:
   - fill: { label: Amount, value: "50" }
   - click: { role: button, name: Send }

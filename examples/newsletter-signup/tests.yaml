@@ -1,4 +1,4 @@
-test: Subscribes with consent
+test: Subscribes ana@example.test with consent
 steps:
   - fill: { label: Email address, value: ana@example.test }
   - check: { label: I agree to receive emails }

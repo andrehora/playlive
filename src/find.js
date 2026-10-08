@@ -73,7 +73,7 @@ export function describeStepBase(s){
     case 'uncheck': return `Uncheck ${describeTarget(s.target)}`;
     case 'wait': return `Wait ${s.ms || 500} ms`;
     case 'expectText': return `Expect to see “${s.text}”`;
-    case 'expectTextInRange': return `Expect a number between ${s.min} and ${s.max} beside “${s.text}”`;
+    case 'expectNumber': return `Expect a number between ${s.min} and ${s.max} beside “${s.text}”`;
     case 'expectNoText': return `Expect not to see “${s.text}”`;
     case 'expectVisible': return `Expect ${describeTarget(s.target)} to be visible`;
     default: return s.action;

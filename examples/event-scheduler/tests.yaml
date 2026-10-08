@@ -1,4 +1,4 @@
-test: Adds an event
+test: Adds Team standup on Tuesday
 steps:
   - fill: { label: Event title, value: Team standup }
   - select: { label: Day, value: Tuesday }

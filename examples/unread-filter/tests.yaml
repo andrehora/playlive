@@ -8,13 +8,13 @@ steps:
   - expectText: "2 messages · 2 unread"
   - expectNoText: "Standup notes · read"
 
-test: Reading a message lowers the count
+test: Reading Welcome aboard lowers the count
 steps:
   - click: { role: button, name: "Mark read Welcome aboard" }
   - expectText: "3 messages · 1 unread"
   - expectText: "Welcome aboard · read"
 
-test: Starring puts a message in the starred list
+test: Starring Standup notes puts it in the starred list
 steps:
   - click: { role: button, name: Star Standup notes }
   - select: { label: Show, value: Starred }

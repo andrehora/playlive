@@ -50,7 +50,9 @@ export async function selectSite(page, id){
   await expect(page.locator(`#tabs .tab[data-site="${id}"]`)).toHaveAttribute('aria-pressed', 'true');
   // The site's tests are fetched, so wait for the editor to hold them
   await expect(page.locator('#spec')).not.toHaveValue('');
-  await expect(page.locator('#results .test').first()).toBeVisible();
+  // and Results to draw them, unless the file is Create's titles with no tests yet
+  await expect.poll(() => page.evaluate(() => !!document.querySelector('#results .test')
+    || !/^test\s*:/m.test(document.getElementById('spec').value))).toBe(true);
 }
 
 export async function setSpeed(page, value){

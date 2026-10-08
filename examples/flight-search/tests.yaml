@@ -1,4 +1,4 @@
-test: A search lists the flights
+test: A search on 2026-04-18 lists the flights
 steps:
   - fill: { label: Date, value: "2026-04-18" }
   - click: { role: button, name: Search }

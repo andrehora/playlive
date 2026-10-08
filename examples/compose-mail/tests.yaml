@@ -1,4 +1,4 @@
-test: A complete message is sent
+test: A complete message is sent to dana@example.test
 steps:
   - fill: { label: To, value: dana@example.test }
   - fill: { label: Subject, value: Lunch on Thursday }
@@ -14,7 +14,7 @@ steps:
   - click: { role: button, name: Send }
   - expectText: you will be told when it is read
 
-test: A bad address is refused
+test: The bad address dana-at-example is refused
 steps:
   - fill: { label: To, value: dana-at-example }
   - fill: { label: Subject, value: Hello }
@@ -27,7 +27,7 @@ steps:
   - click: { role: button, name: Send }
   - expectText: Add a subject, or it will look like spam.
 
-test: A draft keeps its subject
+test: A draft keeps its subject, Half-written
 steps:
   - fill: { label: Subject, value: Half-written }
   - click: { role: button, name: Save draft }

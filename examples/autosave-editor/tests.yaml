@@ -1,4 +1,4 @@
-test: Stores the draft after you stop typing
+test: Stores a five-word draft after you stop typing
 steps:
   - fill: { label: Message draft, value: See you at the station }
   - expectText: Draft stored · 5 words

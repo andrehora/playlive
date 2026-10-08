@@ -1,4 +1,4 @@
-test: Archiving one message moves it out of the inbox
+test: Archiving Standup notes moves it out of the inbox
 steps:
   - check: { label: Standup notes }
   - click: { role: button, name: Archive selected }

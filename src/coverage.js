@@ -2,7 +2,7 @@ import { catalogs, keyFor } from './catalog.js';
 import { $id, specEl } from './dom.js';
 import { validate } from './parse.js';
 import { addTest, withValue } from './recorder.js';
-import { editorSite, recording, running } from './state.js';
+import { editorSite, hunting, mode, recording, running } from './state.js';
 import { toast } from './ui.js';
 
 /* ---------- UI coverage: which of a site's controls the tests reach ----------
@@ -134,6 +134,11 @@ export function renderCoverage(){
   covPanel.dataset.band = r.total ? band(pct) : '';
   covBar.hidden = !r.total;
   covBar.firstElementChild.style.width = `${Math.round(r.score * 100)}%`;
+  // Only a finished run is a score: mid-run the next screen may not have been
+  // reached yet, and a hunt's runs are against a page broken on purpose.
+  if (mode === 'coverage' && !running && !hunting && r.total){
+    document.dispatchEvent(new CustomEvent('playlive:graded', { detail: { site: r.site, mode, done: r.used === r.total } }));
+  }
   const top = covEl.scrollTop;
   covEl.innerHTML = '';
   if (!r.total){

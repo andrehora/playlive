@@ -5,7 +5,7 @@ steps:
   - click: { role: button, name: Save address }
   - expectText: Address saved for United States.
 
-test: The postal field follows the country
+test: The postal field becomes Postcode for the UK
 steps:
   - select: { label: Country, value: United Kingdom }
   - fill: { label: Street, value: 10 Downing Street }

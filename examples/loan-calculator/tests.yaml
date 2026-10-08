@@ -1,35 +1,24 @@
-vars:
-  amount: 200000
-  rate: 5
-  term: 30 years
-
-test: 30-year loan
+test: "$200,000 over 30 years at 5%"
 steps:
-  - fill: { label: Loan amount, value: "${amount}" }
-  - fill: { label: "Interest rate (%)", value: "${rate}" }
-  - select: { label: Term, value: "${term}" }
+  - fill: { label: Loan amount, value: "200000" }
+  - fill: { label: "Interest rate (%)", value: "5" }
+  - select: { label: Term, value: 30 years }
   - click: { role: button, name: Calculate }
   - expectText: "Monthly payment: $1,073.64"
 
-test: 15-year loan costs less in total
-vars:
-  term: 15 years
+test: "$200,000 over 15 years at 5% costs less in total"
 steps:
-  - fill: { label: Loan amount, value: "${amount}" }
-  - fill: { label: "Interest rate (%)", value: "${rate}" }
-  - select: { label: Term, value: "${term}" }
+  - fill: { label: Loan amount, value: "200000" }
+  - fill: { label: "Interest rate (%)", value: "5" }
+  - select: { label: Term, value: 15 years }
   - click: { role: button, name: Calculate }
   - expectText: "Monthly payment: $1,581.59 · Total paid: $284,685.71"
 
-test: Zero interest
-vars:
-  amount: 120000
-  rate: 0
-  term: 20 years
+test: "$120,000 over 20 years at zero interest"
 steps:
-  - fill: { label: Loan amount, value: "${amount}" }
-  - fill: { label: "Interest rate (%)", value: "${rate}" }
-  - select: { label: Term, value: "${term}" }
+  - fill: { label: Loan amount, value: "120000" }
+  - fill: { label: "Interest rate (%)", value: "0" }
+  - select: { label: Term, value: 20 years }
   - click: { role: button, name: Calculate }
   - expectText: "Monthly payment: $500.00"
 

@@ -1,4 +1,4 @@
-test: Posting a comment adds it to the thread
+test: Ana posting “The export bug is fixed, yes.” adds it to the thread
 steps:
   - fill: { label: Name, value: Ana }
   - fill: { label: Comment, value: "The export bug is fixed, yes." }

@@ -1,17 +1,17 @@
-test: Typing offers the matching recipes
+test: Typing le offers the matching recipes
 steps:
   - fill: { label: Search recipes, value: le }
   - expectVisible: { role: button, name: Choose Lemon risotto }
   - expectVisible: { role: button, name: Choose Leek tart }
   - expectNoText: Mango sorbet
 
-test: Choosing a suggestion fills the box
+test: Choosing Mango sorbet fills the box
 steps:
   - fill: { label: Search recipes, value: man }
   - click: { role: button, name: Choose Mango sorbet }
   - expectText: "Chosen: Mango sorbet"
 
-test: A search with no match says so
+test: A search for pizza says nothing matches
 steps:
   - fill: { label: Search recipes, value: pizza }
   - expectText: No recipe matches pizza.

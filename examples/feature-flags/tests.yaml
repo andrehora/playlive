@@ -2,7 +2,7 @@ test: One flag is on to start with
 steps:
   - expectText: "On: Dark mode"
 
-test: Turning flags on lists them
+test: Turning on Beta search and Usage metrics lists them
 steps:
   - check: { label: Beta search }
   - check: { label: Usage metrics }

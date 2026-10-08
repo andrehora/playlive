@@ -78,6 +78,7 @@ main{display:grid;grid-template-columns:var(--left-w) 12px minmax(0,1fr);padding
 .file-status{font-weight:400;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .file-status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pass)}
 .file-status.bad{color:var(--fail)} .file-status.bad::before{background:var(--fail)}
+.file-status.none::before{background:var(--muted)}
 .file-status:empty{display:none}
 
 /* Resize handles */
@@ -127,6 +128,7 @@ body.resizing iframe{pointer-events:none}
 .ac-detail{margin-left:auto;font-size:11.5px;color:var(--muted);white-space:nowrap;flex:none}
 #error{color:var(--fail);font-size:12.5px;padding:8px 14px;margin:0;white-space:pre-wrap;border-top:1px solid var(--line);background:color-mix(in srgb,var(--fail) 6%,transparent);max-height:96px;overflow:auto}
 #error:empty{display:none}
+#error.hint{color:var(--muted);background:none}   /* an empty file is a start, not a mistake */
 #error.jump{cursor:pointer}
 #error.jump:hover{background:color-mix(in srgb,var(--fail) 10%,transparent)}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--line)}

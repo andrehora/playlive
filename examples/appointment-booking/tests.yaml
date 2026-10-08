@@ -1,4 +1,4 @@
-test: Booking a free slot
+test: "Booking the free 09:30 slot"
 steps:
   - click: { role: button, name: "09:30, free" }
   - expectText: "Chosen: Monday at 09:30 with Dr Reis"
@@ -12,7 +12,7 @@ steps:
   - click: { role: button, name: Confirm booking }
   - expectText: arrive 10 minutes early for a first visit
 
-test: Another clinician has different slots taken
+test: Dr Lima has other slots taken on Tuesday
 steps:
   - select: { label: Clinician, value: Dr Lima }
   - select: { label: Day, value: Tuesday }

@@ -4,8 +4,8 @@ import { jumpToLine, lineForStep } from './editor.js';
 import { describeStep } from './find.js';
 import { ASSERTIONS, validate } from './parse.js';
 import { selectSite } from './picker.js';
-import { testsFor } from './sites.js';
-import { editorSite } from './state.js';
+import { exampleCache, testsFor } from './sites.js';
+import { editorSite, mode } from './state.js';
 
 /* ---------- Test smells: what is wrong with the tests themselves ----------
 
@@ -35,26 +35,18 @@ function sharedOpening(tests){
   while (n < first.length && lists.every(l => n < l.length && stepKey(l[n]) === stepKey(first[n]))) n++;
   return first.slice(0, n);
 }
+// The beforeEach steps a General Fixture can be made of: the ones that leave a
+// field holding a value, which a test can replace with its own. What a click did
+// is not written in the file, so nothing here can say a test undid it.
+const SETS = new Set(['fill', 'select']);
+const targetKey = s => JSON.stringify(s.target && Object.entries(s.target).sort());
 // A test's own steps. beforeEach runs inside every test, so the parser folds it
 // in; a smell about what *this* test does has to take it back out.
 const own = t => t.steps.filter(s => s.from !== 'beforeEach');
-// How many times a test stops to check: runs of checks, separated by the steps
-// in between. One phase is a test proving one thing, however many checks it
-// takes. Four is a test proving four, under one title.
-export const EAGER = 4;
-export function phasesOf(steps){
-  let n = 0, inPhase = false;
-  for (const s of steps){
-    const check = ASSERTIONS.has(s.action);
-    if (check && !inPhase) n++;
-    inPhase = check;
-  }
-  return n;
-}
-// How many checks a test makes, which is not how many times it stops to check.
-// Assertion Roulette is about the count: a step here carries no message of its
-// own, so when one of a long row of checks goes red, the row is all there is to
-// read. More than five is where that stops being readable — of the shipped
+// How many checks a test makes. Unknown Test is a test with none; Assertion
+// Roulette is one with too many: a step carries no message of its own, so when
+// one of a long row of checks goes red, the row is all there is to read. More
+// than five is where that stops being readable — of the shipped
 // tests the busiest makes four.
 export const ROULETTE = 5;
 export const checksIn = steps => steps.filter(s => ASSERTIONS.has(s.action)).length;
@@ -63,12 +55,7 @@ export const SMELLS = [
   {
     id: 'unknown-test',
     name: 'Unknown Test',
-    why: 'Checks nothing. Add an expectText, expectNoText or expectVisible.'
-  },
-  {
-    id: 'eager-test',
-    name: 'Eager Test',
-    why: 'Acts and checks over and over. Split it into one test per thing it proves.'
+    why: 'Checks nothing. Add an expect.'
   },
   {
     id: 'assertion-roulette',
@@ -76,14 +63,14 @@ export const SMELLS = [
     why: 'So many checks that a red one says little. Keep the checks that say what the test is for.'
   },
   {
-    id: 'magic-value',
-    name: 'Magic Value',
-    why: 'The same value typed out in several places. Name it once under vars:.'
-  },
-  {
     id: 'duplication-of-setup',
     name: 'Duplication of Setup',
     why: 'Every test starts the same way. Move those steps to a beforeEach.'
+  },
+  {
+    id: 'general-fixture',
+    name: 'General Fixture',
+    why: 'Keep in beforeEach only what every test uses.'
   }
 ];
 
@@ -96,60 +83,27 @@ function testLines(text){
   return out;
 }
 
-// A value is what a step types or picks. Numbers in a check's text are the
-// words of a message — "3 orders", "Count: 3" — and reading those as constants
-// would flag every example in the catalogue, so this one stays with values.
-const VALUED = new Set(['fill', 'select']);
-// Every value with a number in it, and the lines it is written out on. A value
-// that came from a "vars:" entry is not on its own step's line — that line says
-// ${name} — so a file that has already named one has nothing to answer for.
-function spelledValues(tests, text){
-  const lines = text.split('\n');
-  const seen = new Map();
-  for (const t of tests) for (const s of t.steps){
-    if (!VALUED.has(s.action) || s.value == null) continue;
-    const value = String(s.value);
-    if (!/\d/.test(value)) continue;
-    const at = lineForStep(text, s.src);
-    if (at < 0 || !lines[at].includes(value)) continue;
-    if (!seen.has(value)) seen.set(value, new Set());
-    seen.get(value).add(at);            // the same line twice is one place
-  }
-  return seen;
-}
-
 export function report(text = specEl.value){
   const v = validate(text);
   if (!v.spec) return { parsed: false, tests: 0, items: [], total: 0 };
   const tests = v.spec.tests, titleLines = testLines(text), items = [];
 
-  // Unknown Test: nothing in the test says what should have happened. Eager
-  // Test: it says it over and over, acting in between, which is several tests
-  // wearing one title — and the Results row can only name the first that broke.
+  // Unknown Test: nothing in the test says what should have happened.
   // Assertion Roulette: it says far too much, in a row of checks none of which
   // explains itself, so a red one leaves you guessing which claim mattered.
   tests.forEach((t, i) => {
     const mine = own(t);
-    const phases = phasesOf(mine);
-    if (!phases){
+    const checks = checksIn(mine);
+    if (!checks){
       items.push({
         smell: 'unknown-test',
         what: `${t.title}`,
         detail: 'runs its steps and checks nothing',
         line: titleLines[i] ?? -1
       });
-    } else if (phases >= EAGER){
-      items.push({
-        smell: 'eager-test',
-        what: `${t.title}`,
-        detail: `acts and checks ${phases} times over`,
-        line: titleLines[i] ?? -1
-      });
     }
-    // Assertion Roulette counts the checks rather than the phases, so a test
-    // can be both: one says it proves several things, this one says that when
-    // it breaks, nothing in the row tells you which check was the point.
-    const checks = checksIn(mine);
+    // When a long row of checks breaks, nothing in the row tells you which
+    // check was the point.
     if (checks > ROULETTE){
       items.push({
         smell: 'assertion-roulette',
@@ -159,18 +113,6 @@ export function report(text = specEl.value){
       });
     }
   });
-
-  // Magic Value: the same number typed out in more than one place. Once is a
-  // value; twice is a value with no name, and "vars:" is where a name goes.
-  for (const [n, where] of spelledValues(tests, text)){
-    if (where.size < 2) continue;
-    items.push({
-      smell: 'magic-value',
-      what: `“${n}”`,
-      detail: `written out in ${where.size} places`,
-      line: Math.min(...where)
-    });
-  }
 
   // Duplication of Setup: every test opens the same way. Those steps are the
   // suite's setup written out once per test, and a beforeEach is where setup
@@ -183,7 +125,37 @@ export function report(text = specEl.value){
       line: lineForStep(text, s.src)
     });
   }
+
+  // General Fixture: the setup does more than some test needs. The case the file
+  // shows for certain is a test whose very first step sets a field beforeEach has
+  // just set, to something else. Nothing ran in between, so that test never used
+  // the value. Anything later in beforeEach other than setting another field
+  // might have used it, and then the rule says nothing.
+  const fixture = tests[0]?.steps.filter(s => s.from === 'beforeEach') ?? [];
+  fixture.forEach((set, i) => {
+    if (!SETS.has(set.action)) return;
+    const after = fixture.slice(i + 1);
+    if (!after.every(s => SETS.has(s.action) && targetKey(s) !== targetKey(set))) return;
+    const n = tests.filter(t => {
+      const first = own(t)[0];
+      return first && first.action === set.action && targetKey(first) === targetKey(set) && first.value !== set.value;
+    }).length;
+    if (!n) return;
+    items.push({
+      smell: 'general-fixture',
+      what: describeStep(set),
+      detail: n === tests.length ? 'replaced by every test' : `replaced by ${n} of ${tests.length} tests`,
+      line: lineForStep(text, set.src)
+    });
+  });
   return { parsed: true, tests: tests.length, items, total: items.length };
+}
+
+// A file is clean when nothing smells and it still has every test the example
+// ships with: deleting the test that smells is not fixing it.
+export function clean(r, shipped){
+  const s = shipped ? validate(shipped).spec : null;
+  return r.parsed && !r.total && !!s && r.tests >= s.tests.length;
 }
 
 /* ---------- Which examples have one ----------
@@ -241,7 +213,7 @@ function rescanEditor(r){
    one. **This file** is what the tests on screen smell of. **All smells** is
    the catalogue: every smell the app looks for, named and explained whether or
    not anything has it, with the examples that do underneath. A student who has
-   never met Eager Test should be able to find out that it exists without first
+   never met Assertion Roulette should be able to find out that it exists without first
    writing one, and a row goes to the example and the line that has it, so the
    catalogue is a way into the hundred examples rather than a glossary.       */
 export const smellsEl = $id('smells'), smellScore = $id('smellScore');
@@ -268,6 +240,9 @@ document.addEventListener('playlive:smelly', () => { if (view === 'all') renderS
 export function renderSmells(){
   const r = report();
   rescanEditor(r);
+  if (mode === 'smells' && exampleCache[editorSite] !== undefined){
+    document.dispatchEvent(new CustomEvent('playlive:graded', { detail: { site: editorSite, mode, done: clean(r, exampleCache[editorSite]) } }));
+  }
   const top = smellsEl.scrollTop;
   smellsEl.innerHTML = '';
   if (view === 'all') renderAll(); else renderFile(r);

@@ -84,7 +84,7 @@ export const ACTIONS = {
   // countdown or a total has a range it should stay inside, and a test that
   // says so is stable without being blind. The line the number sits on is the
   // page's own text, so what the test names is what a person would read.
-  async expectTextInRange(s){
+  async expectNumber(s){
     try { await waitFor(() => inRange(numberBeside(s.text), s), `${describeRange(s)}`); }
     catch (e){
       if (stopRequested) throw e;
@@ -94,7 +94,7 @@ export const ACTIONS = {
         : `. The page says ${n}, which is outside ${s.min} to ${s.max}`;
       throw new Error(e.message + why, { cause: e });
     }
-    const el = query({ text: s.text })[0]; if (el){ setLastEl(el); await highlight(el, 'expectTextInRange', '#1F8A55'); }
+    const el = query({ text: s.text })[0]; if (el){ setLastEl(el); await highlight(el, 'expectNumber', '#1F8A55'); }
   },
   async expectNoText(s){
     await sleep(150);

@@ -1,10 +1,10 @@
-test: Opens a topic from the menu
+test: Opens Installation from the menu
 steps:
   - click: { role: link, name: Installation }
   - expectText: Help center / Installation
   - expectText: Run npm install our-sdk
 
-test: Sends page feedback
+test: Answering No sends page feedback
 steps:
   - click: { role: link, name: Troubleshooting }
   - click: { role: button, name: "No" }

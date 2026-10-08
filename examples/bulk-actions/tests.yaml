@@ -1,4 +1,4 @@
-test: An action applies to the one you picked
+test: Send invite applies to the one you picked
 steps:
   - check: { label: Bruno Lima }
   - expectText: "3 members · 1 selected"
@@ -12,7 +12,7 @@ steps:
   - click: { role: button, name: Apply to selected }
   - expectText: Suspend applied to 3 members.
 
-test: Removing takes them off the list
+test: Removing Chen Wei takes them off the list
 steps:
   - check: { label: Chen Wei }
   - select: { label: Action, value: Remove }

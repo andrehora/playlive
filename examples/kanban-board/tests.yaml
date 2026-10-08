@@ -1,4 +1,4 @@
-test: Moves a card forward
+test: Moves a to-do card forward
 steps:
   - click: { role: button, name: Move Write tests to Doing }
   - expectText: To do (1)

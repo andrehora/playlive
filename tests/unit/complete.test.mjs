@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load, site } from './env.mjs';
 
-const { context, suggest, fileInfo } = await load('src/complete.js');
+const { context, suggest } = await load('src/complete.js');
 const { harvest, clearCatalog } = await load('src/catalog.js');
 const { validate } = await load('src/parse.js');
 const { query } = await load('src/find.js');
@@ -42,7 +42,7 @@ test('an action is what goes after a dash', () => {
 });
 
 test('a bare indented word is an action only where steps live', () => {
-  const noSteps = 'vars:\n  em';
+  const noSteps = 'test: T\n  em';
   assert.notEqual(context(noSteps, noSteps.length)?.what, 'action');
 });
 
@@ -72,7 +72,7 @@ test('a comma inside quotes does not start a new part', () => {
 
 test('${…} is read before anything it sits inside', () => {
   const t = `${head}  - fill: { label: Email, value: "\${em`;
-  assert.equal(context(t, t.length).what, 'var');
+  assert.equal(context(t, t.length).what, 'unique');
 });
 
 test('a "timeout:" line of its own is a slot', () => {
@@ -95,17 +95,9 @@ test('the whole argument after "- click: " is one slot', () => {
 
 test('nowhere to suggest anything reads as nothing', () => {
   assert.equal(context('', 0)?.what, 'top', 'an empty file is where a setting or a test goes');
-  // Half way through a var's value: not a slot the catalog has anything to say about.
-  const t = 'vars:\n  email: a@b';
+  // Half way through a title: not a slot the catalog has anything to say about.
+  const t = 'test: Half way thr';
   assert.equal(context(t, t.length), null);
-});
-
-/* ---------- The vars a file has named ---------- */
-
-test('fileInfo reads the names under "vars:"', () => {
-  assert.deepEqual(fileInfo('vars:\n  email: a\n  tag: b\n\ntest: t\n').vars, ['email', 'tag']);
-  assert.deepEqual(fileInfo('vars:\n  email: a\n  # a comment\n  tag: b\n').vars, ['email', 'tag']);
-  assert.deepEqual(fileInfo('test: t\nsteps:\n  - click: A\n').vars, [], 'a step is not a var');
 });
 
 /* ---------- What each action may act on ---------- */
@@ -174,8 +166,8 @@ test('a key already written is not offered again', () => {
 });
 
 test('the range check has keys of its own rather than a target’s', () => {
-  assert.deepEqual(labels(`${head}  - expectTextInRange: { `), ['text', 'min', 'max', 'timeout']);
-  assert.deepEqual(labels(`${head}  - expectTextInRange: { text: n, `), ['min', 'max', 'timeout']);
+  assert.deepEqual(labels(`${head}  - expectNumber: { `), ['text', 'min', 'max', 'timeout']);
+  assert.deepEqual(labels(`${head}  - expectNumber: { text: n, `), ['min', 'max', 'timeout']);
 });
 
 test('a value slot on a select offers that select’s options', () => {
@@ -191,9 +183,9 @@ test('wait offers a number of ms', () => {
   assert.deepEqual(inserts(`${head}  - wait: `), ['500', '1000', '2000']);
 });
 
-test('a variable slot offers the file’s names and ${unique}', () => {
-  const t = `vars:\n  email: a\n\n${head}  - fill: { label: Email, value: "\${`;
-  assert.deepEqual(labels(t), ['email', 'unique']);
+test('a ${ slot offers ${unique}', () => {
+  const t = `${head}  - fill: { label: Email, value: "\${`;
+  assert.deepEqual(labels(t), ['unique']);
 });
 
 test('it says nothing where nothing can be suggested', () => {

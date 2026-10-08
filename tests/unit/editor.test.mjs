@@ -52,9 +52,9 @@ test('a step written over more than one line points at where it starts', () => {
   assert.deepEqual(linesOf(text), [[2, 4]]);
 });
 
-test('a title with vars between it and its steps is still found', () => {
-  const text = ['test: One', 'vars:', '  a: b', 'steps:', '  - click: A', ''].join('\n');
-  assert.deepEqual(linesOf(text), [[4]]);
+test('a title with a comment between it and its steps is still found', () => {
+  const text = ['test: One', '# a note', 'steps:', '  - click: A', ''].join('\n');
+  assert.deepEqual(linesOf(text), [[3]]);
 });
 
 test('a step with no source has no line', () => {
@@ -108,12 +108,12 @@ test('a title, an action and a step option each get their own class', () => {
   assert.match(hlLine('test: Shows the dashboard'), /class="tt"/);
   assert.match(hlLine('  - click: Send'), /class="act"/);
   assert.match(hlLine('    timeout: 8000'), /class="opt"/);
-  assert.match(hlLine('vars:'), /class="top"/);
+  assert.match(hlLine('beforeEach:'), /class="top"/);
 });
 
 test('an action is one the app actually has', () => {
   assert.equal(isAction('click'), true);
-  assert.equal(isAction('expectTextInRange'), true);
+  assert.equal(isAction('expectNumber'), true);
   assert.equal(isAction('use'), false, 'flows are gone, so "use" is not an action');
   assert.equal(isAction('timeout'), false);
 });
@@ -123,11 +123,11 @@ test('a comment is highlighted as one, and a # inside quotes is not', () => {
   assert.doesNotMatch(hlLine('  - expectText: "Invoice #4821"'), /class="c"/);
 });
 
-test('a value’s strings, numbers, braces and vars are told apart', () => {
+test('a value’s strings, numbers, braces and ${unique} are told apart', () => {
   const html = hlValue(' { label: Email, value: "ana-${unique}" }');
   assert.match(html, /class="p"/, 'the braces');
   assert.match(html, /class="s"/, 'the quoted value');
-  assert.match(html, /class="v"/, 'the variable inside it');
+  assert.match(html, /class="v"/, 'the ${unique} inside it');
   assert.match(hlValue(' 8000'), /class="n"/);
 });
 

@@ -5,7 +5,7 @@ import { validate } from './parse.js';
 import { setView } from './picker.js';
 import { run, syncUI } from './run.js';
 import { loadApp, pageSource } from './sites.js';
-import { clearBugHtml, editorSite, hunting, recording, running, setBugHtml, setHunting } from './state.js';
+import { clearBugHtml, editorSite, hunting, mode, recording, running, setBugHtml, setHunting } from './state.js';
 import { toast } from './ui.js';
 
 /* ---------- Bugs: what the tests would catch if the page broke ----------
@@ -139,6 +139,11 @@ export async function hunt(){
     summaryEl.textContent = `Mutation: ${r.caught} of ${r.scored} caught` + (r.escaped ? `, ${r.escaped} through` : '');
     summaryEl.className = r.escaped ? 'bad' : 'ok';
     renderBugs();
+    // Done is every mutation tried and caught: a stopped hunt has tried some,
+    // and one that no longer applies has not been caught by anything.
+    if (mode === 'mutation'){
+      document.dispatchEvent(new CustomEvent('playlive:graded', { detail: { site, mode, done: r.total > 0 && r.caught === r.total } }));
+    }
   }
 }
 

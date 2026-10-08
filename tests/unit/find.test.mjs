@@ -129,7 +129,7 @@ test('every action says what it does, in words', () => {
     '  - expectText: Hi',
     '  - expectNoText: Oops',
     '  - expectVisible: { role: heading, name: Dashboard }',
-    '  - expectTextInRange: { text: Ends in, min: 1, max: 24 }'
+    '  - expectNumber: { text: Ends in, min: 1, max: 24 }'
   ].join('\n')), [
     'Click button “Go”',
     'Type “a@b.test” into field “Email”',

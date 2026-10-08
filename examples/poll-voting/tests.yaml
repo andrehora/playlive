@@ -1,11 +1,11 @@
-test: Voting shows the results
+test: Voting for Dark mode shows the results
 steps:
   - check: { label: Dark mode }
   - click: { role: button, name: Vote }
   - expectText: Thanks for voting! 25 votes so far.
   - expectText: "Dark mode: 13 votes (52%)"
 
-test: Percentages follow the vote
+test: A vote for Calendar view moves the percentages
 steps:
   - check: { label: Calendar view }
   - click: { role: button, name: Vote }

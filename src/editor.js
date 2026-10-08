@@ -1,4 +1,4 @@
-import { STEP_OPTS } from './parse.js';
+import { NO_TESTS, STEP_OPTS } from './parse.js';
 import { ACTIONS } from './actions.js';
 import { $id, errorEl, specEl } from './dom.js';
 import { completionOpen } from './state.js';
@@ -149,19 +149,16 @@ export function setSpecFolded(folded){
 }
 foldSpecBtn.addEventListener('click', () => setSpecFolded(!specFolded));
 
-/* ---------- The editor does not copy or paste ----------
-   Writing the step is the exercise. A file that can be copied from one example
-   into another, or pasted in from somewhere else, turns every mode into a
-   shuffling of text that teaches nothing — Create most of all, where the
-   answer is one mode away on purpose. So copy, cut, paste and a dropped
-   selection are all turned down here, with a line saying why rather than a
-   control that quietly does nothing. Export is still the way out: it is a
-   deliberate press on a button that says what it is handing you.
+/* ---------- The editor does not paste ----------
+   Writing the step is the exercise. A file that can be pasted in from
+   somewhere else turns every mode into a shuffling of text that teaches
+   nothing — Create most of all, where the answer is one mode away on purpose.
+   So paste and a dropped selection are turned down here, with a line saying
+   why rather than a control that quietly does nothing. Copy and cut are fine:
+   taking your own tests out costs the exercise nothing.
    The tests and the recorder write the file through its value, not through the
    clipboard, so none of this is in their way. */
 const REFUSED = {
-  copy: 'Copying the tests is off here: reading them and writing them is the exercise.',
-  cut: 'Cutting the tests is off here: reading them and writing them is the exercise.',
   paste: 'Pasting into the tests is off here. Type the step, or press Ctrl+Space for the suggestions.',
   drop: 'Dropping text into the tests is off here. Type the step, or press Ctrl+Space for the suggestions.'
 };
@@ -174,6 +171,7 @@ for (const [type, msg] of Object.entries(REFUSED)){
 new MutationObserver(() => {
   errLines = errorEl.textContent ? errorLinesFor(errorEl.textContent, specEl.value) : new Set();
   errorEl.classList.toggle('jump', errLines.size > 0);
+  errorEl.classList.toggle('hint', errorEl.textContent === NO_TESTS);
   errorEl.title = errLines.size ? 'Go to the line' : '';
   renderEditor(true);
 })
@@ -210,6 +208,9 @@ export function setFileStatus(v){
     const steps = v.spec.tests.reduce((n, t) => n + t.steps.length, 0);
     el.textContent = `${v.spec.tests.length} ${v.spec.tests.length === 1 ? 'test' : 'tests'} · ${steps} ${steps === 1 ? 'step' : 'steps'}`;
     el.className = 'file-status';
+  } else if (v.empty){
+    el.textContent = 'No tests';
+    el.className = 'file-status none';
   } else {
     const n = v.error.split('\n').length;
     el.textContent = `${n} ${n === 1 ? 'problem' : 'problems'}`;

@@ -1,16 +1,16 @@
-test: Filters by category
+test: Filters by Shoes
 steps:
   - check: { label: Shoes }
   - expectText: Showing 2 products
 
-test: Combines category and stock
+test: Combines Shoes and in stock
 steps:
   - check: { label: Shoes }
   - check: { label: In stock only }
   - expectText: Showing 1 product
   - expectText: "1. Runner shoes · $80"
 
-test: Sorts by price
+test: Sorts by price, low to high
 steps:
   - select: { label: Sort by, value: "Price: low to high" }
   - expectText: "1. Wool beanie · $20"

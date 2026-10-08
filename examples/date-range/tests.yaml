@@ -3,7 +3,7 @@ steps:
   - expectText: "Visits: 1,240"
   - expectText: "Signups: 62"
 
-test: A wider range shows more
+test: Last 30 days and This year show more
 steps:
   - select: { label: Date range, value: Last 30 days }
   - expectText: "Visits: 5,310"

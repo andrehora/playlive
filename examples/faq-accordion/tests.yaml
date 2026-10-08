@@ -1,16 +1,16 @@
-test: Opens an answer
+test: Opening the shipping question shows its answer
 steps:
   - click: { role: button, name: How long does shipping take? }
   - expectText: Orders arrive in 3 to 5 business days.
 
-test: Only one answer is open at a time
+test: Opening the returns question closes the shipping answer
 steps:
   - click: { role: button, name: How long does shipping take? }
   - click: { role: button, name: Can I return an item? }
   - expectText: Yes, within 30 days of delivery.
   - expectNoText: Orders arrive in 3 to 5 business days.
 
-test: Clicking again closes it
+test: Clicking the ship abroad question twice closes its answer
 steps:
   - click: { role: button, name: Do you ship abroad? }
   - expectText: We ship to 40 countries.

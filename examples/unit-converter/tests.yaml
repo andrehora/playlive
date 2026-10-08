@@ -1,9 +1,9 @@
-test: Converts kilometers to miles
+test: Converts 10 km to miles
 steps:
   - fill: { label: Value, value: 10 }
   - expectText: 10 km = 6.21 mi
 
-test: Converts Celsius to Fahrenheit
+test: Converts 100 °C to Fahrenheit
 steps:
   - select: { label: Conversion, value: Celsius to Fahrenheit }
   - fill: { label: Value, value: 100 }

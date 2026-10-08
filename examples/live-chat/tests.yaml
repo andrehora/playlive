@@ -1,4 +1,4 @@
-test: The agent answers a question it knows
+test: The agent answers a question about the hours
 steps:
   - fill: { label: Message, value: What are your hours? }
   - click: { role: button, name: Send }
@@ -16,7 +16,7 @@ steps:
   - click: { role: button, name: Send }
   - expectText: Type a message before sending.
 
-test: Ending the chat closes it
+test: After a refund question, ending the chat closes it
 steps:
   - fill: { label: Message, value: refund please }
   - click: { role: button, name: Send }

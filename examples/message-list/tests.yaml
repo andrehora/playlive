@@ -1,4 +1,4 @@
-test: Opening a message marks it read
+test: "Opening Invoice #4821 marks it read"
 steps:
   - click: { role: button, name: "Open Invoice #4821" }
   - expectText: "Reading: Invoice #4821"

@@ -1,4 +1,4 @@
-test: Updates the name and bio
+test: Updates the name to Ana Souza and the bio to Coffee and code
 steps:
   - fill: { label: Display name, value: Ana Souza }
   - fill: { label: Bio, value: Coffee and code }

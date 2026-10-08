@@ -1,4 +1,4 @@
-test: Adds a note
+test: Adds a note saying Eggs, spinach, lemons
 steps:
   - fill: { label: Title, value: Groceries }
   - fill: { label: Note, value: "Eggs, spinach, lemons" }

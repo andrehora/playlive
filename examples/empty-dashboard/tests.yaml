@@ -2,7 +2,7 @@ test: An empty dashboard says what to do
 steps:
   - expectText: No widgets yet. Add one to get started.
 
-test: Adding a widget replaces the empty state
+test: Adding Signup funnel replaces the empty state
 steps:
   - select: { label: Widget, value: Signup funnel }
   - click: { role: button, name: Add widget }

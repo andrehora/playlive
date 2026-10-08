@@ -1,4 +1,4 @@
-test: Splits the bill
+test: Splits a $60 bill three ways
 steps:
   - fill: { label: Bill amount, value: 60 }
   - fill: { label: People, value: 3 }
@@ -6,7 +6,7 @@ steps:
   - expectText: "Total: $69.00"
   - expectText: "Each person pays: $23.00"
 
-test: A bigger tip
+test: A 20% tip on $50
 steps:
   - fill: { label: Bill amount, value: 50 }
   - select: { label: Tip, value: "20%" }

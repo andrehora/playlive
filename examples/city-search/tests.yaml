@@ -1,16 +1,16 @@
-test: Suggests matching cities
+test: Typing par suggests matching cities
 steps:
   - fill: { label: Destination, value: par }
   - expectText: 3 suggestions
   - expectVisible: { role: option, name: Parma }
 
-test: Picking a suggestion shows flights
+test: Picking Paris shows its flights
 steps:
   - fill: { label: Destination, value: par }
   - click: { role: option, name: Paris }
   - expectText: Flights to Paris from $129
 
-test: Explains when nothing matches
+test: Explains when nothing matches xyz
 steps:
   - fill: { label: Destination, value: xyz }
   - expectText: No cities match “xyz”

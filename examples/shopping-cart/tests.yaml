@@ -1,4 +1,4 @@
-test: Add two products and check out
+test: Add Coffee beans and Green tea and check out
 steps:
   - click: { role: button, name: Add Coffee beans to cart }
   - click: { role: button, name: Add Green tea to cart }
@@ -7,14 +7,12 @@ steps:
   - click: { role: button, name: Checkout }
   - expectText: "Order placed! 2 items, $20.50."
 
-test: One product uses the singular "item"
+test: Dark chocolate alone uses the singular "item"
 steps:
   - click: { role: button, name: Add Dark chocolate to cart }
   - expectText: "Cart: 1 item"
   - expectText: "Total: $5.00"
 
-# Deliberately smelly: a third Eager Test. Every line of the shop's behaviour
-# proved under one title, so what broke is never what the row says.
 test: Fills the cart one product at a time
 steps:
   - click: { role: button, name: Add Coffee beans to cart }

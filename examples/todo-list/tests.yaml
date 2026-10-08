@@ -12,8 +12,6 @@ steps:
   - check: { label: Buy milk }
   - expectText: 1 of 2 done
 
-# Deliberately smelly: a second Eager Test. It adds two tasks and ticks them
-# both off, stopping to check after every step, which is four tests in one.
 test: Works through a list of two tasks
 steps:
   - fill: { placeholder: What needs doing?, value: Buy bread }

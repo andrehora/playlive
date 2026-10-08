@@ -3,7 +3,7 @@ steps:
   - expectText: "0 pairs found · 0 turns"
   - expectVisible: { role: button, name: "Card 1, face down" }
 
-test: A matching pair stays face up
+test: The Moon pair stays face up
 steps:
   - click: { role: button, name: "Card 1, face down" }
   - click: { role: button, name: "Card 3, face down" }
@@ -11,7 +11,7 @@ steps:
   - expectVisible: { role: button, name: "Card 1, Moon" }
   - expectVisible: { role: button, name: "Card 3, Moon" }
 
-test: A wrong pair turns back over
+test: A wrong pair with card 1 turns back over
 steps:
   - click: { role: button, name: "Card 1, face down" }
   - click: { role: button, name: "Card 2, face down" }

@@ -1,10 +1,10 @@
-test: Finds matching products
+test: Searching mug finds matching products
 steps:
   - fill: { label: Search products, value: mug }
   - expectText: 3 results for “mug”
   - expectText: Mug warmer
 
-test: Explains when nothing matches
+test: Explains when nothing matches blender
 steps:
   - fill: { label: Search products, value: blender }
   - expectText: No results for “blender”. Try another word.

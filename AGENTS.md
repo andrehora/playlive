@@ -61,10 +61,8 @@ npm run lint && npm run lint:css                 # both must be clean
 ## The YAML format
 
 ```yaml
-vars:                       # ${name}; ${unique} changes every run
-  email: ana@example.test
 beforeEach:
-  - fill: { label: Email, value: "${email}" }
+  - fill: { label: Email, value: ana@example.test }
 
 test: Shows the dashboard   # each test starts with "test:" at column 0
 steps:
@@ -74,16 +72,17 @@ steps:
     timeout: 8000
 ```
 
-- Only `vars`, `beforeEach` and `failOnPageErrors` may come before the first test. A file never names its site.
+- Only `beforeEach` and `failOnPageErrors` may come before the first test. A file never names its site.
+- `${unique}` in a value changes every run.
 - Each test starts fresh at `/` and is independent. There is no navigation step.
 - Targets: `{ role, name }`, `{ label }`, `{ placeholder }`, `{ text }`, or a bare string (= `{ text }`).
-- **Values and `timeout:` go inside the target braces:** `- select: { label: Country, value: United Kingdom }`. Quote values containing `,` `:` `{` `}` `#` or `${var}`. Steps with no target (`expectText`, `expectNoText`, `wait`) take `timeout:` on their own line.
+- **Values and `timeout:` go inside the target braces:** `- select: { label: Country, value: United Kingdom }`. Quote values containing `,` `:` `{` `}` `#` or `${unique}`. Steps with no target (`expectText`, `expectNoText`, `wait`) take `timeout:` on their own line.
 - Default timeout is 4s (`TIMEOUT`).
 - Old shapes (`tests:` list, `site:`, `flows:`/`use:`) are gone and fail with the normal errors.
 
-**Actions:** `click`, `fill`, `select`, `check`, `uncheck`, `wait`, `expectText`, `expectNoText`, `expectTextInRange`, `expectVisible`.
+**Actions:** `click`, `fill`, `select`, `check`, `uncheck`, `wait`, `expectText`, `expectNoText`, `expectNumber`, `expectVisible`.
 
-**`expectTextInRange`** (`{ text, min, max, timeout }`) reads the first number on the first visible line containing `text` (commas removed) and passes if it's within `[min, max]`. It's the fix for values that drift (countdowns, growing counts). It has no target, so both exporters read page text. Keep the runner and both exporters in sync.
+**`expectNumber`** (`{ text, min, max, timeout }`) reads the first number on the first visible line containing `text` (commas removed) and passes if it's within `[min, max]`. It's the fix for values that drift (countdowns, growing counts). It has no target, so both exporters read page text. Keep the runner and both exporters in sync.
 
 **Adding an action** means updating all of: `ACTIONS`, `normalizeStep`, `describeStepBase`, `toPlaywright`, `toCypress`, `ASSERTIONS` in `parse.js` (if it's a check), `KINDS` in `complete.js` (if it takes a target), and one non-Flaky example that uses it.
 
@@ -122,7 +121,7 @@ Rules:
   | **Dashboards** `#5b21b6` | **Learning** `#78350f` | **Games** `#9f1239` | **Flaky** `#b91c1c` |
 
 - **Decided:** a category is one word naming a kind of app, never a mechanism. No Misc, no Forms. Sixteen is the limit for this colour scheme.
-- **Decided:** **Flaky** is the exception and stays last. Its one site (Weather app) is random on purpose, and its tests should *mostly* pass. It deliberately doesn't use `expectTextInRange`; that fix is shown in `bmi-calculator`. Add a site here only if unreliability is the lesson.
+- **Decided:** **Flaky** is the exception and stays last. Its one site (Weather app) is random on purpose, and its tests should *mostly* pass. It deliberately doesn't use `expectNumber`; that fix is shown in `bmi-calculator`. Add a site here only if unreliability is the lesson.
 - A new category needs an icon in `icons.js` (inline SVG, 24×24, stroke-only, `currentColor`).
 - Write plain HTML/JS. Make elements testable the way a person describes them: real `<label for>`, real buttons, `aria-label` when buttons share text.
 - **Deterministic only.** Outside Flaky, nothing random, slow or clock-dependent.
@@ -157,11 +156,11 @@ Rules:
 - **Catalog** (`catalog.js`): what the live page offers, read through `targetParts` the same way the recorder does. Harvests only add. Hidden elements are kept.
 - **Coverage** (`coverage.js`): controls the run actually used, credited at run time under the catalog's `keyFor` key, never by reading the file. Hidden controls count against you. Untested rows offer **Add test**, which appends a whole `test:` block.
 - **Mutation** (`bugs.js`, called "bugs" in code, "Mutation" on screen; don't rename): `{ id, title, find, replace }` patches applied to the page source and served as `srcdoc`. It refuses to start unless the suite is green. Each `find` must match **exactly once**. A site with bugs needs `bugs: true` in the manifest. `hunting` keeps hunt results out of history, status and coverage.
-- **Create** (`create.js`): the editor starts with only the example's test titles as comments. It keeps its own file per site (`createTests`, stored under `:create`); always go through `testsFor`/`stashEditor`. A title is done when a test with that exact title makes every check the original makes in its own steps. Tests with no checks aren't offered. **Decided:** the titles are the whole brief.
-- **Smells** (`smells.js`): reads the file, not a run. Unknown Test (no own check), Eager Test (≥ `EAGER` = 4 assertion phases), Assertion Roulette (> `ROULETTE` = 5 checks), Magic Value (same `fill`/`select` value on more than one line), Duplication of Setup (every test opens with the same steps). **Decided:** a smell stays silent when unsure, and one with no line to jump to isn't shown. Seven example tests are deliberately smelly and commented so. Adding a smell means an entry in `SMELLS`, a rule in `report`, tests for what it catches and what it must not, and an example that has it.
-- **Lessons** (`lessons.js`): an ordered path through the examples. Each lesson is `{ site, mode, title, goal, tip }` in `LESSONS`; it shows first in the example list and as a bar above the site. A lesson is done when its grader announces `playlive:graded` (`{ site, mode, done }`) and stays done. Only the done ids are stored (`:lessons`), and **Reset** clears them. Today only Create announces, so only Create lessons exist.
+- **Create** (`create.js`): the editor starts with only the example's test titles as comments. It keeps its own file per site (`createTests`, stored under `:create`); always go through `testsFor`/`stashEditor`. A title is done when a test with that exact title makes every check the original makes in its own steps. Tests with no checks aren't offered. **Decided:** the titles are the whole brief, so a title names every choice its checks depend on (which country, which question). Otherwise a correct test written for another choice never counts.
+- **Smells** (`smells.js`): reads the file, not a run. Unknown Test (no own check), Assertion Roulette (> `ROULETTE` = 5 checks), Duplication of Setup (every test opens with the same steps), General Fixture (a `beforeEach` `fill`/`select` that a test's first step sets to another value, when nothing later in `beforeEach` could have used it). **Decided:** a smell stays silent when unsure, and one with no line to jump to isn't shown. Five example tests are deliberately smelly, and **Decided:** no comment says so — finding them is the exercise (pinned in `smells.test.mjs`). Adding a smell means an entry in `SMELLS`, a rule in `report`, tests for what it catches and what it must not, an example that has it, and a Smells lesson on that example (one per smell, pinned in `tests/unit/lessons.test.mjs`).
+- **Lessons** (`lessons.js`): an ordered path through the examples. Each lesson is `{ site, mode, title, goal, tip }` in `LESSONS`; it shows first in the example list and as a bar above the site. A lesson is done when its grader announces `playlive:graded` (`{ site, mode, done }`) and stays done: Create when every title is done, Coverage after a finished run that used every control, Mutation after a hunt that caught every mutation, Smells when nothing smells and no shipped test was deleted. A lesson's example must not start done. Only the done ids are stored (`:lessons`), and **Reset** clears them.
 - **HTML view** (`htmlview.js`): live markup, re-read after every step, with the step's line marked and the action name in the gutter. Editable; **Save** makes it the site's page (`editedHtml`, never stored).
-- **The test editor refuses copy, cut, paste and drop** (`REFUSED` in `editor.js`). **Decided:** writing the steps is the exercise. Export is the way out.
+- **The test editor refuses paste and drop** (`REFUSED` in `editor.js`); copy and cut are allowed. **Decided:** writing the steps is the exercise.
 - **Autocomplete** (`complete.js`): `context()` reads the caret, `itemsFor()` fills from the catalog. It only offers what the action can act on.
 - **Exports:** no comments. Preserve runner semantics: fresh page per test, partial match for `expectText`, visible text only for `expectNoText`, per-step timeouts, `${unique}`. Update both exporters together.
 

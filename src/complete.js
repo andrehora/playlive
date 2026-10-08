@@ -53,24 +53,6 @@ function parseParts(inner){
   }
   return parts;
 }
-// The keys of a block written as "name:" lines, which is how vars are written
-function blockKeys(text, name){
-  const lines = text.split('\n'), out = [];
-  for (let i = 0; i < lines.length; i++){
-    if (!new RegExp(`^\\s*${name}\\s*:\\s*$`).test(lines[i])) continue;
-    let ind = null;
-    for (let j = i + 1; j < lines.length; j++){
-      const l = lines[j];
-      if (!l.trim() || /^\s*#/.test(l)) continue;
-      if (!/^\s/.test(l)) break;                                   // back at column 0: the block is over
-      const m = /^(\s+)([A-Za-z_][\w-]*)\s*:/.exec(l); if (!m) continue;   // "- click: …" is a step, not a key
-      if (ind === null) ind = m[1].length;
-      if (m[1].length === ind) out.push(m[2]);
-    }
-  }
-  return [...new Set(out)];
-}
-export const fileInfo = text => ({ vars: blockKeys(text, 'vars') });
 
 export function context(text, caret){
   const ls = text.lastIndexOf('\n', caret - 1) + 1;
@@ -85,7 +67,7 @@ export function context(text, caret){
   // ${…} can appear inside anything else, so it is read first
   if ((m = /\$\{(\w*)$/.exec(before))){
     const closed = text[wordEnd] === '}';
-    return { what: 'var', from: caret - m[1].length, to: closed ? wordEnd + 1 : wordEnd };
+    return { what: 'unique', from: caret - m[1].length, to: closed ? wordEnd + 1 : wordEnd };
   }
   // inside a target's braces
   if (/\{[^}]*$/.test(before)){
@@ -172,10 +154,10 @@ function valueItems(ctx, cat){
   return vals.map(v => item(yq(v), v, key));
 }
 
-function itemsFor(ctx, cat, file){
+function itemsFor(ctx, cat){
   switch (ctx.what){
-    case 'var':
-      return [...file.vars, 'unique'].map(v => item(v + '}', v, v === 'unique' ? 'new on every run' : 'variable'));
+    case 'unique':
+      return [item('unique}', 'unique', 'new on every run')];
     case 'action':
       return actions().map(a => item((ctx.dash ? '- ' : '') + a + (ctx.bare ? ': ' : ''), a, 'action'));
     case 'top':
@@ -184,7 +166,7 @@ function itemsFor(ctx, cat, file){
       // Only the slots this site's own elements are described by: a field that
       // has a label is not worth offering a "role:" for
       // The range check has keys of its own rather than a target's
-      if (ctx.action === 'expectTextInRange'){
+      if (ctx.action === 'expectNumber'){
         return ['text', 'min', 'max', 'timeout'].filter(k => ctx.parts[k] === undefined)
           .map(k => item(k + ': ', k, 'range'));
       }
@@ -201,7 +183,7 @@ function itemsFor(ctx, cat, file){
       if (a === 'expectText' || a === 'expectNoText') return textItems(cat);
       // One line to edit rather than four to type: the page's own text, with a
       // range around it to replace.
-      if (a === 'expectTextInRange'){
+      if (a === 'expectNumber'){
         return textItems(cat).map(i => ({ ...i, insert: `{ text: ${i.insert}, min: 0, max: 10 }` }));
       }
       return targetItems(cat, a);
@@ -252,7 +234,7 @@ export function suggest(text, caret, cat = catalogNow()){
   if (!ctx) return null;
   ctx.text = text;
   const word = text.slice(ctx.from, caret);
-  const items = rank(itemsFor(ctx, cat, fileInfo(text)), word);
+  const items = rank(itemsFor(ctx, cat), word);
   return items.length ? { what: ctx.what, from: ctx.from, to: Math.max(ctx.to, caret), word, items } : null;
 }
 

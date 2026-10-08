@@ -1,9 +1,9 @@
-test: Counts characters as you type
+test: Typing Hello leaves 45 characters
 steps:
   - fill: { label: Your post, value: Hello }
   - expectText: 45 characters left
 
-test: Publishes a post
+test: Publishes Shipping our new feature today
 steps:
   - fill: { label: Your post, value: Shipping our new feature today }
   - click: { role: button, name: Post }
@@ -11,7 +11,7 @@ steps:
   - expectText: Shipping our new feature today
   - expectNoText: Nothing posted yet.
 
-test: Warns when the post is too long
+test: Warns when the post is 5 characters too long
 steps:
   - fill: { label: Your post, value: "The quick brown fox jumps over the lazy dog every day!!" }
   - expectText: Too long by 5 characters

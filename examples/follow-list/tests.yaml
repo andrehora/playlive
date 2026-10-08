@@ -1,4 +1,4 @@
-test: Following someone raises the count
+test: Following Bruno Lima raises the count
 steps:
   - expectText: Following 1 person
   - click: { role: button, name: Follow Bruno Lima }

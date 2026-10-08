@@ -18,8 +18,6 @@ steps:
   - expectText: Saved to your collection.
   - expectText: 12 likes
 
-# Deliberately smelly: a second Unknown Test for Smells mode. It takes the
-# like back and never looks at the count it was supposed to change.
 test: Likes and unlikes the post
 steps:
   - click: { role: button, name: Like }

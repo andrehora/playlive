@@ -3,13 +3,13 @@ steps:
   - expectText: "Total of 3 series: 13,500 visits"
   - expectText: "Search · 7,800"
 
-test: Hiding a series takes it out of the total
+test: Hiding Search takes it out of the total
 steps:
   - uncheck: { label: Search }
   - expectText: "Total of 2 series: 5,700 visits"
   - expectNoText: "Search · 7,800"
 
-test: Share recomputes against what is showing
+test: With Social hidden, share recomputes against what is showing
 steps:
   - uncheck: { label: Social }
   - select: { label: Show as, value: Share }

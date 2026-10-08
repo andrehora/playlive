@@ -38,7 +38,7 @@ test.describe('Test smells', () => {
     await page.keyboard.press('Escape');
 
     await setMode(page, 'smells');
-    await expect.poll(async () => (await page.evaluate(() => window.playlive.smells.sites())).length).toBe(20);
+    await expect.poll(async () => (await page.evaluate(() => window.playlive.smells.sites())).length).toBe(8);
     await page.click('#siteBtn');
     const all = await listed();
     expect(all).toHaveLength(100);
@@ -59,7 +59,7 @@ test.describe('Test smells', () => {
   test('the All smells tab follows a smell typed into the editor', async ({ page }) => {
     await openApp(page, { site: SITE, mode: 'smells' });
     await page.click('.smell-seg [data-smellview="all"]');
-    await expect(score(page)).toHaveText('20 of 100 examples have one');
+    await expect(score(page)).toHaveText('8 of 100 examples have one');
     const unknown = page.locator('.smell-group[data-smell="unknown-test"]');
     await expect(unknown.locator('.cov-n')).toHaveText('2');
     await expect(unknown.locator('.smell-what')).toHaveText(['Like button', 'Counter']);
@@ -68,7 +68,7 @@ test.describe('Test smells', () => {
     await page.fill('#spec', 'test: Does a thing\nsteps:\n  - click: { role: button, name: Send }\n');
     await expect(unknown.locator('.cov-n')).toHaveText('3');
     await expect(unknown.locator('.smell-what')).toHaveText(['Contact form', 'Like button', 'Counter']);
-    await expect(score(page)).toHaveText('21 of 100 examples have one');
+    await expect(score(page)).toHaveText('9 of 100 examples have one');
   });
 
   test('the panel folds to its one row and Results takes the room back', async ({ page }) => {
@@ -113,8 +113,8 @@ test.describe('Test smells', () => {
     await expect(page.locator('.smell-seg [data-smellview="all"]')).toHaveAttribute('aria-pressed', 'true');
     // Every smell is named and explained, in the order the panel keeps them.
     const names = await page.$$eval('.smell-group .cov-title', t => t.map(x => x.textContent));
-    expect(names).toEqual(['Unknown Test', 'Eager Test', 'Assertion Roulette', 'Magic Value', 'Duplication of Setup']);
-    await expect(score(page)).toHaveText('20 of 100 examples have one');
+    expect(names).toEqual(['Unknown Test', 'Assertion Roulette', 'Duplication of Setup', 'General Fixture']);
+    await expect(score(page)).toHaveText('8 of 100 examples have one');
 
     // Each group counts the examples that have it, and names them.
     const group = page.locator('.smell-group[data-smell="assertion-roulette"]');

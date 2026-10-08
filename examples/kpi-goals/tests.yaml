@@ -9,7 +9,7 @@ steps:
   - select: { label: Quarter, value: Q2 }
   - expectText: 3 of 3 goals met in Q2
 
-test: Stretch targets are harder to hit
+test: Stretch targets are harder to hit in Q2
 steps:
   - select: { label: Quarter, value: Q2 }
   - check: { label: Use stretch targets }

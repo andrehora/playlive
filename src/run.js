@@ -12,7 +12,7 @@ import { renderCreate } from './create.js';
 import { renderSmells } from './smells.js';
 import { markStep, renderResults } from './results.js';
 import { loadApp, pageErrors, persist } from './sites.js';
-import { TIMEOUT, editorSite, hunting, lastEl, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from './state.js';
+import { TIMEOUT, editorSite, hunting, lastEl, mode, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from './state.js';
 import { setProgress, setSiteStatus } from './ui.js';
 import { sleep } from './util.js';
 
@@ -198,11 +198,20 @@ export function syncUI(){
   document.dispatchEvent(new CustomEvent('playlive:busy'));
 }
 
+// Which file Results was last drawn from. A file that stops parsing keeps the
+// last list while you type, but only its own: after a swap (another example,
+// Create's file, a Reset) the old list is someone else's tests, and in Create
+// it would be the very answers you are meant to write.
+let shownFor = '';
+const fileKey = () => `${editorSite}:${mode === 'create' ? 'create' : 'tests'}`;
 export function preview(){
   if (running) return;
   const v = validate(specEl.value);
-  if (v.spec){ renderResults(v.spec.tests); errorEl.textContent = ''; setFileStatus(v); }
-  else if (!recording){ errorEl.textContent = v.error; setFileStatus(v); }
+  if (v.spec){ renderResults(v.spec.tests); shownFor = fileKey(); errorEl.textContent = ''; setFileStatus(v); }
+  else if (!recording){
+    if (shownFor !== fileKey()){ renderResults([]); shownFor = fileKey(); }
+    errorEl.textContent = v.error; setFileStatus(v);
+  }
   renderCoverage();                 // whether a step can be added depends on the file parsing
   renderSmells();                   // and the smells are read from the file itself
   renderCreate();                   // as is how much of this example you have written

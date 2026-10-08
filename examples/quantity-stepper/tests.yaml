@@ -1,4 +1,4 @@
-test: Increases the quantity
+test: Increases the quantity to 3
 steps:
   - click: { role: button, name: Increase quantity }
   - click: { role: button, name: Increase quantity }

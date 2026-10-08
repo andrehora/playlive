@@ -2,7 +2,7 @@ test: Nothing plays until you choose
 steps:
   - expectText: Nothing playing.
 
-test: Playing a track by name
+test: Playing Harbour Lights by name
 steps:
   - click: { role: button, name: Play Harbour Lights }
   - expectText: "Now playing: Harbour Lights · 4:10"

@@ -1,4 +1,4 @@
-test: Changing a role and saving it
+test: Making Bruno Lima an admin and saving it
 steps:
   - select: { label: Bruno Lima, value: Admin }
   - click: { role: button, name: Save roles }

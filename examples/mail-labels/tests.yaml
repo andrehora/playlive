@@ -1,4 +1,4 @@
-test: Labelling a message says so
+test: "Labelling Invoice #4821 as Billing says so"
 steps:
   - select: { label: Message, value: "Invoice #4821" }
   - select: { label: Label, value: Billing }
@@ -6,7 +6,7 @@ steps:
   - expectText: "Invoice #4821 labelled Billing."
   - expectText: "Invoice #4821 · Billing"
 
-test: Filtering shows only that label
+test: Filtering by Team shows only Standup notes
 steps:
   - select: { label: Message, value: Standup notes }
   - select: { label: Label, value: Team }
@@ -15,7 +15,7 @@ steps:
   - expectText: "Standup notes · Team"
   - expectNoText: "Invoice #4821 · no label"
 
-test: A label with nothing on it says so
+test: The Personal label with nothing on it says so
 steps:
   - select: { label: Show, value: Personal }
   - expectText: Nothing labelled Personal.

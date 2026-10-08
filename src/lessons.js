@@ -30,6 +30,42 @@ export const LESSONS = [
     title: 'Proving something is gone',
     goal: 'Write each test from its title alone.',
     tip: 'Some of these prove that text has left the page.'
+  },
+  {
+    id: 'reach', site: 'weather-widget', mode: 'coverage',
+    title: 'Reaching every control',
+    goal: 'Run tests that use every control on the page.',
+    tip: 'Untested names what no step has used yet.'
+  },
+  {
+    id: 'catch', site: 'coupon-code', mode: 'mutation',
+    title: 'Tests that catch bugs',
+    goal: 'Catch every mutation.',
+    tip: 'Each one that escapes names a test this file is missing.'
+  },
+  {
+    id: 'checks-nothing', site: 'click-counter', mode: 'smells',
+    title: 'A test that checks nothing',
+    goal: 'Clear every smell without deleting a test.',
+    tip: 'A test with no check can only fail by crashing.'
+  },
+  {
+    id: 'too-many-checks', site: 'status-page', mode: 'smells',
+    title: 'Checks that say what matters',
+    goal: 'Clear every smell without deleting a test.',
+    tip: 'Keep the checks that prove what the title promises.'
+  },
+  {
+    id: 'say-it-once', site: 'retry-on-error', mode: 'smells',
+    title: 'Writing the opening once',
+    goal: 'Clear every smell without deleting a test.',
+    tip: 'Steps every test starts with can run before each test instead.'
+  },
+  {
+    id: 'shared-setup', site: 'login', mode: 'smells',
+    title: 'Setup every test needs',
+    goal: 'Clear every smell without deleting a test.',
+    tip: 'A test that types over what beforeEach typed is telling you something.'
   }
 ];
 

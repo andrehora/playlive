@@ -1,4 +1,4 @@
-test: A completed form prints the certificate
+test: A completed form prints Ana Reis's certificate
 steps:
   - fill: { label: Full name, value: Ana Reis }
   - check: { label: I completed this course myself }
@@ -7,7 +7,7 @@ steps:
   - expectText: Awarded to Ana Reis
   - expectText: "Intro to testing · 2026"
 
-test: Another course and format
+test: Advanced selectors in Print format
 steps:
   - fill: { label: Full name, value: Bruno Lima }
   - select: { label: Course, value: Advanced selectors }

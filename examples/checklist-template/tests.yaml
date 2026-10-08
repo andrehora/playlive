@@ -1,4 +1,4 @@
-test: A template fills the checklist
+test: The New laptop template fills the checklist
 steps:
   - click: { role: button, name: Use this template }
   - expectText: "0 of 2 done · New laptop"
@@ -20,7 +20,7 @@ steps:
   - check: { label: Install the tools }
   - expectText: Everything is ticked off.
 
-test: Another template brings other steps
+test: The Trip packing template brings other steps
 steps:
   - select: { label: Template, value: Trip packing }
   - click: { role: button, name: Use this template }

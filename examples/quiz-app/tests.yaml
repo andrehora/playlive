@@ -6,7 +6,7 @@ steps:
   - click: { role: button, name: Submit answers }
   - expectText: You scored 3 of 3 · Perfect!
 
-test: Some answers wrong
+test: Two wrong answers score 1 of 3
 steps:
   - check: { label: Mars }
   - check: { label: Seven }

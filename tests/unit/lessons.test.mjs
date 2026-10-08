@@ -9,6 +9,7 @@ const { LESSONS, LESSONS_KEY, lessonFor, nextLesson, markGraded, clearLessons, l
 const { titlesOf } = await load('src/create.js');
 const { SITES } = await load('examples/examples.js');
 const { MODES } = await load('src/modes.js');
+const { report: smells, clean, SMELLS } = await load('src/smells.js');
 
 test('every lesson is a real example in a real mode, with a goal', () => {
   assert.equal(new Set(LESSONS.map(l => l.id)).size, LESSONS.length, 'ids are unique');
@@ -23,6 +24,53 @@ test('a Create lesson has briefs to write', async () => {
   const files = new Map((await corpus()).map(({ id, yaml }) => [id, yaml]));
   for (const l of LESSONS.filter(x => x.mode === 'create')){
     assert.ok(titlesOf(files.get(l.site)).length > 0, `${l.id}: ${l.site} offers no brief`);
+  }
+});
+
+test('a Mutation lesson has mutations to catch', () => {
+  for (const l of LESSONS.filter(x => x.mode === 'mutation')) assert.ok(SITES[l.site].bugs, `${l.id}: ${l.site} has no bugs`);
+});
+
+test('a Smells lesson starts smelly, and deleting the smelly test does not clear it', async () => {
+  const files = new Map((await corpus()).map(({ id, yaml }) => [id, yaml]));
+  for (const l of LESSONS.filter(x => x.mode === 'smells')){
+    const shipped = files.get(l.site);
+    assert.equal(clean(smells(shipped), shipped), false, `${l.id}: ${l.site} is already clean`);
+  }
+  const shipped = 'test: A\nsteps:\n  - click: Go\n  - expectText: Done\n\ntest: B\nsteps:\n  - click: Stop\n';
+  assert.equal(clean(smells(shipped.split('\n\n')[0] + '\n'), shipped), false, 'one test fewer');
+  assert.equal(clean(smells(shipped + '  - expectText: Done\n'), shipped), true);
+  assert.equal(clean(smells('test: A\nsteps:\n  - nonsense\n'), shipped), false, 'does not parse');
+});
+
+test('there is a Smells lesson for every smell, each starting with that smell alone', async () => {
+  const files = new Map((await corpus()).map(({ id, yaml }) => [id, yaml]));
+  const taught = LESSONS.filter(l => l.mode === 'smells').map(l => {
+    const found = [...new Set(smells(files.get(l.site)).items.map(i => i.smell))];
+    assert.equal(found.length, 1, `${l.id}: ${l.site} should smell of one thing, not ${found.join(', ')}`);
+    return found[0];
+  });
+  assert.deepEqual(taught.sort(), SMELLS.map(s => s.id).sort());
+});
+
+// The fix a student would write, applied to the shipped file: every Smells
+// lesson can be finished without deleting a test.
+const FIXES = {
+  'checks-nothing': f => f.trimEnd() + '\n  - expectText: "Count: 3"\n',
+  'too-many-checks': f => f.replace(/ {2}- expectText: "Email delivery · Operational"\n {2}- expectText: "Dashboards · Operational"\n/, ''),
+  'say-it-once': f => 'beforeEach:\n  - click: { role: button, name: Load orders }\n\n'
+    + f.replaceAll('  - click: { role: button, name: Load orders }\n', ''),
+  'shared-setup': f => f.replace('  - fill: { label: Password, value: secret123 }\n', '')
+    .replaceAll('steps:\n  - click: { role: button, name: Log in }', 'steps:\n  - fill: { label: Password, value: secret123 }\n  - click: { role: button, name: Log in }')
+};
+test('every Smells lesson can be finished without deleting a test', async () => {
+  const files = new Map((await corpus()).map(({ id, yaml }) => [id, yaml]));
+  for (const l of LESSONS.filter(x => x.mode === 'smells')){
+    assert.ok(FIXES[l.id], `${l.id} needs a fix in this test`);
+    const shipped = files.get(l.site), fixed = FIXES[l.id](shipped);
+    assert.notEqual(fixed, shipped, `${l.id}: the fix changed nothing`);
+    assert.deepEqual(smells(fixed).items.map(i => i.smell), [], `${l.id}: still smells`);
+    assert.equal(clean(smells(fixed), shipped), true, l.id);
   }
 });
 

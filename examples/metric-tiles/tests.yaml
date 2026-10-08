@@ -16,8 +16,6 @@ steps:
   - expectText: "Revenue · €11,408"
   - expectText: "Orders · 318"
 
-# Deliberately smelly: a second Assertion Roulette. Six checks over three
-# tiles, before and after the comparison, under one title.
 test: Checks every tile before and after comparing
 steps:
   - expectText: "Revenue · $12,400"

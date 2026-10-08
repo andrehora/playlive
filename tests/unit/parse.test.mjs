@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { validate, normalizeStep, substitute, ASSERTIONS, STEP_OPTS, stripFences } = await load('src/parse.js');
+const { validate, normalizeStep, ASSERTIONS, STEP_OPTS, stripFences } = await load('src/parse.js');
 
 // One test's steps, or the error the file was rejected with.
 const one = steps => validate(`test: T\nsteps:\n${steps.map(s => '  ' + s).join('\n')}\n`);
@@ -111,11 +111,11 @@ test('exactly one action per step', () => {
   assert.match(errorOf(['- just a string']), /each step must be/);
 });
 
-/* ---------- expectTextInRange ---------- */
+/* ---------- expectNumber ---------- */
 
-test('expectTextInRange takes the text and the two ends', () => {
-  const [s] = stepsOf(['- expectTextInRange: { text: Ends in, min: 1, max: 24 }']);
-  assert.equal(s.action, 'expectTextInRange');
+test('expectNumber takes the text and the two ends', () => {
+  const [s] = stepsOf(['- expectNumber: { text: Ends in, min: 1, max: 24 }']);
+  assert.equal(s.action, 'expectNumber');
   assert.equal(s.text, 'Ends in');
   assert.equal(s.min, 1);
   assert.equal(s.max, 24);
@@ -123,40 +123,24 @@ test('expectTextInRange takes the text and the two ends', () => {
 });
 
 test('its timeout may sit in the braces with the range', () => {
-  assert.equal(stepsOf(['- expectTextInRange: { text: n, min: 1, max: 2, timeout: 9000 }'])[0].timeout, 9000);
-  const v = validate('test: T\nsteps:\n  - expectTextInRange: { text: n, min: 1, max: 2 }\n    timeout: 9000\n');
+  assert.equal(stepsOf(['- expectNumber: { text: n, min: 1, max: 2, timeout: 9000 }'])[0].timeout, 9000);
+  const v = validate('test: T\nsteps:\n  - expectNumber: { text: n, min: 1, max: 2 }\n    timeout: 9000\n');
   assert.equal(v.spec.tests[0].steps[0].timeout, 9000);
 });
 
 test('it explains a range it cannot use', () => {
-  assert.match(errorOf(['- expectTextInRange: Ends in']), /needs text and a range/);
-  assert.match(errorOf(['- expectTextInRange: { min: 1, max: 2 }']), /needs the text to find the number by/);
-  assert.match(errorOf(['- expectTextInRange: { text: n, min: 1 }']), /must be numbers/);
-  assert.match(errorOf(['- expectTextInRange: { text: n, min: 9, max: 2 }']), /"min" is more than "max"/);
-  assert.match(errorOf(['- expectTextInRange: { text: n, min: 1, max: 2, role: button }']), /not "role"/);
+  assert.match(errorOf(['- expectNumber: Ends in']), /needs text and a range/);
+  assert.match(errorOf(['- expectNumber: { min: 1, max: 2 }']), /needs the text to find the number by/);
+  assert.match(errorOf(['- expectNumber: { text: n, min: 1 }']), /must be numbers/);
+  assert.match(errorOf(['- expectNumber: { text: n, min: 9, max: 2 }']), /"min" is more than "max"/);
+  assert.match(errorOf(['- expectNumber: { text: n, min: 1, max: 2, role: button }']), /not "role"/);
 });
 
-/* ---------- Variables ---------- */
+/* ---------- ${unique} ---------- */
 
-test('${name} is replaced from vars, and ${unique} is left for the run', () => {
-  const v = validate('vars:\n  email: ana@example.test\n\ntest: T\nsteps:\n  - fill: { label: Email, value: "${email}" }\n  - fill: { label: Tag, value: "x-${unique}" }\n');
-  assert.equal(v.spec.tests[0].steps[0].value, 'ana@example.test');
-  assert.equal(v.spec.tests[0].steps[1].value, 'x-${unique}');
-});
-
-test('an unknown variable says to define it', () => {
-  const v = validate('test: T\nsteps:\n  - fill: { label: Email, value: "${nope}" }\n');
-  assert.match(v.error, /unknown variable "\$\{nope\}"/);
-});
-
-test('a test may add vars of its own', () => {
-  const v = validate('vars:\n  a: one\n\ntest: T\nvars:\n  b: two\nsteps:\n  - fill: { label: A, value: "${a}-${b}" }\n');
-  assert.equal(v.spec.tests[0].steps[0].value, 'one-two');
-});
-
-test('substitute reaches into nested targets', () => {
-  assert.deepEqual(substitute({ fill: { label: '${l}', value: '${v}' } }, { l: 'Email', v: 'a' }, 'n'),
-    { fill: { label: 'Email', value: 'a' } });
+test('${unique} is left for the run to fill in', () => {
+  const v = validate('test: T\nsteps:\n  - fill: { label: Tag, value: "x-${unique}" }\n');
+  assert.equal(v.spec.tests[0].steps[0].value, 'x-${unique}');
 });
 
 /* ---------- beforeEach ---------- */
@@ -176,17 +160,13 @@ test('beforeEach has to be a list of steps', () => {
 
 /* ---------- The file as a whole ---------- */
 
-test('only vars, beforeEach and failOnPageErrors may come before the first test', () => {
+test('only beforeEach and failOnPageErrors may come before the first test', () => {
   assert.equal(validate('failOnPageErrors: true\n\ntest: T\nsteps:\n  - click: A\n').spec.failOnPageErrors, true);
   for (const key of ['speed', 'tests', 'site', 'flows']){
     const v = validate(`${key}: x\n\ntest: T\nsteps:\n  - click: A\n`);
     assert.match(v.error, new RegExp(`Unknown setting "${key}"`));
-    assert.match(v.error, /vars, beforeEach, failOnPageErrors/);
+    assert.match(v.error, /Settings are: beforeEach, failOnPageErrors\./);
   }
-});
-
-test('"vars:" must be name: value pairs', () => {
-  assert.match(validate('vars:\n  - a\n\ntest: T\nsteps:\n  - click: A\n').error, /name: value pairs/);
 });
 
 test('a steps list with no title above it says so', () => {
@@ -200,7 +180,10 @@ test('a test with no steps is rejected', () => {
 
 test('an empty file asks for the first test', () => {
   assert.match(validate('').error, /No tests yet/);
-  assert.match(validate('vars:\n  a: b\n').error, /No tests yet/);
+  assert.match(validate('beforeEach:\n  - click: A\n').error, /No tests yet/);
+  // and says it is empty, so the app can show a start rather than a mistake
+  assert.equal(validate('# just a comment\n').empty, true);
+  assert.equal(validate('test: T\n').empty, undefined);
 });
 
 test('invalid YAML is reported with the line it is on', () => {
@@ -227,7 +210,7 @@ test('a step remembers where it was written, so a run can point at the line', ()
 /* ---------- The lists other panels read ---------- */
 
 test('ASSERTIONS is every action that says what should be true', () => {
-  assert.deepEqual([...ASSERTIONS].sort(), ['expectNoText', 'expectText', 'expectTextInRange', 'expectVisible']);
+  assert.deepEqual([...ASSERTIONS].sort(), ['expectNoText', 'expectNumber', 'expectText', 'expectVisible']);
 });
 
 test('STEP_OPTS is what a step may carry besides its action', () => {

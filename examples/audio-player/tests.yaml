@@ -9,7 +9,7 @@ steps:
   - click: { role: button, name: Pause }
   - expectText: Paused
 
-test: Volume and speed show in the state
+test: Playing at high volume and 1.5x shows in the state
 steps:
   - click: { role: button, name: Play }
   - select: { label: Volume, value: High }

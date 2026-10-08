@@ -1,4 +1,4 @@
-test: Adding a reminder lists it
+test: Adding Vitamin D with food lists it
 steps:
   - fill: { label: Medicine, value: Vitamin D }
   - check: { label: Take with food }
@@ -13,7 +13,7 @@ steps:
   - expectText: Name the medicine first.
   - expectText: No reminders yet.
 
-test: The same medicine at the same time is refused
+test: Vitamin D twice in the morning is refused
 steps:
   - fill: { label: Medicine, value: Vitamin D }
   - click: { role: button, name: Add reminder }

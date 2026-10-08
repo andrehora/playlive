@@ -1,10 +1,10 @@
-test: Sends a reset link
+test: Sends a reset link to ana@example.test
 steps:
   - fill: { label: Email, value: ana@example.test }
   - click: { role: button, name: Send reset link }
   - expectText: If an account exists for ana@example.test, we sent a reset link.
 
-test: Can send the link again
+test: Can send the link to ana@example.test again
 steps:
   - fill: { label: Email, value: ana@example.test }
   - click: { role: button, name: Send reset link }

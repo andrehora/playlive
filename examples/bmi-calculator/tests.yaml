@@ -1,11 +1,11 @@
-test: A healthy metric reading
+test: "170 cm and 65 kg is a healthy reading"
 steps:
   - fill: { label: Height in cm, value: "170" }
   - fill: { label: Weight in kg, value: "65" }
   - click: { role: button, name: Work it out }
   - expectText: "BMI 22.5 · in the healthy range"
 
-test: Imperial units relabel the fields
+test: In imperial units, 67 inches and 200 pounds is well over the healthy range
 steps:
   - select: { label: Units, value: Imperial }
   - expectText: Height in inches
@@ -14,7 +14,7 @@ steps:
   - click: { role: button, name: Work it out }
   - expectText: "BMI 31.3 · well over the healthy range"
 
-test: A low reading is called out too
+test: "180 cm and 55 kg is called out as under the healthy range"
 steps:
   - fill: { label: Height in cm, value: "180" }
   - fill: { label: Weight in kg, value: "55" }
@@ -27,11 +27,11 @@ steps:
   - expectText: Enter a height and a weight above zero.
 
 # A healthy BMI is a range rather than a number, so the test says the range.
-# expectTextInRange reads the first number on the line holding the text, which
+# expectNumber reads the first number on the line holding the text, which
 # is what keeps this true for any height and weight inside it.
 test: A healthy reading lands inside the healthy range
 steps:
   - fill: { label: Height in cm, value: "175" }
   - fill: { label: Weight in kg, value: "70" }
   - click: { role: button, name: Work it out }
-  - expectTextInRange: { text: BMI, min: 18.5, max: 24.9 }
+  - expectNumber: { text: BMI, min: 18.5, max: 24.9 }

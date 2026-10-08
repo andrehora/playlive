@@ -103,7 +103,7 @@ test('every action has a line in both exports', () => {
     '  - expectText: Welcome back',
     '  - expectNoText: Something went wrong',
     '  - expectVisible: { role: heading, name: Dashboard }',
-    '  - expectTextInRange: { text: Ends in, min: 1, max: 24 }'
+    '  - expectNumber: { text: Ends in, min: 1, max: 24 }'
   ].join('\n'));
   for (const [key, code] of Object.entries(out)){
     for (const want of ['Go', 'Email', 'United Kingdom', 'Terms', 'Welcome back', 'Something went wrong', 'Dashboard', 'Ends in'])
@@ -135,7 +135,7 @@ test('a per-step timeout survives into both', () => {
 });
 
 test('${unique} becomes a value computed at run time, not a literal', () => {
-  const out = exportsOf('vars:\n  email: ana+${unique}@example.test\n\ntest: T\nsteps:\n  - fill: { label: Email, value: "${email}" }\n');
+  const out = exportsOf('test: T\nsteps:\n  - fill: { label: Email, value: "ana+${unique}@example.test" }\n');
   for (const [key, code] of Object.entries(out)){
     assert.match(code, /const unique = Date\.now\(\)\.toString\(36\);/, `${key} should compute unique`);
     assert.ok(code.includes('${unique}'), `${key} should interpolate it`);
@@ -149,8 +149,8 @@ test('a test with no ${unique} does not declare it', () => {
   for (const code of Object.values(out)) assert.doesNotMatch(code, /const unique/);
 });
 
-test('expectTextInRange reads the page rather than a locator, in both', () => {
-  const out = exportsOf('test: T\nsteps:\n  - expectTextInRange: { text: Ends in, min: 1, max: 24 }\n');
+test('expectNumber reads the page rather than a locator, in both', () => {
+  const out = exportsOf('test: T\nsteps:\n  - expectNumber: { text: Ends in, min: 1, max: 24 }\n');
   // The runner reads the first number on the page's first visible line holding
   // the text, commas taken out. Both exports have to read it the same way.
   for (const [key, code] of Object.entries(out)){

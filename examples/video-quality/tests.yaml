@@ -16,7 +16,7 @@ steps:
   - expectText: Save data caps quality at 480p.
   - expectText: "Paused · 480p · 1x"
 
-test: Speed shows alongside the quality
+test: "2x speed shows alongside the quality"
 steps:
   - select: { label: Speed, value: 2x }
   - expectText: "Paused · Auto · 2x"
