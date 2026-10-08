@@ -9,7 +9,7 @@ import { readFile, readdir, access } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, load } from './env.mjs';
 
-const { SITES, SITE_IDS } = await load('examples/examples.js');
+const { SITES, SITE_IDS } = await load('examples/html/examples.js');
 const { catIconSvg } = await load('src/icons.js');
 
 // The categories in manifest order, which is the order they are drawn in.
@@ -32,13 +32,13 @@ test('every example is defined exactly once', () => {
 test('an id is kebab-case, and is the folder it lives in', async () => {
   for (const id of SITE_IDS){
     assert.match(id, /^[a-z0-9]+(-[a-z0-9]+)*$/, `${id} should be kebab-case`);
-    assert.ok(await exists(`examples/${id}/index.html`), `examples/${id}/index.html is missing`);
-    assert.ok(await exists(`examples/${id}/tests.yaml`), `examples/${id}/tests.yaml is missing`);
+    assert.ok(await exists(`examples/html/${id}/index.html`), `examples/html/${id}/index.html is missing`);
+    assert.ok(await exists(`examples/html/${id}/tests.yaml`), `examples/html/${id}/tests.yaml is missing`);
   }
 });
 
-test('no folder in examples/ is missing from the manifest', async () => {
-  const dirs = (await readdir(resolve(ROOT, 'examples'), { withFileTypes: true }))
+test('no folder in examples/html/ is missing from the manifest', async () => {
+  const dirs = (await readdir(resolve(ROOT, 'examples/html'), { withFileTypes: true }))
     .filter(e => e.isDirectory()).map(e => e.name);
   assert.deepEqual(dirs.filter(d => !SITES[d]), [], 'a folder the app would never show');
 });
@@ -134,7 +134,7 @@ test('an icon is 24x24, stroke-only inline SVG, so it sizes and tints itself', (
 
 test('every example page sets its theme’s --accent', async () => {
   for (const id of SITE_IDS){
-    const html = await readFile(resolve(ROOT, `examples/${id}/index.html`), 'utf8');
+    const html = await readFile(resolve(ROOT, `examples/html/${id}/index.html`), 'utf8');
     const m = /--accent:\s*(#[0-9a-fA-F]{3,8})/.exec(html);
     assert.ok(m, `${id} sets no --accent`);
     assert.equal(m[1].toLowerCase(), SITES[id].accent.toLowerCase(), `${id}'s page disagrees with the manifest`);
@@ -143,7 +143,7 @@ test('every example page sets its theme’s --accent', async () => {
 
 test('every example page loads the shared hooks and stylesheet', async () => {
   for (const id of SITE_IDS){
-    const html = await readFile(resolve(ROOT, `examples/${id}/index.html`), 'utf8');
+    const html = await readFile(resolve(ROOT, `examples/html/${id}/index.html`), 'utf8');
     assert.match(html, /src="\.\.\/hooks\.js"/, `${id} should load hooks.js, which gives it $(id) and the error hooks`);
     assert.match(html, /href="\.\.\/site\.css"/, `${id} should load the shared stylesheet`);
     assert.match(html, /<html lang="/, `${id} should say what language it is in`);
@@ -152,7 +152,7 @@ test('every example page loads the shared hooks and stylesheet', async () => {
 
 test('nothing is loaded from the network, since the published page allows no remote images', async () => {
   for (const id of SITE_IDS){
-    const html = await readFile(resolve(ROOT, `examples/${id}/index.html`), 'utf8');
+    const html = await readFile(resolve(ROOT, `examples/html/${id}/index.html`), 'utf8');
     assert.doesNotMatch(html, /(src|href)="https?:\/\//, `${id} reaches off the page`);
   }
 });
@@ -161,7 +161,7 @@ test('nothing is loaded from the network, since the published page allows no rem
 
 test('an example claiming bugs has a bugs.js, and one with a bugs.js claims them', async () => {
   for (const id of SITE_IDS){
-    const has = await exists(`examples/${id}/bugs.js`);
+    const has = await exists(`examples/html/${id}/bugs.js`);
     assert.equal(!!SITES[id].bugs, has,
       has ? `${id} ships bugs.js but does not say "bugs: true"` : `${id} says "bugs: true" but ships no bugs.js`);
   }
@@ -192,7 +192,7 @@ test('every example ships two to five tests, covering the main path and its erro
   const OVER = { 'score-board': 6 };
   const counts = [];
   for (const id of SITE_IDS){
-    const yaml = await readFile(resolve(ROOT, `examples/${id}/tests.yaml`), 'utf8');
+    const yaml = await readFile(resolve(ROOT, `examples/html/${id}/tests.yaml`), 'utf8');
     const n = yaml.split('\n').filter(l => /^test\s*:/.test(l)).length;
     assert.ok(n >= 2, `${id} ships ${n} tests, and an example wants at least 2`);
     if (n > 5) counts.push([id, n]);
@@ -203,7 +203,7 @@ test('every example ships two to five tests, covering the main path and its erro
 test('a file never names the site it belongs to', async () => {
   // A file belongs to whichever example is selected.
   for (const id of SITE_IDS){
-    const yaml = await readFile(resolve(ROOT, `examples/${id}/tests.yaml`), 'utf8');
+    const yaml = await readFile(resolve(ROOT, `examples/html/${id}/tests.yaml`), 'utf8');
     assert.doesNotMatch(yaml, /^site\s*:/m, `${id} names a site`);
     assert.doesNotMatch(yaml, /^tests\s*:/m, `${id} uses the removed "tests:" list`);
     assert.doesNotMatch(yaml, /^flows\s*:/m, `${id} uses the removed "flows:" block`);

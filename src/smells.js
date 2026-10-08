@@ -1,15 +1,15 @@
-import { SITES, SITE_IDS } from '../examples/examples.js';
+import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id, specEl } from './dom.js';
 import { jumpToLine, lineForStep } from './editor.js';
 import { describeStep } from './find.js';
 import { ASSERTIONS, validate } from './parse.js';
 import { selectSite } from './picker.js';
-import { exampleCache, testsFor } from './sites.js';
-import { editorSite, mode } from './state.js';
+import { testsFor } from './sites.js';
+import { editorSite } from './state.js';
 
 /* ---------- Test smells: what is wrong with the tests themselves ----------
 
-   Coverage asks what the tests reach and Mutation asks what they would catch.
+   Mutation asks what the tests would catch.
    Both read the run. This one reads the file, because some of what makes a
    suite hard to trust is visible in the tests before anything runs: a test that
    checks nothing, a fixture that sets up more than its tests need.
@@ -151,18 +151,11 @@ export function report(text = specEl.value){
   return { parsed: true, tests: tests.length, items, total: items.length };
 }
 
-// A file is clean when nothing smells and it still has every test the example
-// ships with: deleting the test that smells is not fixing it.
-export function clean(r, shipped){
-  const s = shipped ? validate(shipped).spec : null;
-  return r.parsed && !r.total && !!s && r.tests >= s.tests.length;
-}
-
 /* ---------- Which examples have one ----------
-   Smells mode narrows the example list to the ones worth opening: a hundred
-   buttons where fifteen have anything to say is a worse list than fifteen. The
-   scan reads each example's file the same way the panel reads the one on
-   screen, so what the list promises is what the panel will show.
+   The All smells tab lists the examples worth opening: a hundred rows where
+   fifteen have anything to say is a worse list than fifteen. The scan reads
+   each example's file the same way the tab reads the one on screen, so what
+   the list promises is what the tab will show.
 
    It is never stored. The files are already cached by the time it has run once,
    and the site being edited is re-read on every keystroke, so the list follows
@@ -205,9 +198,9 @@ function rescanEditor(r){
   document.dispatchEvent(new CustomEvent('playlive:smelly'));
 }
 
-/* ---------- The panel ----------
-   On screen in Smells mode and nowhere else, like the other two scores. It has
-   no run behind it, so it redraws from the file as it is typed.
+/* ---------- The tab ----------
+   The Smells tab of the Results panel. It has no run behind it, so it redraws
+   from the file as it is typed.
 
    Two tabs, because the panel answers two questions and they are not the same
    one. **This file** is what the tests on screen smell of. **All smells** is
@@ -217,8 +210,7 @@ function rescanEditor(r){
    writing one, and a row goes to the example and the line that has it, so the
    catalogue is a way into the hundred examples rather than a glossary.       */
 export const smellsEl = $id('smells'), smellScore = $id('smellScore');
-export const smellPanel = smellsEl.closest('.panel');
-export const foldSmellsBtn = $id('foldSmells');
+export const smellPanel = $id('smellTab');
 export const smellSeg = document.querySelector('.smell-seg');
 
 // Which tab is showing. It is about this browser rather than the examples and
@@ -233,16 +225,13 @@ export function setSmellView(v){
 }
 smellSeg.querySelectorAll('button').forEach(b =>
   b.addEventListener('click', () => setSmellView(b.dataset.smellview)));
-// The scan is what the All smells tab lists, and it finishes after the mode has
+// The scan is what the All smells tab lists, and it finishes after the tab has
 // opened. It says so rather than being reached into from here.
 document.addEventListener('playlive:smelly', () => { if (view === 'all') renderSmells(); });
 
 export function renderSmells(){
   const r = report();
   rescanEditor(r);
-  if (mode === 'smells' && exampleCache[editorSite] !== undefined){
-    document.dispatchEvent(new CustomEvent('playlive:graded', { detail: { site: editorSite, mode, done: clean(r, exampleCache[editorSite]) } }));
-  }
   const top = smellsEl.scrollTop;
   smellsEl.innerHTML = '';
   if (view === 'all') renderAll(); else renderFile(r);
@@ -271,7 +260,7 @@ function renderFile(r){
     if (!rows.length) continue;
     const g = group(s, rows.length);
     const ul = document.createElement('ul');
-    ul.className = 'cov-list';
+    ul.className = 'list-list';
     for (const i of rows) ul.appendChild(row(i));
     g.appendChild(ul);
     smellsEl.appendChild(g);
@@ -300,7 +289,7 @@ function renderAll(){
       g.appendChild(note(scanned ? 'No example has this one.' : 'Reading the examples…'));
     } else {
       const ul = document.createElement('ul');
-      ul.className = 'cov-list';
+      ul.className = 'list-list';
       for (const x of rows) ul.appendChild(siteRow(x.id, x.item));
       g.appendChild(ul);
     }
@@ -314,10 +303,10 @@ function group(s, n){
   const g = document.createElement('div');
   g.className = 'smell-group'; g.dataset.smell = s.id;
   const h = document.createElement('div');
-  h.className = 'cov-head'; h.title = s.why;
-  h.innerHTML = '<span class="smell-dot" aria-hidden="true"></span><span class="cov-title"></span><span class="cov-n"></span>';
-  h.querySelector('.cov-title').textContent = s.name;
-  h.querySelector('.cov-n').textContent = n;
+  h.className = 'list-head'; h.title = s.why;
+  h.innerHTML = '<span class="smell-dot" aria-hidden="true"></span><span class="list-title"></span><span class="list-n"></span>';
+  h.querySelector('.list-title').textContent = s.name;
+  h.querySelector('.list-n').textContent = n;
   g.appendChild(h);
   const p = document.createElement('p');
   p.className = 'smell-why'; p.textContent = s.why;
@@ -326,7 +315,7 @@ function group(s, n){
 }
 function note(text){
   const p = document.createElement('p');
-  p.className = 'cov-note'; p.textContent = text;
+  p.className = 'list-note'; p.textContent = text;
   return p;
 }
 // A row names the thing and goes to its line: a smell you cannot find is a
@@ -371,21 +360,7 @@ function siteRow(id, i){
   return li;
 }
 
-/* ---------- Folding: the count stays, the list goes ----------
-   The same three stops the other two lists have: folded, the panel is its one
-   row and Results takes the room back, rather than a blank panel staying
-   behind. The layout reads the state off #left the way it reads the others. */
-let folded = false;
-export function setSmellFolded(f){
-  folded = f;
-  smellsEl.hidden = f;
-  $id('left').dataset.smells = f ? 'collapsed' : 'open';
-  foldSmellsBtn.setAttribute('aria-expanded', String(!f));
-  foldSmellsBtn.setAttribute('aria-label', f ? 'Expand the smells' : 'Collapse the smells');
-  foldSmellsBtn.title = f ? 'Show what these tests smell of' : 'Hide the list of smells';
-  $id('foldSmellsIcon').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
-}
-foldSmellsBtn.addEventListener('click', () => setSmellFolded(!folded));
-setSmellFolded(false);
+// The catalogue is read the first time the tab is opened, not at boot.
+document.addEventListener('playlive:restab', () => { if (!$id('smellTab').hidden) scanSites(); });
 smellSeg.querySelectorAll('button').forEach(b =>
   b.setAttribute('aria-pressed', String(b.dataset.smellview === view)));

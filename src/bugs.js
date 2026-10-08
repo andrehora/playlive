@@ -1,16 +1,16 @@
-import { SITES } from '../examples/examples.js';
+import { SITES } from '../examples/html/examples.js';
 import { $id, specEl, summaryEl } from './dom.js';
 import { setBugMark, withBase } from './htmlview.js';
 import { validate } from './parse.js';
 import { setView } from './picker.js';
 import { run, syncUI } from './run.js';
 import { loadApp, pageSource } from './sites.js';
-import { clearBugHtml, editorSite, hunting, mode, recording, running, setBugHtml, setHunting } from './state.js';
+import { clearBugHtml, editorSite, hunting, recording, running, setBugHtml, setHunting } from './state.js';
 import { toast } from './ui.js';
 
 /* ---------- Bugs: what the tests would catch if the page broke ----------
 
-   Coverage says which controls a test touched. It cannot say whether the test
+   A test can touch every control on a page. That cannot say whether the test
    would notice the page going wrong, and a student who trusts a green 100%
    learns the wrong lesson. So each site may ship a list of bugs: small patches
    on its own source, one at a time, each one a plausible mistake.
@@ -30,7 +30,7 @@ export async function bugsFor(site){
     if (!SITES[site] || !SITES[site].bugs) bugLists[site] = [];
     else {
       try {
-        const m = await import(`../examples/${site}/bugs.js`);
+        const m = await import(`../examples/html/${site}/bugs.js`);
         bugLists[site] = Array.isArray(m.default) ? m.default : [];
       } catch { bugLists[site] = []; }
     }
@@ -52,7 +52,7 @@ export function patch(src, bug){
 }
 // The written page needs the real address to find the stylesheet and hooks the
 // markup asks for, and the HTML view skips the tag the runner adds.
-const baseFor = site => new URL(`examples/${site}/index.html`, location.href).href;
+const baseFor = site => new URL(`examples/html/${site}/index.html`, location.href).href;
 
 // Put a bug on the page. The page is written rather than fetched from here on,
 // so every test in a run meets the broken version.
@@ -86,7 +86,7 @@ export async function repair(){
 
 /* ---------- The hunt ---------- */
 // Every bug in turn, with the whole suite run against each. Deliberate failures,
-// so the hunt leaves run history, the site's status and the coverage score alone.
+// so the hunt leaves run history and the site's status alone.
 export async function hunt(){
   if (running || recording || hunting) return;
   const site = editorSite;
@@ -139,11 +139,6 @@ export async function hunt(){
     summaryEl.textContent = `Mutation: ${r.caught} of ${r.scored} caught` + (r.escaped ? `, ${r.escaped} through` : '');
     summaryEl.className = r.escaped ? 'bad' : 'ok';
     renderBugs();
-    // Done is every mutation tried and caught: a stopped hunt has tried some,
-    // and one that no longer applies has not been caught by anything.
-    if (mode === 'mutation'){
-      document.dispatchEvent(new CustomEvent('playlive:graded', { detail: { site, mode, done: r.total > 0 && r.caught === r.total } }));
-    }
   }
 }
 
@@ -162,19 +157,16 @@ export function report(site = editorSite){
 export const percent = r => Math.round(r.score * 100);
 export const band = p => p === 100 ? 'ok' : p >= 60 ? 'warn' : 'bad';
 
-/* ---------- The panel ----------
-   A panel of its own below Coverage, so the two scores read one under the
-   other. It is on screen in Mutation mode and nowhere else, which is why it has no
-   fold of its own: the mode is the fold. */
+/* ---------- The tab ----------
+   The Mutation tab of the Results panel: Results folds it with the rest. */
 export const bugsEl = $id('bugs'), bugScore = $id('bugScore'), bugBar = $id('bugbar');
-export const bugPanel = bugsEl.closest('.panel');   // the band is the panel's, head and bar included
-export const bugMeter = $id('bugMeter');
+export const bugPanel = $id('bugTab');   // the band is the tab's, its head included
 export const huntBtn = $id('hunt');
 const GROUPS = [
-  ['escaped', 'Escaped', 'The page broke and every test still passed'],
-  ['stale', 'No longer applies', 'The page has changed, so this mutation cannot be tried'],
-  ['unchecked', 'Not checked yet', 'Nothing has tried these yet'],
-  ['caught', 'Caught', 'A test failed, which is a test doing its job']
+  ['escaped', 'Escaped', 'Every test still passed'],
+  ['stale', 'No longer applies', 'The page has changed'],
+  ['unchecked', 'Not checked yet', 'Not tried yet'],
+  ['caught', 'Caught', 'A test failed']
 ];
 
 export function renderBugs(){
@@ -192,8 +184,6 @@ export function renderBugs(){
   const r = report();
   const pct = percent(r);
   bugPanel.dataset.band = r.scored ? band(pct) : '';
-  bugMeter.hidden = !r.scored;
-  bugMeter.firstElementChild.style.width = `${pct}%`;
   bugScore.textContent = r.scored ? `${r.caught} of ${r.scored} mutations caught (${pct}%)` : r.total ? `${r.total} mutations` : '';
   bugScore.dataset.band = r.scored ? band(pct) : '';
   huntBtn.disabled = running || recording || hunting || !r.total;
@@ -223,13 +213,13 @@ export function renderBugs(){
     const g = document.createElement('div');
     g.className = 'bug-group'; g.dataset.state = state;
     const h = document.createElement('div');
-    h.className = 'cov-head'; h.title = why;
-    h.innerHTML = '<span class="bug-dot" aria-hidden="true"></span><span class="cov-title"></span><span class="cov-n"></span>';
-    h.querySelector('.cov-title').textContent = title;
-    h.querySelector('.cov-n').textContent = rows.length;
+    h.className = 'list-head'; h.title = why;
+    h.innerHTML = '<span class="bug-dot" aria-hidden="true"></span><span class="list-title"></span><span class="list-n"></span>';
+    h.querySelector('.list-title').textContent = title;
+    h.querySelector('.list-n').textContent = rows.length;
     g.appendChild(h);
     const ul = document.createElement('ul');
-    ul.className = 'cov-list';
+    ul.className = 'list-list';
     for (const b of rows) ul.appendChild(row(b));
     g.appendChild(ul);
     bugsEl.appendChild(g);
@@ -238,7 +228,7 @@ export function renderBugs(){
 }
 function note(text){
   const p = document.createElement('p');
-  p.className = 'cov-note'; p.textContent = text;
+  p.className = 'list-note'; p.textContent = text;
   return p;
 }
 // An escaped bug says why it got through: that sentence is the test the file is
@@ -265,7 +255,7 @@ function row(b){
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'ghost small bug-btn';
     btn.textContent = b.live ? 'Repair' : 'Inject';
-    btn.title = b.live ? 'Put the page back as it ships' : 'Break the page this way and leave it broken, to look at or run by hand';
+    btn.title = b.live ? 'Restore the page' : 'Inject this change';
     btn.setAttribute('aria-label', b.live ? `Repair: ${b.title}` : `Inject: ${b.title}`);
     btn.addEventListener('click', async () => {
       if (running || recording || hunting) return;
@@ -288,22 +278,4 @@ document.addEventListener('playlive:site', () => renderBugs());
 // control rather than being the one thing a run leaves clickable.
 document.addEventListener('playlive:busy', () => renderBugs());
 huntBtn.addEventListener('click', () => hunt());
-
-/* ---------- Folding: the score stays, the list goes ----------
-   The same stops the other lists have: folded, the panel is its one row and
-   Results takes the room back. The mode is still the only way this panel comes
-   and goes, but a list of a dozen mutations is a list, and a list folds. */
-export const foldBugsBtn = $id('foldBugs');
-let folded = false;
-export function setBugFolded(f){
-  folded = f;
-  bugsEl.hidden = f;
-  $id('left').dataset.bug = f ? 'collapsed' : 'open';
-  foldBugsBtn.setAttribute('aria-expanded', String(!f));
-  foldBugsBtn.setAttribute('aria-label', f ? 'Expand the mutations' : 'Collapse the mutations');
-  foldBugsBtn.title = f ? 'Show every mutation and what the tests made of it' : 'Hide the list of mutations';
-  $id('foldBugsIcon').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
-}
-foldBugsBtn.addEventListener('click', () => setBugFolded(!folded));
-setBugFolded(false);
 [$id('bugbarRepair'), $id('htmlBugRepair')].forEach(b => b.addEventListener('click', () => repair()));

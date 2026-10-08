@@ -36,16 +36,13 @@ test.describe('Create', () => {
     await setMode(page, 'create');
     // Three panels: nothing is being measured here, there is something to write.
     await expect(page.locator('.create-panel')).toBeVisible();
-    await expect(page.locator('.coverage-panel')).toBeHidden();
-    await expect(page.locator('.bugs-panel')).toBeHidden();
-    await expect(page.locator('.smells-panel')).toBeHidden();
 
     // The titles, as comments, and nothing else: no steps, no settings.
     await expect(page.locator('#spec')).toHaveValue('# Saves a US address\n\n# The postal field becomes Postcode for the UK\n\n# Rejects a short ZIP code\n');
     await expect(page.locator('#createScore')).toHaveText('0 of 3 done');
-    await expect(page.locator('.create-group[data-state="todo"] .cov-title')).toHaveText('TODO');
+    await expect(page.locator('.create-group[data-state="todo"] .list-title')).toHaveText('TODO');
     await expect(page.locator('.create-group[data-state="todo"] .create-row')).toHaveCount(3);
-    await expect(page.locator('#create .cov-note')).toHaveCount(0);   // the list is the panel
+    await expect(page.locator('#create .list-note')).toHaveCount(0);   // the list is the panel
     // Nothing written yet is a start, not a problem: no red count, and the hint in grey
     await expect(page.locator('#fileStatus')).toHaveText('No tests');
     await expect(page.locator('#fileStatus')).not.toHaveClass(/bad/);

@@ -1,6 +1,5 @@
-import { SITES } from '../examples/examples.js';
+import { SITES } from '../examples/html/examples.js';
 import { harvest } from './catalog.js';
-import { renderCoverage } from './coverage.js';
 import { frame, specEl } from './dom.js';
 import { attachRecorder } from './recorder.js';
 import { hideSnapshot } from './snapshots.js';
@@ -20,7 +19,7 @@ export const exampleCache = {};
 export async function exampleTests(id){
   if (exampleCache[id] === undefined){
     try {
-      const res = await fetch(`examples/${id}/tests.yaml`);
+      const res = await fetch(`examples/html/${id}/tests.yaml`);
       exampleCache[id] = res.ok ? await res.text() : '';
     } catch { exampleCache[id] = ''; }
   }
@@ -41,7 +40,7 @@ export const sourceCache = {};
 export async function pageSource(id){
   if (sourceCache[id] === undefined){
     try {
-      const res = await fetch(`examples/${id}/index.html`);
+      const res = await fetch(`examples/html/${id}/index.html`);
       sourceCache[id] = res.ok ? await res.text() : '';
     } catch { sourceCache[id] = ''; }
   }
@@ -68,7 +67,7 @@ export function persist(){
   try { localStorage.setItem(CREATE, JSON.stringify(createTests)); } catch {}
 }
 
-// examples/hooks.js, which every example page loads, reports the storage keys the
+// examples/html/hooks.js, which every example page loads, reports the storage keys the
 // site writes so Reset can clear that site's data
 export const SITE_KEYS = 'live-test-runner:site-keys';
 export let siteKeys = {};
@@ -87,9 +86,9 @@ export function loadApp(){
   const site = currentSite;
   return new Promise(res => {
     frame.onload = () => {
-      attachRecorder(); harvest(site); renderCoverage();
+      attachRecorder(); harvest(site);
       // A page that fills itself in after load is read again a moment later
-      setTimeout(() => { if (currentSite === site){ harvest(site); renderCoverage(); } }, 250);
+      setTimeout(() => { if (currentSite === site) harvest(site); }, 250);
       res();
     };
     frame.removeAttribute('srcdoc');          // a snapshot may have been showing
@@ -98,6 +97,6 @@ export function loadApp(){
     // so a run starts every test from the page as it was edited.
     if (bugHtml[currentSite]) frame.srcdoc = bugHtml[currentSite];
     else if (editedHtml[currentSite]) frame.srcdoc = editedHtml[currentSite];
-    else frame.src = `examples/${currentSite}/index.html?load=${++loadCount}`;
+    else frame.src = `examples/html/${currentSite}/index.html?load=${++loadCount}`;
   });
 }

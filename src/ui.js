@@ -4,10 +4,12 @@ import { currentSite } from './state.js';
 
 /* ---------- Progress, toast, tab status ---------- */
 export const progressEl = $id('progress');
-export function setProgress(frac, state){
-  progressEl.hidden = frac == null;
-  progressEl.className = 'progress' + (state ? ' ' + state : '');
-  if (frac != null) progressEl.firstElementChild.style.width = `${Math.round(frac * 100)}%`;
+// The thin bar under a Results head: how far the run has got, then how it went.
+// The site modes' bar unless another is given.
+export function setProgress(frac, state, el = progressEl){
+  el.hidden = frac == null;
+  el.className = 'progress' + (state ? ' ' + state : '');
+  if (frac != null) el.firstElementChild.style.width = `${Math.round(frac * 100)}%`;
 }
 export function toast(msg){
   const t = $id('toast'); t.textContent = msg; t.classList.add('show');

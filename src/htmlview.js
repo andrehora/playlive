@@ -1,5 +1,5 @@
 import { $id, doc, frame } from './dom.js';
-import { escH } from './editor.js';
+import { commentKey, escH, undoable } from './editor.js';
 import { reduceMotion } from './find.js';
 import { layout, saveLayout } from './layout.js';
 import { loadApp } from './sites.js';
@@ -212,6 +212,8 @@ htmlEdit.addEventListener('input', () => {
 htmlEdit.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); applyHtml(); }
 });
+commentKey(htmlEdit, '<!--', '-->');
+undoable(htmlEdit);
 applyBtn.addEventListener('click', applyHtml);
 revertBtn.addEventListener('click', revertHtml);
 

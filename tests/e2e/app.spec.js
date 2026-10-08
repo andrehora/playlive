@@ -93,47 +93,52 @@ test.describe('Shareable links', () => {
     expect(errors).toEqual([]);
   });
 
-  test('an example that does not exist falls back to the first one', async ({ page }) => {
+  test('an example that does not exist opens home', async ({ page }) => {
     const { errors } = await openApp(page, { hash: '#no-such-example' });
-    await expect(page.locator('#siteName')).toHaveText(homeName);
+    expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
+    await expect(page.locator('#siteName')).toHaveText('Calculator');
     expect(new URL(page.url()).hash).toBe('');
     expect(errors).toEqual([]);
   });
 
-  test('home and the first example are the same place', async ({ page }) => {
-    // "/" shows the first example and stays "/"; "/#<first example>" is the same
-    // place spelled out, and settles on the shorter spelling.
-    const { errors } = await openApp(page);
-    await expect(page.locator('#siteName')).toHaveText(homeName);
+  test('home is Python on its first example, and the first site is "#explore"', async ({ page }) => {
+    // "/" is Python on its first example and stays "/".
+    const { errors } = await openApp(page, { hash: '' });
+    expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
+    await expect(page.locator('.area-seg [data-area="python"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#siteName')).toHaveText('Calculator');
     expect(new URL(page.url()).pathname).toBe('/');
     expect(new URL(page.url()).hash).toBe('');
 
+    // A site is Explore's, so naming the first one settles on "#explore".
     await openApp(page, { hash: '#' + HOME });
+    expect(await page.evaluate(() => window.playlive.modes.get())).toBe('explore');
     await expect(page.locator('#siteName')).toHaveText(homeName);
     expect(new URL(page.url()).pathname).toBe('/');
-    expect(new URL(page.url()).hash).toBe('');
+    expect(new URL(page.url()).hash).toBe('#explore');
     await expect(page.frameLocator('#app').locator('h1')).toBeVisible();
     expect(errors).toEqual([]);
   });
 
-  test('walking back to the first example clears the hash again', async ({ page }) => {
+  test('walking back to the first example leaves only the mode in the hash', async ({ page }) => {
     await openApp(page, { site: 'newsletter-signup' });
     expect(new URL(page.url()).hash).toBe('#newsletter-signup');
     await selectSite(page, HOME);
-    expect(new URL(page.url()).hash).toBe('');
+    expect(new URL(page.url()).hash).toBe('#explore');
   });
 
   test('opening the page again starts at the first example, not the last one visited', async ({ page }) => {
     await openApp(page, { site: 'coupon-code' });
     await openApp(page);
     await expect(page.locator('#siteName')).toHaveText(homeName);
-    expect(new URL(page.url()).hash).toBe('');
+    expect(new URL(page.url()).hash).toBe('#explore');
   });
 
   test('the name and icon link home', async ({ page }) => {
     await openApp(page, { hash: '#coupon-code' });
     await page.click('.brand');
-    await expect(page.locator('#siteName')).toHaveText(homeName);
+    await expect.poll(() => page.evaluate(() => window.playlive?.modes.get())).toBe('python');
+    await expect(page.locator('#siteName')).toHaveText('Calculator');
     expect(new URL(page.url()).pathname).toBe('/');
     expect(new URL(page.url()).hash).toBe('');
   });
@@ -153,7 +158,7 @@ test.describe('Shareable links', () => {
 
   test('choosing an example writes it to the URL without filling the back button', async ({ page }) => {
     await openApp(page);
-    expect(new URL(page.url()).hash).toBe('');
+    expect(new URL(page.url()).hash).toBe('#explore');
     await selectSite(page, 'coupon-code');
     expect(new URL(page.url()).hash).toBe('#coupon-code');
 
@@ -182,7 +187,7 @@ test.describe('Shareable links', () => {
     await expect(page.locator('#spec')).not.toHaveValue('');
 
     await page.click('#share');
-    await expect(page.locator('#toast')).toHaveText('Link to Coupon code copied');
+    await expect(page.locator('#toast')).toHaveText('Link copied!');
     const copied = await page.evaluate(() => navigator.clipboard.readText());
     expect(copied).toBe(page.url());
     expect(copied.endsWith('/#coupon-code')).toBe(true);
@@ -205,10 +210,10 @@ test.describe('Running', () => {
     expect(await page.evaluate(() => localStorage.getItem('live-test-runner:status'))).toContain('contact-form');
   });
 
-  test('the head counts the run in circles, one per step, and keeps them', async ({ page }) => {
+  test('the head counts the run in circles, one per test, and keeps them', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'fast');
-    const steps = await page.locator('#results .steps li').count();
+    const tests = await page.locator('#results .test').count();
 
     // Collapsed to one row, the head is all there is to watch: the summary says
     // how far the run has got and the circles say the rest, over the whole run
@@ -217,8 +222,8 @@ test.describe('Running', () => {
     await expect(page.locator('#results')).toBeHidden();
     const res = await runAll(page);
     expect(res.state, describeFailures(res)).toBe('ok');
-    await expect(page.locator('#runDots i')).toHaveCount(steps);
-    await expect(page.locator('#runDots i.ok')).toHaveCount(steps);
+    await expect(page.locator('#runDots i')).toHaveCount(tests);
+    await expect(page.locator('#runDots i.ok')).toHaveCount(tests);
     // The summary names no test: the circles are the detail.
     expect(res.summary).not.toContain('“');
 
@@ -382,27 +387,27 @@ test.describe('Running', () => {
     await expect(page.locator('#run .lbl')).toHaveText('Run');
   });
 
-  test('the head lays out a circle for every step and fills them as the run goes', async ({ page }) => {
+  test('the head lays out a circle for every test and fills them as the run goes', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
-    const all = await page.locator('#results .steps li').count();   // every step of the run
-    expect(await page.evaluate(() => getComputedStyle(document.getElementById('runDots'), '::before').content)).toContain('Steps:');
+    const all = await page.locator('#results .test').count();      // every test of the run
+    expect(all).toBeGreaterThan(1);
+    expect(await page.evaluate(() => getComputedStyle(document.getElementById('runDots'), '::before').content)).toContain('Tests:');
     await setSpeed(page, 'step');
     await page.click('#run');
 
     // They are all there from the start, hollow until the run reaches them, so
-    // the row says how long the run is as well as how far it has got.
+    // the row says how long the run is as well as how far it has got. The test
+    // running is the one circle that is not hollow.
     await expect(page.locator('#runDots i')).toHaveCount(all);
-    for (const n of [1, 2, 3]){
-      await expect(page.locator('#runDots i:not(.todo)')).toHaveCount(n);
-      await expect(page.locator('#runDots i.todo')).toHaveCount(all - n);
-      await page.click('#run');
-    }
+    await expect(page.locator('#runDots i.run')).toHaveCount(1);
+    await expect(page.locator('#runDots i.todo')).toHaveCount(all - 1);
+    await expect(page.locator('#runDots i').first()).toHaveAttribute('title', await page.locator('#results .test .ttl').first().textContent());
 
-    // Stopped part way, the steps nobody reached stay hollow rather than going.
+    // Stopped part way, the test stopped and the ones not reached stay hollow
     await page.click('#stop');
     await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
     await expect(page.locator('#runDots i')).toHaveCount(all);
-    expect(await page.locator('#runDots i.todo').count()).toBeGreaterThan(0);
+    await expect(page.locator('#runDots i.todo')).toHaveCount(all);
   });
 
   test('Repeat runs the tests several times and reports every run', async ({ page }) => {

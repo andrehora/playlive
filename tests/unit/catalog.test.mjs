@@ -1,12 +1,12 @@
-// The site catalog: what a step could target on a page, and the key coverage
-// credits it under. Reading the page is all this does, so it is read here; what
+// The site catalog: what a step could target on a page, which the editor's
+// suggestions offer. Reading the page is all this does, so it is read here; what
 // stays in the Playwright suite is the half that needs a real browser — whether
 // an element is visible, and that a run reveals screens the first page does not.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load, site } from './env.mjs';
 
-const { entryFor, keyFor, harvest, snapshot, clearCatalog, catalogs } = await load('src/catalog.js');
+const { entryFor, harvest, snapshot, clearCatalog, catalogs } = await load('src/catalog.js');
 const { validate } = await load('src/parse.js');
 const { query } = await load('src/find.js');
 
@@ -76,18 +76,15 @@ test('an option with no text falls back to its value', async () => {
   assert.deepEqual(cat.select[0].options, ['fr', 'Spain']);
 });
 
-/* ---------- The key coverage credits ---------- */
+/* ---------- The key an entry is kept under ---------- */
 
-test('the key joins what the catalog offers to what a run touched', async () => {
+test('an entry is kept under what a step would do with it and its target', async () => {
   const { d } = await harvested('<button>Apply</button>');
-  const btn = d.querySelector('button');
-  assert.equal(keyFor(btn), 'click { role: button, name: Apply }');
-  assert.equal(entryFor(btn).key, keyFor(btn));
+  assert.equal(entryFor(d.querySelector('button')).key, 'click { role: button, name: Apply }');
 });
 
-test('an element there is nothing to say about has no key', async () => {
+test('an element there is nothing to say about has no entry', async () => {
   const { d } = await harvested('<div id="x"></div>');
-  assert.equal(keyFor(d.getElementById('x')), null);
   assert.equal(entryFor(d.getElementById('x')), null);
 });
 

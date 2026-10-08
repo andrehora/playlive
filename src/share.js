@@ -1,7 +1,8 @@
-import { SITES, SITE_IDS } from '../examples/examples.js';
+import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id } from './dom.js';
-import { MODES, setMode } from './modes.js';
+import { MODES, OLD_MODES, setMode } from './modes.js';
 import { selectSite } from './picker.js';
+import { LABS, exampleOf, labOf, selectExample } from './lab.js';
 import { editorSite, mode, recording, running } from './state.js';
 import { toast } from './ui.js';
 
@@ -12,9 +13,14 @@ import { toast } from './ui.js';
    rather than a query so the link still works from a subfolder on GitHub Pages,
    with no server rule behind it.
 
-   Each half is left out when it is the default: home is the first example and
-   the default mode is Explore, so ".../" is Explore on the first example and
-   "#coupon-code" still means exactly what it always did.                      */
+   Each half is left out when it is the default: home is Python on its first
+   example, so ".../" is that. Only Explore has the sites, so a link naming a
+   site and no mode is Explore, and "#coupon-code" still means exactly what it
+   always did; Explore on the first site is "#explore".
+
+   The code modes (Python, JS/TS) have examples of their own, so their links
+   name one of those instead: "#javascript#cart", or "#javascript" alone for
+   the first. Python is home, so its links are just "#stack".                                                                      */
 
 // The parts of the fragment, in the order they are written. A fragment is
 // everything after the first "#", so the second one is just a separator.
@@ -23,21 +29,29 @@ const parts = (hash = location.hash) => hash.replace(/^#\/?/, '').split('#')
   .filter(Boolean);
 
 export const siteFromHash = (hash = location.hash) => parts(hash).find(p => SITES[p]) || null;
+export const labFromHash = (hash = location.hash, m = linkedMode(hash)) => (labOf(m) && parts(hash).find(p => LABS[labOf(m)].examples[p])) || null;
 // A part that is not an example and is a mode's name is the mode. Examples are
 // looked at first, so a link from before modes existed cannot be misread.
 export const modeFromHash = (hash = location.hash) => {
-  const rest = parts(hash).filter(p => !SITES[p]);
-  return rest.find(p => MODES.includes(p)) || null;
+  const rest = parts(hash).filter(p => !SITES[p] && !Object.values(LABS).some(l => l.examples[p]));
+  return rest.find(p => MODES.includes(p) || OLD_MODES.includes(p)) || null;
 };
+// The mode a link opens: the one it names, else Explore if it names a site,
+// else home's.
+export const linkedMode = (hash = location.hash) => modeFromHash(hash) || (siteFromHash(hash) ? 'explore' : MODES[0]);
 // "/index.html" and "/" are the same page, and the shorter one is the link worth
 // sharing, so the file name is dropped: ".../#newsletter-signup".
 const homePath = () => location.pathname.replace(/(^|\/)index\.html$/, '$1');
 // Home is the first example, so that one is addressed as "/" with no hash at all
 // and "/#address-form" is the same place, spelled out.
-export const shareUrl = (id = editorSite, m = mode) =>
-  `${location.origin}${homePath()}${location.search}`
-  + (m && m !== MODES[0] ? '#' + m : '')
-  + (id === SITE_IDS[0] ? '' : '#' + id);
+// In a code mode the example is the mode's own, whichever site is given.
+export const shareUrl = (id = editorSite, m = mode, lab = labOf(m) && exampleOf(m)) => {
+  const [ex, home] = labOf(m) ? [lab, LABS[labOf(m)].ids[0]] : [id, SITE_IDS[0]];
+  const implied = m === MODES[0] || (m === 'explore' && ex !== home);
+  return `${location.origin}${homePath()}${location.search}`
+    + (m && !implied ? '#' + m : '')
+    + (ex === home ? '' : '#' + ex);
+};
 
 // Walking the 100 examples would fill the back button with steps nobody took on
 // purpose, so the URL is replaced rather than pushed. Replacing it also drops
@@ -56,7 +70,7 @@ export async function copyLink(id = editorSite, m = mode){
     try { document.execCommand('copy'); } catch {}
     t.remove();
   }
-  toast(`Link to ${SITES[id].name} copied`);
+  toast('Link copied!');
   return url;
 }
 $id('share').addEventListener('click', () => copyLink(editorSite));
@@ -67,10 +81,14 @@ window.addEventListener('hashchange', () => {
   if (running || recording) return;
   // Both halves are read before either is applied: changing the mode writes the
   // address, which would take the example out of the hash before it was read.
-  // An emptied hash is home: the first example, in the first mode.
-  const m = modeFromHash() || MODES[0];
+  // An emptied hash is home: Python, on its first example.
+  const m = linkedMode();
   const id = siteFromHash() || SITE_IDS[0];
   if (m !== mode) setMode(m);        // first: it decides which file the example gets
-  if (id !== editorSite) selectSite(id);
+  if (labOf(m)){
+    const ex = labFromHash(location.hash, m) || LABS[labOf(m)].ids[0];
+    if (ex !== exampleOf(m)) selectExample(ex); else syncUrl();
+  }
+  else if (id !== editorSite) selectSite(id);
   else syncUrl(id);                  // a link that only named the mode still tidies up
 });

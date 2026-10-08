@@ -1,4 +1,4 @@
-import { SITE_IDS } from '../examples/examples.js';
+import { SITE_IDS } from '../examples/html/examples.js';
 
 // State that more than one module reads. Reading an imported binding always
 // gives the current value, but only this module may assign to one, so each of
@@ -18,6 +18,7 @@ export let mode = 'explore';               // which panels the left column has, 
 export const editedHtml = {};              // site -> markup applied in the HTML view, until Reset
 export let hunting = false;                // a bug hunt is running the tests against a broken page
 export const bugHtml = {};                 // site -> the page with one bug patched in, while it is injected
+export const labExample = {};              // code mode -> the example it is showing, its first until chosen
 
 export const setStepTimeout = v => { stepTimeout = v; };
 export const setStopRequested = v => { stopRequested = v; };
@@ -32,6 +33,7 @@ export const setCompletionOpen = v => { completionOpen = v; };
 // the picker and the sites all have to read it without importing a panel.
 export const setAppMode = v => { mode = v; };
 export const setHunting = v => { hunting = v; };
+export const setLabExample = (m, id) => { labExample[m] = id; };
 export const setBugHtml = (site, markup) => { bugHtml[site] = markup; };
 export const clearBugHtml = site => { delete bugHtml[site]; };
 export const setEditedHtml = (site, markup) => { editedHtml[site] = markup; };

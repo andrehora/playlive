@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { lineForStep, errorLinesFor, hlLine, hlValue, escH, isAction } = await load('src/editor.js');
+const { lineForStep, errorLinesFor, hlLine, hlValue, escH, isAction, undoable } = await load('src/editor.js');
 const { validate } = await load('src/parse.js');
 
 // The line each of a file's steps was written on, in run order.
@@ -137,4 +137,72 @@ test('highlighting never loses or invents the line’s own characters', () => {
       .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
     assert.equal(text, line, `highlighting changed: ${JSON.stringify(line)}`);
   }
+});
+
+/* ---------- Undo ---------- */
+
+// A textarea with its own history, and the edits a person makes on it
+function undoEditor(text = ''){
+  const ta = document.createElement('textarea');
+  document.body.append(ta);
+  ta.value = text;
+  undoable(ta);
+  ta.dispatchEvent(new Event('focus'));
+  const key = (k, mods = {}) => {
+    const e = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ctrlKey: true, ...mods });
+    ta.dispatchEvent(e);
+    return e.defaultPrevented;
+  };
+  // Typing: the text at the caret, with the input event the browser fires
+  const type = (data, inputType = 'insertText') => {
+    ta.setRangeText(data, ta.selectionStart, ta.selectionEnd, 'end');
+    ta.dispatchEvent(new InputEvent('input', { inputType, data, bubbles: true }));
+  };
+  // An edit made in code (Tab, a snippet, a comment): an input event, no type
+  const edit = text => { ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input')); };
+  return { ta, key, type, edit };
+}
+
+test('Ctrl+Z undoes a word at a time, and Ctrl+Shift+Z or Ctrl+Y redoes', () => {
+  const { ta, key, type } = undoEditor();
+  for (const c of 'x = one two') type(c);
+  assert.ok(key('z'), 'the browser\'s own undo is kept out of it');
+  assert.equal(ta.value, 'x = one ');
+  key('z');
+  assert.equal(ta.value, 'x = ');
+  key('z'); key('z');
+  assert.equal(ta.value, '');
+  key('z');
+  assert.equal(ta.value, '', 'nothing before the start');
+  key('z', { shiftKey: true });
+  assert.equal(ta.value, 'x ');
+  key('y');
+  assert.equal(ta.value, 'x = ');
+});
+
+test('edits made in code undo one at a time, and a new edit drops what was undone', () => {
+  const { ta, key, type, edit } = undoEditor('a');
+  ta.setSelectionRange(1, 1);
+  edit('\n  ');
+  edit('# x');
+  key('z');
+  assert.equal(ta.value, 'a\n  ');
+  type('b');
+  key('y');
+  assert.equal(ta.value, 'a\n  b', 'redo has nothing after a new edit');
+  key('z'); key('z');
+  assert.equal(ta.value, 'a');
+});
+
+test('undo tells the editor with an input event, and a file loaded starts a new history', () => {
+  const { ta, key, type } = undoEditor('old');
+  ta.setSelectionRange(3, 3);
+  type('!');
+  let heard = 0;
+  ta.addEventListener('input', e => { if (e.undo) heard++; });
+  key('z');
+  assert.equal(heard, 1);
+  ta.value = 'another file';
+  key('z');
+  assert.equal(ta.value, 'another file', 'undo does not reach back into the file before');
 });

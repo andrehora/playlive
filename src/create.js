@@ -4,7 +4,7 @@ import { ASSERTIONS } from './parse.js';
 import { validate } from './parse.js';
 import { preview } from './run.js';
 import { exampleCache, exampleTests, persist, stashEditor, testsFor } from './sites.js';
-import { editorSite, mode } from './state.js';
+import { editorSite } from './state.js';
 
 /* ---------- Create: write the example's tests yourself ----------
 
@@ -36,7 +36,7 @@ import { editorSite, mode } from './state.js';
 // The titles an example ships, in file order — except the titles of tests that
 // check nothing. A brief is "prove this", and a test with no check of its own
 // proves nothing, so there is nothing to ask for and no way to mark it done.
-// Smells mode has a name for those: they are Unknown Tests, and the handful the
+// The Smells tab has a name for those: they are Unknown Tests, and the handful the
 // examples ship on purpose are there to be looked at rather than copied.
 export function titlesOf(text){
   const v = validate(text);
@@ -126,9 +126,9 @@ export const createPanel = createEl.closest('.panel');
 export const foldCreateBtn = $id('foldCreate');
 export const band = p => (p === 100 ? 'ok' : p >= 60 ? 'warn' : 'bad');
 const GROUPS = [
-  ['todo', 'TODO', 'The example has these tests and your file holds nothing by that title'],
-  ['nocheck', 'DOING', 'Written under the right title, but not yet checking what the example’s own test checks'],
-  ['done', 'DONE', 'Written under the example’s own title, checking everything its own test checks']
+  ['todo', 'TODO', 'No test with this title yet'],
+  ['nocheck', 'DOING', 'Missing some of the original checks'],
+  ['done', 'DONE', 'Checks what the original checks']
 ];
 
 export function renderCreate(){
@@ -144,11 +144,6 @@ export function renderCreate(){
     return;
   }
   const pct = Math.round(r.score * 100);
-  // Outside Create the editor holds the shipped tests, which answer every brief
-  // by definition, so only a file written here is announced.
-  if (mode === 'create'){
-    document.dispatchEvent(new CustomEvent('playlive:graded', { detail: { site: r.site, mode, done: r.done === r.total } }));
-  }
   createPanel.dataset.band = band(pct);
   createScore.textContent = r.done === r.total
     ? `All ${r.total} ${r.total === 1 ? 'test' : 'tests'} written`
@@ -164,13 +159,13 @@ export function renderCreate(){
     const g = document.createElement('div');
     g.className = 'create-group'; g.dataset.state = state;
     const h = document.createElement('div');
-    h.className = 'cov-head'; h.title = why;
-    h.innerHTML = '<span class="create-dot" aria-hidden="true"></span><span class="cov-title"></span><span class="cov-n"></span>';
-    h.querySelector('.cov-title').textContent = title;
-    h.querySelector('.cov-n').textContent = rows.length;
+    h.className = 'list-head'; h.title = why;
+    h.innerHTML = '<span class="create-dot" aria-hidden="true"></span><span class="list-title"></span><span class="list-n"></span>';
+    h.querySelector('.list-title').textContent = title;
+    h.querySelector('.list-n').textContent = rows.length;
     g.appendChild(h);
     const ul = document.createElement('ul');
-    ul.className = 'cov-list';
+    ul.className = 'list-list';
     for (const i of rows) ul.appendChild(row(i));
     g.appendChild(ul);
     createEl.appendChild(g);
@@ -179,7 +174,7 @@ export function renderCreate(){
 }
 function note(text){
   const p = document.createElement('p');
-  p.className = 'cov-note'; p.textContent = text;
+  p.className = 'list-note'; p.textContent = text;
   return p;
 }
 function row(i){
@@ -189,7 +184,7 @@ function row(i){
   el.className = 'create-line';
   if (i.line >= 0){
     el.type = 'button';
-    el.title = i.state === 'todo' ? 'Go to its comment in the editor' : 'Go to it in the editor';
+    el.title = i.state === 'todo' ? 'Go to its comment' : 'Go to the test';
     el.setAttribute('aria-label', `Go to ${i.title}`);
     el.addEventListener('click', () => jumpToLine(i.line));
   }
@@ -210,7 +205,7 @@ export function setCreateFolded(f){
   $id('left').dataset.create = f ? 'collapsed' : 'open';
   foldCreateBtn.setAttribute('aria-expanded', String(!f));
   foldCreateBtn.setAttribute('aria-label', f ? 'Expand the list' : 'Collapse the list');
-  foldCreateBtn.title = f ? 'Show every test this example ships' : 'Hide the list of tests';
+  foldCreateBtn.title = f ? 'Show tests' : 'Hide tests';
   $id('foldCreateIcon').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
 }
 foldCreateBtn.addEventListener('click', () => setCreateFolded(!folded));

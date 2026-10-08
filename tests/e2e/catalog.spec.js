@@ -11,7 +11,7 @@ const ids = await siteIds();
 async function frameReady(page, id){
   await page.waitForFunction(id => {
     const f = document.getElementById('app');
-    if (!f.src.includes(`examples/${id}/`)) return false;
+    if (!f.src.includes(`examples/html/${id}/`)) return false;
     const d = f.contentDocument;
     return !!d && !!d.body && d.body.children.length > 0;
   }, id);

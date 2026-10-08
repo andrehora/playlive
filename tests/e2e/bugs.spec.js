@@ -2,11 +2,10 @@
 // A hunt breaks the page on purpose and runs the suite against each version, so
 // these tests drive the real thing and then read the panel and the report.
 import { test, expect } from '@playwright/test';
-import { RUN_TIMEOUT, openApp, runAll, setMode, setSpeed } from './app.mjs';
+import { RUN_TIMEOUT, openApp, runAll, setSpeed, setTab } from './app.mjs';
 
-// Coupon code is the one example that ships bugs so far, and its own tests use
-// every control it has: 100% coverage with a bug still getting through is the
-// whole reason the second score exists.
+// Coupon code ships bugs, and its own tests use every control it has: touching
+// every control with a bug still getting through is the reason Mutation exists.
 const SITE = 'coupon-code';
 const HUNT_TIMEOUT = 180_000;
 
@@ -24,7 +23,7 @@ test.describe('Bugs', () => {
   test('tries every bug and says which the tests caught', async ({ page }) => {
     const { errors } = await openApp(page, { site: SITE });
     await setSpeed(page, 'fast');
-    await setMode(page, 'mutation');
+    await setTab(page, 'mutation');
     await expect(page.locator('#bugs .bug-row')).toHaveCount(8);
 
     // Before a hunt the bugs are listed, unchecked, with nothing scored.
@@ -48,7 +47,7 @@ test.describe('Bugs', () => {
       expired: 'caught', unknown: 'caught', stale: 'escaped', banner: 'escaped'
     });
     await expect(page.locator('#bugScore')).toHaveText('6 of 8 mutations caught (75%)');
-    await expect(page.locator('.bugs-panel')).toHaveAttribute('data-band', 'warn');
+    await expect(page.locator('#bugTab')).toHaveAttribute('data-band', 'warn');
     await expect(page.locator('#summary')).toHaveText('Mutation: 6 of 8 caught, 2 through');
     await expect(page.locator('#hunt')).toHaveText('Run again');
 
@@ -57,12 +56,9 @@ test.describe('Bugs', () => {
     await expect(escaped.locator('.bug-row')).toHaveCount(2);
     await expect(page.locator('.bug-group').first()).toHaveAttribute('data-state', 'escaped');
 
-    // The page is whole again, and the hunt left the run's own score alone:
-    // every control used, and still two bugs through.
+    // The page is whole again
     expect(await page.evaluate(() => window.playlive.bugs.report().items.some(i => i.live))).toBe(false);
     await expect(page.locator('#bugbar')).toBeHidden();
-    const cov = await page.evaluate(() => window.playlive.coverage.report());
-    expect(cov.used).toBe(cov.total);
 
     // Eight deliberate failures are not this site's verdict and not these
     // tests' history: only the hunt's own baseline run is recorded.
@@ -76,7 +72,7 @@ test.describe('Bugs', () => {
   test('a test written for an escaped bug catches it', async ({ page }) => {
     await openApp(page, { site: SITE });
     await setSpeed(page, 'fast');
-    await setMode(page, 'mutation');
+    await setTab(page, 'mutation');
     await expect(page.locator('#bugs .bug-row')).toHaveCount(8);
 
     // The stale-error bug needs two codes in one test to see: one that fails,
@@ -100,7 +96,7 @@ test.describe('Bugs', () => {
   test('injects one bug to look at, and repairs the page', async ({ page }) => {
     const { errors } = await openApp(page, { site: SITE });
     await setSpeed(page, 'fast');
-    await setMode(page, 'mutation');
+    await setTab(page, 'mutation');
     await expect(page.locator('#bugs .bug-row')).toHaveCount(8);
 
     // Injecting leaves the bug on the page, so it can be run by hand or read in
@@ -171,7 +167,7 @@ test.describe('Bugs', () => {
   test('a hunt needs a green suite first', async ({ page }) => {
     await openApp(page, { site: SITE });
     await setSpeed(page, 'fast');
-    await setMode(page, 'mutation');
+    await setTab(page, 'mutation');
     await expect(page.locator('#bugs .bug-row')).toHaveCount(8);
 
     // A suite that is already red would call every bug caught, so the hunt says
@@ -186,7 +182,7 @@ test.describe('Bugs', () => {
 
   test('the hunt greys out while the runner is busy, and comes back', async ({ page }) => {
     await openApp(page, { site: SITE });
-    await setMode(page, 'mutation');
+    await setTab(page, 'mutation');
     await setSpeed(page, 'slow');
     await page.click('#run');
     await expect(page.locator('#hunt')).toBeDisabled();
@@ -205,34 +201,33 @@ test.describe('Bugs', () => {
 
   test('an example with no bugs says so', async ({ page }) => {
     await openApp(page, { site: 'click-counter' });
-    await setMode(page, 'mutation');
-    await expect(page.locator('#bugs .cov-note')).toContainText('ships no mutations yet');
+    await setTab(page, 'mutation');
+    await expect(page.locator('#bugs .list-note')).toContainText('ships no mutations yet');
     const r = await report(page);
     expect(r.total).toBe(0);
-    await expect(page.locator('#bugs .cov-note')).toContainText('ships no mutations yet');
+    await expect(page.locator('#bugs .list-note')).toContainText('ships no mutations yet');
     await expect(page.locator('#hunt')).toBeDisabled();
   });
 
-  // A list of a dozen mutations is a list, and a list folds — to its one row,
-  // with the score still on it, the way Coverage and Test smells do.
-  test('the panel folds to its one row and Results takes the room back', async ({ page }) => {
+  // The tab folds with Results, to the panel's one row, and opens back on it.
+  test('the tab folds with Results, and the code takes the room', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await openApp(page, { site: SITE, mode: 'mutation' });
+    await openApp(page, { site: SITE, tab: 'mutation' });
     const h = sel => page.locator(sel).boundingBox().then(b => Math.round(b.height));
-    const wasPanel = await h('.bugs-panel'), wasResults = await h('.results-panel');
+    const wasEditor = await h('#editor');
+    await expect(page.locator('#foldAll')).toHaveAttribute('aria-label', 'Collapse the panel');
 
-    await page.click('#foldBugs');
-    await expect(page.locator('#bugs')).toBeHidden();
-    await expect(page.locator('#foldBugs')).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('#bugScore')).toBeVisible();          // the score stays
-    await expect(page.locator('#hunt')).toBeVisible();              // and so does the button
-    expect(await h('.bugs-panel')).toBeLessThanOrEqual(await h('.bugs-panel .panel-head') + 2);
-    expect(await h('.results-panel')).toBeGreaterThan(wasResults);
-    // Its handle has no height left to set, so it stops taking the pointer.
-    await expect(page.locator('#bugResizer')).toBeHidden();
+    await page.click('#foldAll');
+    await expect(page.locator('#bugTab')).toBeHidden();
+    expect(await h('.results-panel')).toBeLessThanOrEqual(await h('.results-panel .panel-head') + 2);
+    expect(await h('#editor')).toBeGreaterThan(wasEditor);
+    await expect(page.locator('#foldAll')).toHaveAttribute('aria-label', 'Expand the panel');
 
-    await page.click('#foldBugs');
+    // Choosing a tab opens the panel on it.
+    await setTab(page, 'smells');
+    await expect(page.locator('#smellTab')).toBeVisible();
+    await setTab(page, 'mutation');
     await expect(page.locator('#bugs')).toBeVisible();
-    expect(await h('.bugs-panel')).toBe(wasPanel);
+    await expect(page.locator('#results')).toBeHidden();
   });
 });

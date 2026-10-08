@@ -1,22 +1,57 @@
-import { SITES, SITE_IDS } from '../examples/examples.js';
+import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
 import { createSkeleton } from './create.js';
 import { catIconSvg } from './icons.js';
-import { lessonGroup, renderLessons } from './lessons.js';
+import { LABS, exampleOf, labOf, selectExample } from './lab.js';
 import { preview } from './run.js';
 import { syncUrl } from './share.js';
 import { loadApp, persist, stashEditor, testsFor } from './sites.js';
-import { editorSite, previewTimer, recording, running, setCurrentSite, setEditorSite } from './state.js';
+import { editorSite, mode, previewTimer, recording, running, setCurrentSite, setEditorSite } from './state.js';
 import { paintTabs } from './ui.js';
 
 /* ---------- Site picker: 100 examples, grouped and searchable ---------- */
 export const CATEGORIES = [...new Set(SITE_IDS.map(id => SITES[id].category))];
 export const siteBtn = $id('siteBtn'), sitePop = $id('sitePop'), siteSearch = $id('siteSearch');
 siteSearch.placeholder = 'Search examples';
-export function renderTabs(){
+// A code mode lists its own examples, in the order they are written to be met
+const lab = () => LABS[labOf(mode)];
+const current = () => (lab() ? exampleOf(mode) : editorSite);
+const nameOf = id => (lab() ? lab().examples : SITES)[id]?.name || '';
+function renderLabTabs(){
+  const p = lab();
   tabsEl.innerHTML = '';
-  // The lessons lead: they are where to start when you do not know where to.
-  tabsEl.appendChild(lessonGroup());
+  const group = document.createElement('div'); group.className = 'pop-group';
+  const head = document.createElement('div'); head.className = 'pop-cat';
+  head.innerHTML = catIconSvg(p.icon) + '<span></span>';
+  head.lastChild.textContent = p.title;
+  head.style.setProperty('--cat', p.accent);
+  group.appendChild(head);
+  for (const id of p.ids){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tab'; b.dataset.site = id;
+    b.innerHTML = '<span class="tname"></span><span class="tsub"></span>';
+    b.querySelector('.tname').textContent = p.examples[id].name;
+    b.querySelector('.tsub').textContent = p.examples[id].teaches;
+    b.addEventListener('click', () => { closePicker(true); selectExample(id); });
+    group.appendChild(b);
+  }
+  tabsEl.appendChild(group);
+}
+export function setLabView(id){
+  const p = lab();
+  tabsEl.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === id)));
+  const swatch = $id('siteSwatch');
+  swatch.innerHTML = catIconSvg(p.icon);
+  swatch.style.setProperty('--cat', p.accent);
+  $id('siteName').textContent = p.examples[id].name;
+  delete siteBtn.dataset.status;
+  siteBtn.title = 'Choose an example';
+  setCount(id);
+}
+document.addEventListener('playlive:lab-example', () => setLabView(current()));
+export function renderTabs(){
+  if (lab()) return renderLabTabs();
+  tabsEl.innerHTML = '';
   for (const cat of CATEGORIES){
     const group = document.createElement('div'); group.className = 'pop-group';
     const head = document.createElement('div'); head.className = 'pop-cat';
@@ -35,7 +70,7 @@ export function renderTabs(){
     }
     tabsEl.appendChild(group);
   }
-  paintTabs(); renderLessons();
+  paintTabs();
 }
 export function setView(id){
   setCurrentSite(id);
@@ -49,13 +84,14 @@ export function setView(id){
   cat.innerHTML = catIconSvg(SITES[id].category) + '<span></span>';
   cat.lastChild.textContent = SITES[id].category;
   cat.style.setProperty('--cat', SITES[id].accent);
-  siteBtn.title = `${SITES[id].category}: ${SITES[id].name}. Choose another example`;
+  siteBtn.title = 'Choose an example';
   setCount(id);
   paintTabs();
 }
 // "2 of 100", or of however many the mode is offering
 function setCount(id){
   const list = listed(), i = list.indexOf(id);
+  if (i < 0) return;
   $id('siteCount').textContent = `${i + 1} of ${list.length}`;
 }
 // Every example, in every mode. Smells mode once narrowed this to the examples
@@ -64,7 +100,7 @@ function setCount(id){
 // changes length when the mode changes is a list you cannot keep your place in.
 // The All smells tab in the panel is where "which examples have one" is
 // answered now, and it names them.
-export const listed = () => SITE_IDS;
+export const listed = () => (lab() ? lab().ids : SITE_IDS);
 export function filterSites(q){
   q = q.trim().toLowerCase();
   const inList = new Set(listed());
@@ -72,12 +108,9 @@ export function filterSites(q){
   tabsEl.querySelectorAll('.pop-group').forEach(g => {
     const catHit = g.querySelector('.pop-cat').textContent.toLowerCase().includes(q);
     let any = false;
-    g.querySelectorAll('.tab, .lesson').forEach(b => {
-      // A lesson is found by its title; an example by its name or id.
-      const hit = b.dataset.lesson
-        ? !q || catHit || b.querySelector('.tname').textContent.toLowerCase().includes(q)
-        : inList.has(b.dataset.site)
-          && (!q || catHit || SITES[b.dataset.site].name.toLowerCase().includes(q) || b.dataset.site.includes(q));
+    g.querySelectorAll('.tab').forEach(b => {
+      const hit = inList.has(b.dataset.site)
+        && (!q || catHit || nameOf(b.dataset.site).toLowerCase().includes(q) || b.dataset.site.includes(q));
       b.hidden = !hit; if (hit){ any = true; shown++; }
     });
     g.hidden = !any;
@@ -85,9 +118,19 @@ export function filterSites(q){
   $id('popEmpty').textContent = 'No examples match.';
   $id('popEmpty').hidden = shown > 0;
 }
-// The count and the stepper follow the list, and the mode no longer changes
-// what is in it; this is here for the modes that may yet.
-const relist = () => { setCount(editorSite); if (!sitePop.hidden) filterSites(siteSearch.value); };
+// The count and the stepper follow the list. A code mode has a list of its
+// own, so crossing into one or out of it draws the other list.
+let listedFor = null;                 // the code mode the list is of, or null for the sites
+const relist = () => {
+  const now = labOf(mode);
+  if (now !== listedFor){
+    listedFor = now;
+    renderTabs();
+    if (now) setLabView(current()); else setView(editorSite);
+  }
+  setCount(current());
+  if (!sitePop.hidden) filterSites(siteSearch.value);
+};
 document.addEventListener('playlive:mode', relist);
 export function openPicker(){
   sitePop.hidden = false; siteBtn.setAttribute('aria-expanded', 'true');
@@ -105,7 +148,7 @@ siteBtn.addEventListener('click', () => sitePop.hidden ? openPicker() : closePic
 siteSearch.addEventListener('input', () => filterSites(siteSearch.value));
 document.addEventListener('pointerdown', e => { if (!sitePop.hidden && !e.target.closest('.picker')) closePicker(); });
 sitePop.addEventListener('keydown', e => {
-  const items = [...tabsEl.querySelectorAll('.lesson:not([hidden]), .tab:not([hidden])')].filter(b => !b.closest('.pop-group').hidden);
+  const items = [...tabsEl.querySelectorAll('.tab:not([hidden])')].filter(b => !b.closest('.pop-group').hidden);
   if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closePicker(true); }
   else if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
     if (!items.length) return;
@@ -120,8 +163,8 @@ export function stepSite(d){
   if (running || recording) return;
   const list = listed();
   if (list.length < 2) return;
-  const i = list.indexOf(editorSite);
-  selectSite(list[(i + d + list.length) % list.length]);
+  const i = list.indexOf(current()), next = list[(i + d + list.length) % list.length];
+  if (lab()) selectExample(next); else selectSite(next);
 }
 $id('prevSite').addEventListener('click', () => stepSite(-1));
 $id('nextSite').addEventListener('click', () => stepSite(1));
@@ -136,7 +179,7 @@ export async function selectSite(id){
   setEditorSite(id); setView(id); syncUrl(id);
   specEl.value = await testsFor(id) ?? await createSkeleton(id);
   errorEl.textContent = '';
-  // Mutations belong to the example, and in Mutation mode the panel is on screen the
+  // Mutations belong to the example, and the Mutation tab may be on screen the
   // whole time: it is told the example changed rather than being reached into.
   document.dispatchEvent(new CustomEvent('playlive:site'));
   persist(); preview(); loadApp();

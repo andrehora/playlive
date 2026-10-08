@@ -111,10 +111,10 @@ export async function spec(text){
 // Every example's shipped tests, read straight off disk: the corpus the
 // exporters, the smells and Create are pinned against.
 export async function corpus(){
-  const { SITE_IDS, SITES } = await load('examples/examples.js');
+  const { SITE_IDS, SITES } = await load('examples/html/examples.js');
   const out = [];
   for (const id of SITE_IDS){
-    out.push({ id, site: SITES[id], yaml: await readFile(resolve(ROOT, `examples/${id}/tests.yaml`), 'utf8') });
+    out.push({ id, site: SITES[id], yaml: await readFile(resolve(ROOT, `examples/html/${id}/tests.yaml`), 'utf8') });
   }
   return out;
 }

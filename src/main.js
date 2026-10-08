@@ -1,7 +1,6 @@
-import { SITES, SITE_IDS } from '../examples/examples.js';
-import { bugsFor, clearBugs, hunt, inject, renderBugs, repair, report as bugReport, setBugFolded } from './bugs.js';
+import { SITES, SITE_IDS } from '../examples/html/examples.js';
+import { bugsFor, clearBugs, hunt, inject, renderBugs, repair, report as bugReport } from './bugs.js';
 import { clearCatalog, harvest, snapshot } from './catalog.js';
-import { clearCoverage, report } from './coverage.js';
 import { closeCompletion, completion, context, suggest } from './complete.js';
 import { $id, errorEl, recordBtn, reloadBtn, resetBtn, runBtn, specEl, speedMode, stopBtn, summaryEl } from './dom.js';
 import { setSpecFolded } from './editor.js';
@@ -9,22 +8,22 @@ import { toCypress, toPlaywright } from './exports.js';
 import { applyHtml, htmlDirty, htmlEdit, revertHtml } from './htmlview.js';
 import { query } from './find.js';
 import { HIST, runHistory } from './history.js';
-import { layout } from './layout.js';
-import { LESSONS, LESSONS_KEY, clearLessons, lessonsDone, startLesson } from './lessons.js';
 import { setMode } from './modes.js';
+import { isLab, labOf, labState, resetLab, runLab, selectExample, setFramework, setLang } from './lab.js';
 import { validate } from './parse.js';
 import { renderTabs, selectSite, setView } from './picker.js';
 import { createSkeleton, report as createReport, setCreateFolded, titlesOf } from './create.js';
-import { found as smellFound, scanSites, report as smellReport, setSmellFolded, setSmellView, smellView, smelly } from './smells.js';
+import { found as smellFound, scanSites, report as smellReport, setSmellView, smellView, smelly } from './smells.js';
 import { startRecording, stopRecording } from './recorder.js';
-import { expandedTests } from './results.js';
+import { expandedTests, resultsTab, setResultsTab } from './results.js';
 import { nextResolve, preview, releaseNext, run, syncUI } from './run.js';
-import { copyLink, modeFromHash, shareUrl, siteFromHash, syncUrl } from './share.js';
+import { copyLink, labFromHash, linkedMode, modeFromHash, shareUrl, siteFromHash, syncUrl } from './share.js';
 import { CREATE, SITE_KEYS, STORE, createTests, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './sites.js';
-import { clearBugHtml, clearEditedHtml, editorSite, mode, previewTimer, recording, running, setEditorSite, setPreviewTimer, setStopRequested } from './state.js';
+import { clearBugHtml, clearEditedHtml, editorSite, mode, previewTimer, recording, running, setEditorSite, setLabExample, setPreviewTimer, setStopRequested } from './state.js';
 import { STATUS, paintTabs, setProgress, siteStatus, toast } from './ui.js';
 import './dialog.js';          // registers the export dialog and its Copy button
 import './complete.js';       // registers the editor's suggestion list
+import './codecomplete.js';   // and the code modes' one
 
 /* ---------- Wiring ---------- */
 specEl.addEventListener('input', () => {
@@ -34,6 +33,7 @@ specEl.addEventListener('input', () => {
   }, 400));
 });
 document.addEventListener('keydown', e => {
+  if (isLab(mode)) return;            // lab.js has the keys there
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); if (nextResolve) releaseNext(); else run(); }
   if (e.key === 'Escape' && running) stopBtn.click();
 });
@@ -53,7 +53,6 @@ export async function resetAll(){
     for (const k of siteKeys[id] || []) keys.add(k);
     for (const k of SITES[id].storageKeys || []) keys.add('local:' + k);
     clearCatalog(id);            // what a page offers depends on the data it kept
-    clearCoverage(id);           // and the score was about a run of that page
     clearEditedHtml(id);         // and on the markup, which goes back to the file
     clearBugs(id);               // and a bug score was about a hunt of those tests
     clearBugHtml(id);            // and no bug is left on any page
@@ -68,8 +67,8 @@ export async function resetAll(){
   // the runner's own data about every site
   for (const o of [siteKeys, runHistory, siteStatus]) for (const k of Object.keys(o)) delete o[k];
   expandedTests.clear();
-  clearLessons();              // and the path starts again from lesson 1
-  try { for (const k of [STORE, CREATE, SITE_KEYS, HIST, STATUS, LESSONS_KEY]) localStorage.removeItem(k); } catch {}
+  try { for (const k of [STORE, CREATE, SITE_KEYS, HIST, STATUS]) localStorage.removeItem(k); } catch {}
+  resetLab();                  // and the code modes' files back as they ship
   specEl.value = mode === 'create' ? await createSkeleton(site) : await exampleTests(site);
   errorEl.textContent = ''; summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
   // deliberately no persist(): after Reset nothing of ours is in storage until you type
@@ -88,14 +87,15 @@ reloadBtn.addEventListener('click', () => {
 });
 // A link like "#coupon-code" names the example to open; with no hash the page
 // opens the first example
-const linked = siteFromHash();
+const linked = siteFromHash(), opening = linkedMode(), linkedLab = labFromHash(location.hash, opening);
 if (linked) setEditorSite(linked);
+if (linkedLab) setLabExample(labOf(opening), linkedLab);
 renderTabs();
 setView(editorSite);
-// The link's mode wins over the one this browser remembers: a link is someone
-// saying what to do, and it is applied before the file loads, because which
-// file the editor holds is the mode's to say.
-setMode(modeFromHash() || layout.mode || 'explore', { initial: true });
+// The link says the mode, and a bare "/" is home, Python: every other mode is in
+// the hash, so a reload stays where it was. It is applied before the file loads,
+// because which file the editor holds is the mode's to say.
+setMode(opening, { initial: true });
 syncUrl(editorSite);
 specEl.value = await testsFor(editorSite) ?? await createSkeleton(editorSite);
 renderBugs();
@@ -109,17 +109,17 @@ if (matchMedia('(max-width:900px)').matches) setSpecFolded(true);
 window.playlive = {
   selectSite, validate, toPlaywright, toCypress, SITES, SITE_IDS,
   catalog: { harvest, snapshot, clear: clearCatalog },
-  coverage: { report, clear: clearCoverage },
-  bugs: { report: bugReport, list: bugsFor, hunt, inject, repair, render: renderBugs, fold: setBugFolded },
+  bugs: { report: bugReport, list: bugsFor, hunt, inject, repair, render: renderBugs },
   modes: { set: setMode, get: () => mode },
+  tabs: { set: setResultsTab, get: () => resultsTab },
   smells: {
-    report: smellReport, fold: setSmellFolded, scan: scanSites, sites: () => [...smelly],
+    report: smellReport, scan: scanSites, sites: () => [...smelly],
     view: setSmellView, viewing: smellView, found: id => smellFound.get(id) || []
   },
-  lessons: { list: LESSONS, done: () => [...lessonsDone], start: id => startLesson(LESSONS.find(l => l.id === id)) },
   create: { report: createReport, fold: setCreateFolded, skeleton: createSkeleton, titles: titlesOf },
   share: { copy: copyLink, url: shareUrl, linked: siteFromHash, linkedMode: modeFromHash },
   complete: { suggest, context, showing: completion, close: closeCompletion },
   html: { markup: () => htmlEdit.value, apply: applyHtml, revert: revertHtml, edited: () => htmlDirty() },
+  lab: { select: selectExample, framework: setFramework, lang: setLang, state: labState, run: runLab },
   query
 };

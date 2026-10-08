@@ -3,7 +3,7 @@
   --run:#2563EB; --on-run:#FFF; --running:#EAB308; --running-ink:#8A6100; --active:#94A0B4; --active-ink:#4A5569; --pass:#1F8A55; --fail:#C2412D; --warn:#9A6700; --rec:#D92D20;
   --syn-key:#6D28D9; --syn-act:#B45309; --syn-str:#15803D; --syn-var:#BE185D; --syn-com:#8A93A3; --syn-num:#0E7490;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
-  --left-w:480px; --editor-h:36vh; --cov-h:20vh;
+  --left-w:480px; --editor-h:36vh; --lab-h:46vh;
   /* Control sizing, mobile first. These are the touch-sized values; the
      min-width:901px block near the bottom compacts them for a mouse. */
   --tap:44px; --btn-font:15px; --btn-pad:11px 14px; --btn-r:10px;
@@ -137,12 +137,15 @@ body.resizing iframe{pointer-events:none}
 /* ---------- Results ---------- */
 .results-panel{flex:1;min-height:200px}
 /* Collapsed, Results is its head and nothing else, and the room it gives up
-   goes to Coverage below it rather than to a gap at the bottom. Coverage then
-   takes whatever is left instead of its own height, so the handle above it
-   moves the editor rather than --cov-h; see layout.js. */
+   goes to the mode's panel below it rather than to a gap at the bottom. That
+   panel then takes whatever is left instead of its own height, so the handle
+   above it moves the editor; see layout.js. */
 .left[data-results="collapsed"] .results-panel{flex:0 0 auto;min-height:0}
-.left[data-results="collapsed"] #results{display:none}
-.left[data-results="collapsed"]:not([data-cov="collapsed"]) .coverage-panel{flex:1 1 auto;height:auto}
+.left[data-results="collapsed"] :is(#results, .res-tab){display:none}
+/* Mutation and Smells are tabs beside Results: each a head row of its own,
+   then a list that scrolls inside the panel. */
+.res-tab{flex:1;min-height:0;display:flex;flex-direction:column}
+.res-seg button{font-size:12.5px;font-weight:600}
 #summary{flex:0 1 auto;font-weight:400;font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* The summary is the only head text long enough to wrap the fold button onto its own row,
    so this head keeps one line and the summary gives up its tail instead. */
@@ -174,14 +177,20 @@ body.resizing iframe{pointer-events:none}
 .sdots{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px;margin-left:8px;vertical-align:1px;max-width:100%}
 /* The head's row says what it is. It is drawn here rather than in the markup
    because the row goes when the circles do, and :empty is what takes it. */
-#runDots::before{content:"Steps:";margin-right:4px;font-size:11.5px;font-weight:400;color:var(--muted)}
-#runDots:empty{display:none}
-.sdots i{width:7px;height:7px;border-radius:50%;background:var(--line);animation:dot-in .18s ease-out}
-/* A step the run has not reached yet: there from the start, so the row shows
-   how long the run is, and hollow, so it does not read as a result. */
+#runDots::before,#labDots::before{content:"Tests:";margin-right:4px;font-size:11.5px;font-weight:400;color:var(--muted)}
+#runDots:empty,#labDots:empty{display:none}
+/* The code modes' head also holds the Coverage tab, so its circles go without
+   the label and keep their row */
+#labDots{flex:none;flex-wrap:nowrap}
+#labDots::before{content:none}
+.sdots i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--line);animation:dot-in .18s ease-out}
+/* A step or test the run has not reached yet: there from the start, so the row
+   shows how long the run is, and hollow, so it does not read as a result. */
 .sdots i.todo{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);animation:none}
 .sdots i.run{background:var(--active);animation:dot-in .18s ease-out,pulse 1s ease-in-out .18s infinite}
 .sdots i.ok{background:var(--pass)} .sdots i.bad{background:var(--fail)}
+/* A test the runner skipped: neither a pass nor a failure, so neither colour */
+.sdots i.skip{background:transparent;box-shadow:inset 0 0 0 1.5px var(--muted);animation:none}
 @keyframes dot-in{from{transform:scale(0)}}
 .flaky{font-size:11px;font-weight:600;color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent);border-radius:999px;padding:1px 7px;margin-left:8px;vertical-align:1px}
 .ms{font:11.5px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted);white-space:nowrap}
@@ -207,112 +216,45 @@ body.resizing iframe{pointer-events:none}
 .warn::before{content:"⚠ "}
 .empty{padding:28px 18px;color:var(--muted);font-size:13px;text-align:center}
 
-/* ---------- Coverage: the controls the tests reach ----------
-   The score reads in the app's own colours: green for every control covered,
-   yellow from 60%, red below it. The three states also differ in shape, solid,
-   ringed and hollow, so the list does not rely on colour alone. */
-.coverage-panel{flex:0 1 auto;min-height:0;--cov:var(--muted)}
-.coverage-panel[data-band="ok"]{--cov:var(--pass)}
-.coverage-panel[data-band="warn"]{--cov:var(--running);--cov-ink:var(--running-ink)}
-.coverage-panel[data-band="bad"]{--cov:var(--fail)}
-.cov-body{flex:1;min-height:0;display:flex;flex-direction:column}
-/* Folded, the panel is its head and nothing else, whatever height the handle
-   last gave it, and Results takes the room back. The handle has nothing left
-   to split, and no height of its own to set, so it keeps its place and stops
-   taking the pointer. */
-.left[data-cov="collapsed"] .coverage-panel{flex:0 0 auto;height:auto;min-height:0}
-.left[data-cov="collapsed"] #covResizer{visibility:hidden}
-/* With both lists down to a row there is no list left to take the room, so the
-   editor takes it rather than leaving the column half empty. Its handle has
-   nothing to split either, for the same reason. With the code folded as well
-   there is nothing on screen to grow at all, and the column simply ends: a
-   panel stretched over its own hidden body is worse than the space. */
-.left[data-results="collapsed"][data-cov="collapsed"] .tests-panel{flex:1 1 auto;min-height:0}
-.left[data-results="collapsed"][data-cov="collapsed"] .editor{flex:1 1 auto;height:auto}
-.left[data-results="collapsed"][data-cov="collapsed"] #rowResizer{visibility:hidden}
-#coverage{flex:1;min-height:0;display:flex;flex-direction:column}
-#coverage,#bugs{overflow:auto;overscroll-behavior:contain}
-.covbar{position:absolute;left:0;right:0;bottom:-1px;height:2px}
-.covbar span{display:block;height:100%;width:0;background:var(--cov);transition:width .25s ease}
-#covScore{font-weight:400;font-size:12px;color:var(--cov-ink,var(--cov));white-space:nowrap}
-#covScore:empty{display:none}
-.cov-note{margin:0;padding:18px 14px;color:var(--muted);font-size:12.5px}
-.cov-group{border-bottom:1px solid var(--line)}
-.cov-group:last-child{border-bottom:0}
-.cov-head{display:flex;align-items:center;gap:7px;padding:8px 12px 6px;font-size:12px;font-weight:600}
-.cov-dot{width:9px;height:9px;border-radius:50%;flex:none;border:1.5px solid var(--fail)}
-.cov-group[data-state="checked"] .cov-dot{border-color:var(--running)}
-.cov-group[data-state="used"] .cov-dot{border-color:var(--pass);background:var(--pass)}
-.cov-n{font:11.5px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:0 6px}
-.cov-list{list-style:none;margin:0;padding:0 0 8px}
-.cov-row{display:flex;align-items:center;gap:8px;padding:3px 12px 3px 28px;min-height:26px}
-.cov-row:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
-.cov-k{font-size:11px;color:var(--muted);flex:none;min-width:48px}
-.cov-t{font:12px/1.4 "IBM Plex Mono",ui-monospace,monospace;min-width:0;overflow-wrap:anywhere}
-.cov-m{font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:auto}
-.cov-row[data-queued] .cov-m{color:var(--pass)}
-.cov-add{margin-left:auto;flex:none}
-.cov-m + .cov-add{margin-left:8px}
+/* ---------- Lists in the graders ----------
+   Mutation, Test smells and Create list what they found in groups: a head with
+   a dot and a count, then the rows. A note stands in when there is nothing to
+   list, and Create's thin bar under its head shows the score. Each one sets
+   --band (and --band-ink, where the colour is too light for text) to its band. */
+#bugs{overflow:auto;overscroll-behavior:contain}
+.scorebar{position:absolute;left:0;right:0;bottom:-1px;height:2px}
+.scorebar span{display:block;height:100%;width:0;background:var(--band);transition:width .25s ease}
+.list-note{margin:0;padding:18px 14px;color:var(--muted);font-size:12.5px}
+.list-head{display:flex;align-items:center;gap:7px;padding:8px 12px 6px;font-size:12px;font-weight:600}
+.list-n{font:11.5px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:0 6px}
+.list-list{list-style:none;margin:0;padding:0 0 8px}
 
 /* ---------- Bugs: the other half of the score ----------
    Caught is a pass and escaped is a failure, the same three colours as
    everywhere else, and the dots differ in shape as well: solid for caught,
    hollow for escaped, ringed for a bug nothing has tried. */
-#bugScore{font-weight:400;font-size:12px;color:var(--cov-ink,var(--cov));white-space:nowrap}
+#bugScore{font-weight:400;font-size:12px;color:var(--band-ink,var(--band));white-space:nowrap}
 #bugScore:empty{display:none}
-/* A panel of its own below Coverage, in bug mode only: the mode is what puts it
-   on screen, which is why it needs no fold of its own. Its band follows the bug
-   score in the same three colours the coverage score uses. */
-.bugs-panel{flex:0 1 auto;min-height:0;--cov:var(--muted)}
-.bugs-panel[data-band="ok"]{--cov:var(--pass)}
-.bugs-panel[data-band="warn"]{--cov:var(--running);--cov-ink:var(--running-ink)}
-.bugs-panel[data-band="bad"]{--cov:var(--fail)}
+/* The tab's band follows the score in the app's three colours. */
+.bugs-tab{--band:var(--muted)}
+.bugs-tab[data-band="ok"]{--band:var(--pass)}
+.bugs-tab[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
+.bugs-tab[data-band="bad"]{--band:var(--fail)}
 #bugs{flex:1;min-height:0}
-/* A panel a mode has no use for is not there to be folded, it is not there.
-   Explore is Tests and Results, and each of the others adds its own panel in
-   their place: a mode is one question, and the panel that answers it. */
-:root[data-mode="explore"] .coverage-panel,
-:root[data-mode="explore"] #covResizer,
-:root[data-mode="explore"] .bugs-panel,
-:root[data-mode="explore"] #bugResizer,
-:root[data-mode="coverage"] .bugs-panel,
-:root[data-mode="coverage"] #bugResizer,
-:root[data-mode="smells"] .coverage-panel,
-:root[data-mode="smells"] #covResizer,
-:root[data-mode="smells"] .bugs-panel,
-:root[data-mode="smells"] #bugResizer,
-:root[data-mode="explore"] .smells-panel,
-:root[data-mode="explore"] #smellResizer,
-:root[data-mode="coverage"] .smells-panel,
-:root[data-mode="coverage"] #smellResizer,
-:root[data-mode="mutation"] .coverage-panel,
-:root[data-mode="mutation"] #covResizer,
-:root[data-mode="mutation"] .smells-panel,
-:root[data-mode="mutation"] #smellResizer,
-:root[data-mode="create"] .coverage-panel,
-:root[data-mode="create"] #covResizer,
-:root[data-mode="create"] .bugs-panel,
-:root[data-mode="create"] #bugResizer,
-:root[data-mode="create"] .smells-panel,
-:root[data-mode="create"] #smellResizer,
+/* A panel a mode has no use for is not there to be folded, it is not there:
+   Create adds its own panel below Results. */
 :root[data-mode="explore"] .create-panel,
-:root[data-mode="explore"] #createResizer,
-:root[data-mode="coverage"] .create-panel,
-:root[data-mode="coverage"] #createResizer,
-:root[data-mode="mutation"] .create-panel,
-:root[data-mode="mutation"] #createResizer,
-:root[data-mode="smells"] .create-panel,
-:root[data-mode="smells"] #createResizer{display:none}
+:root[data-mode="explore"] #createResizer{display:none}
 
 /* ---------- Create: the example's tests, for you to write ----------
    A score out of the tests the example ships, in the app's three colours, and
    the three states differ in shape as well: hollow to write, ringed written
    without a check, solid green done. */
-.create-panel{flex:0 1 auto;min-height:0;--cov:var(--muted)}
-.create-panel[data-band="ok"]{--cov:var(--pass)}
-.create-panel[data-band="warn"]{--cov:var(--running);--cov-ink:var(--running-ink)}
-.create-panel[data-band="bad"]{--cov:var(--fail)}
-#createScore{font-weight:400;font-size:12px;color:var(--cov-ink,var(--cov));white-space:nowrap}
+.create-panel{flex:0 1 auto;min-height:0;--band:var(--muted)}
+.create-panel[data-band="ok"]{--band:var(--pass)}
+.create-panel[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
+.create-panel[data-band="bad"]{--band:var(--fail)}
+#createScore{font-weight:400;font-size:12px;color:var(--band-ink,var(--band));white-space:nowrap}
 #createScore:empty{display:none}
 #create{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 .left[data-create="collapsed"] .create-panel{flex:0 0 auto;height:auto;min-height:0}
@@ -334,30 +276,22 @@ button.create-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)
    Read from the tests rather than from a run, so it has no score to band in
    three colours: either it found something, which is a warning, or it did not,
    which is a pass. */
-.smells-panel{flex:0 1 auto;min-height:0;--cov:var(--muted)}
-.smells-panel[data-band="ok"]{--cov:var(--pass)}
-.smells-panel[data-band="warn"]{--cov:var(--running);--cov-ink:var(--running-ink)}
-#smellScore{font-weight:400;font-size:12px;color:var(--cov-ink,var(--cov));white-space:nowrap}
+.smells-tab{--band:var(--muted)}
+.smells-tab[data-band="ok"]{--band:var(--pass)}
+.smells-tab[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
+#smellScore{font-weight:400;font-size:12px;color:var(--band-ink,var(--band));white-space:nowrap}
 #smellScore:empty{display:none}
 #smells{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
-/* Folded, the panel is its head and nothing else, and Results takes the room
-   back. Its handle has nothing left to set, so it keeps its place and stops
-   taking the pointer — the same three rules the Coverage fold has. */
-.left[data-smells="collapsed"] .smells-panel{flex:0 0 auto;height:auto;min-height:0}
-.left[data-smells="collapsed"] #smellResizer{visibility:hidden}
-.left[data-bug="collapsed"] .bugs-panel{flex:0 0 auto;height:auto;min-height:0}
-.left[data-bug="collapsed"] #bugs{display:none}
-.left[data-bug="collapsed"] #bugResizer{visibility:hidden}
 .smell-group{border-bottom:1px solid var(--line)}
 .smell-group:last-child{border-bottom:0}
 .smell-dot{width:9px;height:9px;border-radius:50%;flex:none;border:1.5px solid var(--running);background:var(--running)}
 /* In the catalogue a smell nobody has is still named and still explained; a
-   hollow dot is what says it found nothing, the way Coverage's groups differ in
+   hollow dot is what says it found nothing, the way the other lists' groups differ in
    shape as well as in colour. */
 .smell-group[data-none] .smell-dot{border-color:var(--muted);background:transparent}
-.smell-group[data-none] .cov-title,.smell-group[data-none] .cov-n{color:var(--muted)}
-/* The two tabs sit with the other head actions, and stay on a phone where the
-   screen-size toggle goes: the panel answers two questions at every width. */
+.smell-group[data-none] .list-title,.smell-group[data-none] .list-n{color:var(--muted)}
+/* The two tabs sit in the tab's head, and stay on a phone where the
+   screen-size toggle goes: the tab answers two questions at every width. */
 .smell-seg button{font-size:12px}
 /* The name is what a student looks up, so the sentence that explains it sits
    under the name rather than only in a tooltip nobody opens. */
@@ -415,13 +349,13 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .pop-cat{font-size:11.5px;font-weight:600;color:color-mix(in srgb,var(--cat,var(--muted)) 62%,var(--ink));background:color-mix(in srgb,var(--cat,var(--muted)) 16%,transparent);border-radius:7px;padding:5px 8px;margin:10px 0 4px;display:flex;align-items:center;gap:7px}
 .pop-group:first-child .pop-cat{margin-top:4px}
 .pop-cat svg.i{width:14px;height:14px}
-.pop-list .tab,.pop-list .lesson{width:100%;justify-content:flex-start;gap:9px;border:0;border-radius:7px;padding:7px 8px;min-height:var(--tap);background:transparent;font-size:var(--btn-font)}
-.pop-list .tab:hover,.pop-list .tab:focus-visible,.pop-list .lesson:hover,.pop-list .lesson:focus-visible{background:color-mix(in srgb,var(--ink) 6%,transparent);outline:none}
+.pop-list .tab{width:100%;justify-content:flex-start;gap:9px;border:0;border-radius:7px;padding:7px 8px;min-height:var(--tap);background:transparent;font-size:var(--btn-font)}
+.pop-list .tab:hover,.pop-list .tab:focus-visible{background:color-mix(in srgb,var(--ink) 6%,transparent);outline:none}
 /* The example showing is marked by its weight alone: with every category on a
    band of its own, a second filled block would be one too many. */
-.pop-list .tab[aria-pressed="true"],.pop-list .lesson[aria-pressed="true"]{font-weight:600}
-.pop-list .tab .tres,.pop-list .lesson .tres{margin-left:auto}
-.lnum{min-width:1.5em;color:var(--muted);font-variant-numeric:tabular-nums}
+.pop-list .tab[aria-pressed="true"]{font-weight:600}
+.pop-list .tab .tres{margin-left:auto}
+.pop-list .tab .tsub{margin-left:auto;font-size:var(--small-font);color:var(--muted)}
 .pop-empty{color:var(--muted);font-size:13px;padding:6px 14px 14px;margin:0}
 .stepper{display:flex;align-items:center;gap:2px}
 .site-count{font-size:var(--small-font);color:var(--muted);font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
@@ -434,16 +368,11 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
    button is filled rather than merely lifted: the bar says which app this is
    from across the room. Ink on panel inverts with the theme, so it reads in
    both without a colour of its own. */
-.mode-seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);box-shadow:none}
+:is(.area-seg,.mode-seg) button[aria-pressed="true"]{background:var(--ink);color:var(--panel);box-shadow:none}
+.mode-seg button[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 12px;border-bottom:1px solid var(--line)}
 .snapbar{background:color-mix(in srgb,var(--run) 10%,transparent);color:var(--run)}
 .bugbar{background:color-mix(in srgb,var(--fail) 10%,transparent);color:var(--fail)}
-/* A lesson is a place to be, not a progress meter, so the bar stays neutral
-   until its goal is met and then takes the pass colour. */
-.lessonbar{background:var(--panel-2);color:var(--ink)}
-.lessonbar[data-state="done"]{background:color-mix(in srgb,var(--pass) 10%,transparent)}
-.lessonbar #lessonText{min-width:0;overflow-wrap:anywhere}
-.lessonbar button{flex:none}
 .recbar{background:color-mix(in srgb,var(--rec) 10%,transparent);color:var(--rec)}
 .recbar::before{content:"●";margin-right:6px;animation:pulse 1.2s ease-in-out infinite}
 .view{position:relative;flex:1;min-height:0;display:flex}
@@ -485,6 +414,113 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .gutter div.bug .tag{background:var(--fail);color:#fff}
 .gutter div.ok{opacity:1;color:var(--pass);font-weight:600}
 iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
+
+/* ---------- Python: pytest on a Python module, beside the other modes ----------
+   The same three places as Explore: the tests and Run on the left, what they
+   did below them, and what they test on the right. Every other panel goes, and
+   so does the example picker, since the mode has one example of its own. */
+:root:not([data-mode^="python"], [data-mode^="javascript"]) .lab-panel{display:none}
+:root:is([data-mode^="python"], [data-mode^="javascript"]) :is(.left > .panel:not(.lab-panel), .left > .resizer:not(.lab-panel), .browser){display:none}
+.lab-file{font:500 12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
+.labtests-panel{flex:0 0 auto;min-height:0}
+/* Its handle sets the code's height, as the editor's does in the other modes;
+   Results and Console take whatever is left */
+.labtests-panel .lab-ed{flex:none;height:var(--lab-h)}
+.console-panel{flex:1 1 0;min-height:130px}
+/* Collapsed, Results and Console are their head and nothing else */
+.left[data-lab="collapsed"] .console-panel{flex:0 0 auto;min-height:0}
+.left[data-lab="collapsed"] :is(#labCreate, #labResults, #labConsole, #labMutation, #labSmells){display:none!important}
+.lab-code-panel{min-height:0}
+.lab-ed{flex:1;min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+.lab-ed:focus-within{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
+.lab-ed .hl,.lab-ed textarea{position:absolute;inset:0;margin:0;padding:12px 14px;font:inherit;white-space:pre;tab-size:4;border:0;letter-spacing:0}
+.lab-ed textarea{resize:none;background:transparent;color:transparent;caret-color:var(--ink);overflow:auto;outline:none;scrollbar-width:thin}
+.lab-ed textarea::selection{background:color-mix(in srgb,var(--run) 28%,transparent);color:transparent}
+.lab-state{margin-left:auto;font-size:var(--small-font);color:var(--muted)}
+.lab-state.bad{color:var(--fail)}
+#labSummary{font-weight:400;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#labSummary:empty{display:none}
+#labSummary.ok{color:var(--pass)} #labSummary.bad{color:var(--fail)}
+.lab-console{flex:1;min-height:0;margin:0;padding:10px 14px;overflow:auto;overscroll-behavior:contain;background:var(--panel-2);font:12px/1.55 "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;white-space:pre;outline:none;scrollbar-width:thin}
+.lab-console:focus-visible{box-shadow:inset 0 0 0 2px var(--run)}
+.lab-console .l{display:block}
+.lab-console .ok{color:var(--pass)}
+.lab-console .bad{color:var(--fail)}
+.lab-console .at{font-weight:600}
+.lab-console .muted{color:var(--muted)}
+.lab-console .empty{display:block;white-space:normal;font-family:"IBM Plex Sans",system-ui,sans-serif}
+/* Coverage: a check in the Results head that shades the code and puts the
+   scores on top of it */
+.cov-toggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer}
+.cov-toggle input{margin:0;width:14px;height:14px;accent-color:var(--run);cursor:pointer}
+.cov-score[data-band="ok"]{--band:var(--pass)}
+.cov-score[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
+.cov-score[data-band="bad"]{--band:var(--fail)}
+.cov-score strong{color:var(--band-ink,var(--band))}
+.cov-note{font-size:12.5px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cov-score{display:inline-flex;align-items:baseline;gap:5px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.cov-score strong{font-weight:600}
+.hl .l.cov-hit{background:color-mix(in srgb,var(--pass) 13%,transparent)}
+.hl .l.cov-miss{background:color-mix(in srgb,var(--fail) 13%,transparent)}
+/* The flow view: each method with a branch, its boxes coloured like the code */
+.lab-flow{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;background:var(--panel-2);padding:12px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:18px;scrollbar-width:thin}
+.flow-defs{position:absolute;width:0;height:0;overflow:hidden}
+.flow-fn h3{margin:0 0 6px;font:600 12.5px "IBM Plex Mono",ui-monospace,monospace;color:var(--ink)}
+svg.flow{display:block;max-width:none;overflow:visible}
+.fnode :is(rect, path){fill:var(--panel);stroke:var(--line);stroke-width:1.2}
+.fnode text{font:11.5px "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;fill:var(--ink);text-anchor:middle}
+.fnode:is(.start, .end) :is(rect, path){fill:var(--panel-2)}
+.fnode:is(.start, .end) text{fill:var(--muted)}
+.fnode.hit :is(rect, path){fill:color-mix(in srgb,var(--pass) 16%,var(--panel));stroke:var(--pass)}
+.fnode.part :is(rect, path){fill:color-mix(in srgb,var(--running) 24%,var(--panel));stroke:var(--running)}
+.fnode.miss :is(rect, path){fill:color-mix(in srgb,var(--fail) 14%,var(--panel));stroke:var(--fail)}
+.fnode[data-line]{cursor:pointer;outline:none}
+.fnode[data-line]:hover :is(rect, path){stroke-width:2}
+.fnode[data-line]:focus-visible :is(rect, path){stroke:var(--run);stroke-width:2.5}
+.fedge{fill:none;stroke:var(--muted);stroke-width:1.2}
+#fhead path{fill:var(--muted)}
+.flabel{font:500 10.5px "IBM Plex Sans",system-ui,sans-serif;fill:var(--muted)}
+.cov-seg button,.lab-codeview button{font-size:12.5px;font-weight:600}
+.hl .l.cov-part{background:color-mix(in srgb,var(--running) 22%,transparent)}
+/* Python's mutation tab: the site Mutation tab's groups and rows, with the change
+   and the line it was made on */
+.lab-mutation{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.mut-head{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line)}
+:is(.mut-score, .smell-score){font-size:12px;color:var(--muted)}
+.mut-score[data-band="ok"]{color:var(--pass)}
+.mut-score[data-band="warn"]{color:var(--running-ink)}
+.mut-score[data-band="bad"]{color:var(--fail)}
+.smell-score[data-band="warn"]{color:var(--running-ink)}
+.smell-score[data-band="ok"]{color:var(--pass)}
+.bug-group[data-state="unrun"] .bug-dot{border-style:dashed}
+.mut-row{display:flex;align-items:baseline;justify-content:flex-start;gap:10px;flex:1;min-width:0;min-height:26px;padding:3px 0;border:0;background:transparent;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.mut-row:hover .mut-what{text-decoration:underline}
+.mut-at{flex:none;min-width:52px;font-size:11.5px;color:var(--muted)}
+.mut-what{flex:none;font:600 12px "IBM Plex Mono",ui-monospace,monospace}
+.mut-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
+.bug-row:is([data-trying], [data-live]) .mut-what{color:var(--fail)}
+.mut-inject + .mut-one{margin-left:0}
+.lab-results{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.lab-note{margin:0;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:12.5px}
+.lab-name{border:0;background:transparent;padding:0;min-height:0;font:500 12.5px "IBM Plex Mono",ui-monospace,monospace;color:inherit;text-align:left;white-space:normal;justify-content:flex-start;cursor:pointer}
+.lab-name:hover{text-decoration:underline}
+.test[data-state="error"] .tstate{border-color:var(--fail);background:var(--fail)}
+.test[data-state="skipped"] .tstate{border-style:dashed;border-color:var(--muted)}
+.test.collapsed .lab-detail{display:none}
+.lab-detail{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:0 12px 10px 50px}
+.lab-detail .err{margin:0;font:12px/1.5 "IBM Plex Mono",ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.lab-at{padding:2px 6px;min-height:0;margin-left:-6px;font-size:12px}
+.lab-seg button{font-size:12.5px;font-weight:600}
+.labtests-panel .head-actions{flex-wrap:nowrap}
+.labtests-panel .panel-head h2{flex:0 1 auto;overflow:hidden}
+.labtests-panel .lab-file{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lab-fw button,.lab-lang button{font-size:12.5px;font-weight:600;gap:5px}
+/* The frameworks' own logos, from devicon, inline because the CSP allows no remote images */
+.lab-fw button svg,.lab-lang button svg{width:15px;height:15px;flex:none;background:var(--logo-bg,transparent);border-radius:4px;padding:var(--logo-pad,0)}
+.console-panel .panel-head{flex-wrap:nowrap}
+.console-panel .panel-head h2{gap:10px;flex:0 1 auto;min-width:0;overflow:hidden}
+.console-panel .head-actions{flex:none;flex-wrap:nowrap}
+.lab-console .empty.loading::before,.lab-note.loading::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--active);animation:pulse 1s ease-in-out infinite}
 
 /* ---------- Dialog and toast ---------- */
 dialog{border:1px solid var(--line);border-radius:14px;padding:0;width:min(780px,calc(100vw - 32px));background:var(--panel);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
@@ -530,34 +566,18 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   main{flex:1;min-height:560px;grid-template-rows:minmax(0,1fr)}
   .left{min-height:0}
   .tests-panel{flex:none}
-  /* Three panels share this column, four in bug mode, so the editor starts a
-     little shorter than it did with two and the lists below split what is left,
-     Results taking the larger share. None can be squeezed away: the floors here
-     are what keeps the page itself from ever scrolling. */
+  /* Two panels share this column, three in Create, so the editor starts a
+     little shorter there and the lists below split what is left, Results
+     taking the larger share. None can be squeezed away: the floors here are
+     what keeps the page itself from ever scrolling. The clamps in layout.js
+     hold the floors; these are only where a column the user has not dragged
+     begins. */
   :root{--editor-h:30vh}
-  /* Each mode adds a panel to the same column, so the ones already there start
-     shorter. The clamps in layout.js hold the floors; these are only where a
-     column the user has not dragged begins. */
   :root[data-mode="explore"]{--editor-h:38vh}
-  :root[data-mode="mutation"]{--editor-h:30vh; --bug-h:24vh}
-  /* Test smells is the one panel whose two tabs hold lists of very different
-     lengths — one file's findings, or the whole catalogue — so it starts at a
-     height of its own rather than at the height of whichever list is showing.
-     Switching tabs then moves nothing: both lists scroll inside the panel, and
-     Results keeps the room it had. */
-  :root[data-mode="smells"]{--smell-h:24vh}
   .results-panel{flex:1 1 130px;min-height:130px}
   /* Its own handle sets the height, and Results takes whatever is left over.
      It still gives way when the window is short, down to the floor below. */
-  .coverage-panel{flex:0 1 auto;height:var(--cov-h);min-height:100px}
-  .bugs-panel{height:var(--bug-h);min-height:100px}
-  .smells-panel{height:var(--smell-h);min-height:100px}
   .create-panel{height:var(--create-h);min-height:100px}
-  /* The Tests panel gives way too, down to the editor's own floor, rather than
-     being the one thing that cannot shrink on a short screen. Both lists
-     collapsed still makes it the panel that grows: that rule is more specific,
-     and it comes to the same thing. */
-  :root[data-mode="mutation"] .tests-panel{flex:0 1 auto;min-height:0}
   /* Explore has only Results below the editor, so a collapsed Results leaves
      nothing to take the room: the editor takes it, as it does when both lists
      are down to a row. */
@@ -580,21 +600,6 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      while it has rows to give: collapsed it is its one head, and a list long
      enough to want the whole column (the All smells catalogue) would otherwise
      squeeze that head out of its own panel. */
-  :root[data-mode="coverage"] .left[data-spec="collapsed"]:not([data-cov="collapsed"], [data-results="collapsed"]) .results-panel,
-  :root[data-mode="mutation"] .left[data-spec="collapsed"]:not([data-bug="collapsed"], [data-results="collapsed"]) .results-panel{flex:0 1 auto}
-  :root[data-mode="coverage"] .left[data-spec="collapsed"]:not([data-cov="collapsed"]) .coverage-panel{flex:1 1 auto;height:auto}
-  :root[data-mode="coverage"] .left[data-spec="collapsed"] #covResizer{visibility:hidden}
-  :root[data-mode="mutation"] .left[data-spec="collapsed"]:not([data-bug="collapsed"]) .bugs-panel{flex:1 1 auto;height:auto}
-  :root[data-mode="mutation"] .left[data-spec="collapsed"] #bugResizer{visibility:hidden}
-  /* Mutation is the only panel this mode has, so a collapsed Results hands it
-     the room rather than leaving the column ending half way down — and with
-     both lists down to a row the editor takes what is left, the way it does in
-     the other modes. */
-  :root[data-mode="mutation"] .left[data-results="collapsed"]:not([data-bug="collapsed"]) .bugs-panel{flex:1 1 auto;height:auto;min-height:0}
-  :root[data-mode="mutation"] .left[data-results="collapsed"][data-bug="collapsed"] .tests-panel{flex:1 1 auto;min-height:0}
-  :root[data-mode="mutation"] .left[data-results="collapsed"][data-bug="collapsed"] .editor{flex:1 1 auto;height:auto}
-  :root[data-mode="mutation"] .left[data-results="collapsed"][data-bug="collapsed"] #rowResizer{visibility:hidden}
-  :root[data-mode="mutation"] .left[data-spec="collapsed"][data-results="collapsed"][data-bug="collapsed"] .tests-panel{flex:0 1 auto}
   :root[data-mode="create"] .left[data-spec="collapsed"]:not([data-create="collapsed"], [data-results="collapsed"]) .results-panel{flex:0 1 auto}
   :root[data-mode="create"] .left[data-spec="collapsed"]:not([data-create="collapsed"]) .create-panel{flex:1 1 auto;height:auto}
   :root[data-mode="create"] .left[data-spec="collapsed"] #createResizer{visibility:hidden}
@@ -603,29 +608,28 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   :root[data-mode="create"] .left[data-results="collapsed"][data-create="collapsed"] .editor{flex:1 1 auto;height:auto}
   :root[data-mode="create"] .left[data-results="collapsed"][data-create="collapsed"] #rowResizer{visibility:hidden}
   :root[data-mode="create"] .left[data-spec="collapsed"][data-results="collapsed"][data-create="collapsed"] .tests-panel{flex:0 1 auto}
-  :root[data-mode="smells"] .left[data-spec="collapsed"]:not([data-smells="collapsed"], [data-results="collapsed"]) .results-panel{flex:0 1 auto}
-  :root[data-mode="smells"] .left[data-spec="collapsed"]:not([data-smells="collapsed"]) .smells-panel{flex:1 1 auto;height:auto}
-  :root[data-mode="smells"] .left[data-spec="collapsed"] #smellResizer{visibility:hidden}
-  /* Test smells is the last panel in its mode, so it takes what a collapsed
-     Results gives up, the way Coverage does in the modes that have it. */
-  :root[data-mode="smells"] .left[data-results="collapsed"]:not([data-smells="collapsed"]) .smells-panel{flex:1 1 auto;height:auto;min-height:0}
-  /* And with both lists down to a row the editor takes what is left, so the
-     column is never half empty. */
-  :root[data-mode="smells"] .left[data-results="collapsed"][data-smells="collapsed"] .tests-panel{flex:1 1 auto;min-height:0}
-  :root[data-mode="smells"] .left[data-results="collapsed"][data-smells="collapsed"] .editor{flex:1 1 auto;height:auto}
-  :root[data-mode="smells"] .left[data-results="collapsed"][data-smells="collapsed"] #rowResizer{visibility:hidden}
-  :root[data-mode="smells"] .left[data-spec="collapsed"][data-results="collapsed"][data-smells="collapsed"] .tests-panel{flex:0 1 auto}
   /* With the code and both lists down to a row there is nothing left to stretch,
      so the column simply ends rather than leaving a panel blank. */
-  .left[data-spec="collapsed"][data-results="collapsed"][data-cov="collapsed"] .tests-panel{flex:0 1 auto}
+  /* The code modes: with Results and Console down to their head, the code
+     takes the room, and the handle has nothing left to split */
+  .left[data-lab="collapsed"] .labtests-panel{flex:1 1 auto}
+  .left[data-lab="collapsed"] .labtests-panel .lab-ed{flex:1 1 auto;height:auto}
+  .left[data-lab="collapsed"] #labResizer{visibility:hidden}
   .site-btn{padding:7px 10px}
 }
 /* ---------- Narrow screens: one column, site right after the editor ---------- */
 @media (max-width:900px){
   main{grid-template-columns:minmax(0,1fr);gap:12px;padding:10px max(10px,env(safe-area-inset-right,0px)) 14px max(10px,env(safe-area-inset-left,0px))}
   .left{display:contents}
-  .tests-panel{order:1} .browser{order:2} .results-panel{order:3} .coverage-panel{order:4}
-  .bugs-panel{order:5} .smells-panel{order:6} .create-panel{order:7}
+  .tests-panel{order:1} .browser{order:2} .results-panel{order:3}
+  .create-panel{order:7}
+  .labtests-panel{order:1} .lab-code-panel{order:2} .console-panel{order:3}
+  .labtests-panel .lab-ed{flex:none;height:clamp(220px,42dvh,380px)}
+  .lab-code-panel .lab-ed{flex:none;height:clamp(300px,60dvh,560px)}
+  .lab-console,.lab-results,.lab-mutation{max-height:60dvh;min-height:160px}
+  .lab-console{font-size:12.5px}
+  .lab-detail{padding-left:30px}
+  .lab-ed .hl,.lab-ed textarea{padding:10px 12px}
   .resizer{display:none}
   .appbar{flex-wrap:wrap;row-gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
   .tagline{display:none}
@@ -656,8 +660,9 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .site-btn{width:100%;min-width:0}
   .stepper{gap:4px}
   /* The screen-size toggle goes, but Site/HTML stays, at a size worth tapping */
-  .seg{display:none} .view-seg,.mode-seg,.smell-seg{display:inline-flex}
-  .view-seg button,.mode-seg button,.smell-seg button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
+  .seg{display:none} .view-seg,.area-seg,.mode-seg,.smell-seg,.res-seg,.lab-seg,.lab-fw,.lab-lang,.lab-codeview,.cov-seg{display:inline-flex}
+  .view-seg button,.area-seg button,.mode-seg button,.smell-seg button,.res-seg button,.lab-seg button,.lab-fw button,.lab-lang button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
+  .lab-lang button{padding:0 9px}
 
   /* The example list opens as a sheet, so it is reachable wherever the page sits */
   .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(70dvh,560px);border-radius:14px}
@@ -676,7 +681,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 
   /* Results: roomier rows, and the list scrolls inside its own panel */
   #results{max-height:70dvh}
-  #coverage,#bugs,#smells,#create{max-height:46dvh}
+  #bugs,#smells{max-height:60dvh}
+  #create{max-height:46dvh}
   .test-head{gap:6px;padding:6px 8px}
   .steps li{padding:6px 10px 6px 16px}
   .warn{padding:2px 12px 4px 30px}
@@ -696,12 +702,19 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .appbar{column-gap:8px}
   .appbar .spacer{display:none}
   .appbar #share,.appbar #reset,.appbar .repo-link{flex:1 1 auto;justify-content:center}
-  /* The mode is what every panel below answers to, so it takes the second row
-     whole rather than sharing one, the names splitting it between them. There
-     are five now, which is more than 360px of phone fits on one line, so the
-     row wraps rather than pushing the bar sideways. */
-  .appbar .mode-seg{order:2;flex:1 1 100%;flex-wrap:wrap;row-gap:2px}
-  .appbar .mode-seg button{flex:1 1 auto;min-width:0;padding:0 8px}
+  /* The language and the mode are what every panel below answers to, so they
+     take the second row between them, 60/40 like the example's row below. */
+  .appbar .area-seg{order:2;flex:1 1 calc(60% - 4px);min-width:0}
+  .appbar .mode-seg{order:2;flex:1 1 calc(40% - 4px);min-width:0}
+  .appbar :is(.area-seg,.mode-seg) button{flex:1 1 0;min-width:0;padding:0 4px}
+  /* Up to five tabs over the code modes' results (Create, Results, Console,
+     Mutation, Smells): a row of their own, shared, with what the run said and
+     the Coverage check on the row below */
+  .console-panel .panel-head{flex-wrap:wrap}
+  .console-panel .panel-head h2{flex:1 1 100%;flex-wrap:wrap;row-gap:6px;overflow:visible}
+  .console-panel .lab-seg{flex:1 1 100%}
+  .console-panel .lab-seg button{flex:1 1 0;min-width:0;padding:0 4px}
+  .console-panel .head-actions{margin-left:auto}
   .appbar .picker{order:3;flex:1 1 calc(60% - 4px);min-width:0;margin-left:0}
   .appbar .stepper{order:4;flex:1 1 calc(40% - 4px);min-width:0;justify-content:space-between}
   /* The stepper has a share of the row rather than its natural width, so its

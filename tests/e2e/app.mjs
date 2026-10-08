@@ -10,14 +10,14 @@ export const RUN_TIMEOUT = 180_000;   // a whole site's example tests, at Fast s
 
 // The site ids come from the example manifest, so adding an example adds a test.
 export async function siteIds(){
-  const { SITE_IDS } = await import(pathToFileURL(resolve(ROOT, 'examples/examples.js')).href);
-  if (!SITE_IDS?.length) throw new Error('No example sites found in examples/examples.js.');
+  const { SITE_IDS } = await import(pathToFileURL(resolve(ROOT, 'examples/html/examples.js')).href);
+  if (!SITE_IDS?.length) throw new Error('No example sites found in examples/html/examples.js.');
   return SITE_IDS;
 }
 
 // The manifest itself, for tests that ask what a site is rather than which exist.
 export async function manifest(){
-  const { SITES } = await import(pathToFileURL(resolve(ROOT, 'examples/examples.js')).href);
+  const { SITES } = await import(pathToFileURL(resolve(ROOT, 'examples/html/examples.js')).href);
   return SITES;
 }
 
@@ -28,7 +28,8 @@ export async function siteName(id){
 
 // Loads the app and starts collecting errors from the page that hosts it.
 // The iframe's own errors are collected by the app and surfaced as warnings.
-export async function openApp(page, { site, hash = '', mode } = {}){
+// Home is Python, so the sites are opened in Explore unless a test names a link.
+export async function openApp(page, { site, hash = '#explore', mode, tab } = {}){
   const errors = [];
   page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
   page.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text()}`); });
@@ -37,11 +38,13 @@ export async function openApp(page, { site, hash = '', mode } = {}){
   await page.waitForFunction(() => typeof window.jsyaml !== 'undefined', null, { timeout: 30_000 })
     .catch(() => { throw new Error('js-yaml did not load from cdnjs. These tests need network access.'); });
   await page.waitForFunction(() => typeof window.playlive?.selectSite === 'function');
-  await expect(page.locator('#results .test').first()).toBeVisible();
+  // Attached rather than visible: a link may open on the Mutation or Smells tab
+  await expect(page.locator('#results .test').first()).toBeAttached();
   if (site) await selectSite(page, site);
-  // The app opens in Explore, which has no Coverage or Bugs panel: a test that
-  // reads one says which mode it is about.
+  // The app opens in Explore on the Results tab: a test that reads another
+  // says which mode or tab it is about.
   if (mode) await setMode(page, mode);
+  if (tab) await setTab(page, tab);
   return { errors };
 }
 
@@ -60,10 +63,21 @@ export async function setSpeed(page, value){
 }
 
 // The mode is chosen in the app bar, and it is what decides which panels the
-// left column has: Bug mode is the one that brings the Bugs panel in.
+// left column has: Create is the one that brings a panel of its own in. The
+// bar asks the language first (Python, JS/TS, HTML), then Explore or Create.
 export async function setMode(page, value){
+  const area = ['python', 'javascript'].includes(value) ? value : 'html';
+  await page.click(`.area-seg [data-area="${area}"]`);
+  await expect(page.locator(`.area-seg [data-area="${area}"]`)).toHaveAttribute('aria-pressed', 'true');
+  if (area !== 'html') return;
   await page.click(`.mode-seg [data-mode="${value}"]`);
   await expect(page.locator(`.mode-seg [data-mode="${value}"]`)).toHaveAttribute('aria-pressed', 'true');
+}
+
+// Mutation and Smells are tabs beside Results.
+export async function setTab(page, value){
+  await page.click(`.res-seg [data-resview="${value}"]`);
+  await expect(page.locator(`.res-seg [data-resview="${value}"]`)).toHaveAttribute('aria-pressed', 'true');
 }
 
 // Presses Run and waits for the run to finish (the button comes back).
@@ -99,3 +113,17 @@ export function describeFailures(res){
   if (!bad.length) return res.summary;
   return [`${res.site}: ${res.summary}`, ...bad.map(t => `  ✕ ${t.title}\n    ${t.failedStep || t.state}\n    ${t.error}`)].join('\n');
 }
+
+// The code modes (Python, JS/TS). Their runtimes download on first use, so
+// waits are long.
+export const LAB_LOAD = 120_000;
+// Until the runtime says it is ready: a label such as "Python 3.14.2"
+export const labReady = (page, label, timeout = LAB_LOAD) => expect(page.locator('#labState')).toHaveText(label, { timeout });
+// Run the tests on screen, and what the summary says when they are done
+export async function labRun(page, timeout = LAB_LOAD){
+  await page.click('#labRun');
+  await expect(page.locator('#labSummary')).not.toHaveText(/Running|^$/, { timeout });
+  return page.locator('#labSummary').textContent();
+}
+// How many tests a Results head says all passed, or null if it says otherwise
+export const allPassed = said => (/^The test passed in [\d.]+s$/.test(said) ? 1 : Number(/^All (\d+) tests passed in [\d.]+s$/.exec(said)?.[1]) || null);

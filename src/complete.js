@@ -2,10 +2,10 @@ import { ACTIONS } from './actions.js';
 import { harvest, snapshot } from './catalog.js';
 import { specEl } from './dom.js';
 import { similarity } from './find.js';
-import { lineH } from './editor.js';
 import { SETTINGS } from './parse.js';
 import { withValue, yq } from './recorder.js';
 import { currentSite, editorSite, recording, running, setCompletionOpen } from './state.js';
+import { suggestionList } from './suggestlist.js';
 import { norm } from './util.js';
 
 /* ---------- Autocomplete: only what this site can actually do ---------- */
@@ -239,86 +239,16 @@ export function suggest(text, caret, cat = catalogNow()){
 }
 
 /* ---------- The list under the caret ---------- */
-// It lives on <body> and is positioned in viewport coordinates: a panel clips
-// what overflows it, and the editor can be only a few lines tall.
-export const acEl = document.createElement('div');
-acEl.className = 'ac'; acEl.id = 'acPop'; acEl.hidden = true;
-acEl.setAttribute('role', 'listbox'); acEl.setAttribute('aria-label', 'Suggestions');
-document.body.appendChild(acEl);
-
-let open = null, active = 0, charW = 0, accepting = false;
+// The list itself is suggestlist.js's; this side says what is in it and what
+// taking one writes.
+let open = null, accepting = false;
 export const completion = () => open;
-const narrow = () => window.innerWidth <= 900;
-
-// The font is monospace, so one measured character places every caret
-function cellW(){
-  if (charW) return charW;
-  const probe = document.createElement('span');
-  probe.textContent = '0'.repeat(20);
-  probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${getComputedStyle(specEl).font}`;
-  document.body.appendChild(probe);
-  charW = probe.getBoundingClientRect().width / 20;
-  probe.remove();
-  return charW;
-}
-function rowCol(){
-  const upto = specEl.value.slice(0, specEl.selectionStart).split('\n');
-  return { row: upto.length - 1, col: upto[upto.length - 1].length };
-}
-export function closeCompletion(){
-  if (!open) return;
-  open = null; acEl.hidden = true; acEl.innerHTML = '';
-  setCompletionOpen(false);
-  specEl.setAttribute('aria-expanded', 'false');
-  specEl.removeAttribute('aria-activedescendant');
-}
-function reveal(){
-  const el = acEl.children[active]; if (!el) return;
-  const top = el.offsetTop, bottom = top + el.offsetHeight;
-  if (top < acEl.scrollTop) acEl.scrollTop = top;
-  else if (bottom > acEl.scrollTop + acEl.clientHeight) acEl.scrollTop = bottom - acEl.clientHeight;
-}
-function setActive(i){
-  active = (i + open.items.length) % open.items.length;
-  [...acEl.children].forEach((el, j) => el.setAttribute('aria-selected', String(j === active)));
-  specEl.setAttribute('aria-activedescendant', `acOpt${active}`);
-  reveal();
-}
-function place(){
-  const r = specEl.getBoundingClientRect(), cs = getComputedStyle(specEl), lh = lineH();
-  acEl.style.width = ''; acEl.style.maxWidth = '';
-  if (narrow()){                                   // the caret is usually under the keyboard on a phone
-    const ed = specEl.closest('.editor').getBoundingClientRect();
-    acEl.style.left = `${ed.left}px`;
-    acEl.style.width = `${ed.width}px`; acEl.style.maxWidth = 'none';
-    const below = window.innerHeight - ed.bottom;
-    if (below >= 150 || below >= ed.top){ acEl.style.top = `${ed.bottom + 4}px`; acEl.style.bottom = ''; }
-    else { acEl.style.bottom = `${window.innerHeight - ed.top + 4}px`; acEl.style.top = ''; }
-    return;
-  }
-  const { row, col } = rowCol();
-  const x = r.left + parseFloat(cs.paddingLeft) + col * cellW() - specEl.scrollLeft;
-  const y = r.top + parseFloat(cs.paddingTop) + (row + 1) * lh - specEl.scrollTop;
-  acEl.style.left = `${Math.max(8, Math.min(x, window.innerWidth - acEl.offsetWidth - 8))}px`;
-  const room = window.innerHeight - y;
-  if (room < Math.min(acEl.offsetHeight + 8, 160) && y - lh > room){
-    acEl.style.bottom = `${window.innerHeight - (y - lh) + 2}px`; acEl.style.top = '';
-  } else { acEl.style.top = `${y + 2}px`; acEl.style.bottom = ''; }
-}
-function render(){
-  acEl.innerHTML = '';
-  open.items.forEach((it, i) => {
-    const row = document.createElement('div');
-    row.className = 'ac-item'; row.id = `acOpt${i}`; row.setAttribute('role', 'option');
-    row.setAttribute('aria-selected', String(i === active));
-    const label = document.createElement('span'); label.className = 'ac-label'; label.textContent = it.label;
-    const detail = document.createElement('span'); detail.className = 'ac-detail'; detail.textContent = it.detail || '';
-    row.append(label, detail);
-    // mousedown, not click: the textarea must not lose the caret to the list
-    row.addEventListener('mousedown', e => { e.preventDefault(); accept(i); });
-    acEl.appendChild(row);
-  });
-}
+const list = suggestionList({
+  input: specEl, id: 'acPop', option: 'acOpt', box: () => specEl.closest('.editor'),
+  onAccept: it => accept(open.items.indexOf(it)),
+  onToggle: on => { setCompletionOpen(on); if (!on) open = null; }
+});
+export const closeCompletion = () => list.close();
 // The characters that start something new: typing one opens the list by itself,
 // and accepting an item that ends in one leads on to the next choice.
 const TRIGGER = /(?:[:\-{,]|\$\{)\s*$/;
@@ -347,26 +277,11 @@ export function update(forced){
   const wanted = forced || found.word.length > 0 || (found.what !== 'top' && TRIGGER.test(line));
   const done = found.items.length === 1 && found.items[0].insert === found.word;
   if (!wanted || (done && !forced)) return closeCompletion();
-  open = found; active = 0;
-  setCompletionOpen(true);
-  acEl.hidden = false;
-  specEl.setAttribute('aria-expanded', 'true');
-  render(); place(); setActive(0);
-  acEl.scrollTop = 0;
+  open = found;
+  list.show(found.items);
 }
-specEl.addEventListener('input', () => { if (!accepting) update(); });
-specEl.addEventListener('blur', () => closeCompletion());
-specEl.addEventListener('scroll', () => { if (open) place(); });
-window.addEventListener('resize', () => { charW = 0; closeCompletion(); });
+specEl.addEventListener('input', e => { if (!accepting && !e.undo) update(); });
 specEl.addEventListener('keydown', e => {
   if (e.key === ' ' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); update(true); return; }
-  if (!open) return;
-  if (e.key === 'ArrowDown'){ e.preventDefault(); setActive(active + 1); }
-  else if (e.key === 'ArrowUp'){ e.preventDefault(); setActive(active - 1); }
-  else if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeCompletion(); }
-  else if (e.key === 'Enter' || e.key === 'Tab'){
-    if (e.metaKey || e.ctrlKey || (e.key === 'Tab' && e.shiftKey)) return closeCompletion();   // ⌘+Enter still runs
-    e.preventDefault(); accept(active);
-  }
-  else if (['ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) closeCompletion();
+  if (list.key(e)){ e.preventDefault(); e.stopPropagation(); }
 });

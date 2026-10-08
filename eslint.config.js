@@ -28,8 +28,22 @@ export default [
     }
   },
   {
+    // JS/TS mode's examples: CommonJS, as Jasmine and Mocha document it, with
+    // the frameworks' globals. The manifest beside them is the app's own module.
+    files: ['examples/javascript/*/**/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { ...globals.node, ...globals.jasmine, ...globals.mocha }
+    }
+  },
+  {
+    // Python mode's worker runs in a worker's globals, not a page's
+    files: ['src/pyworker.js'],
+    languageOptions: { globals: globals.worker }
+  },
+  {
     // hooks.js is loaded with a plain <script>, so it is not a module
-    files: ['examples/hooks.js'],
+    files: ['examples/html/hooks.js'],
     languageOptions: { sourceType: 'script' }
   },
   {

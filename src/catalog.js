@@ -37,9 +37,7 @@ function kindOf(el, role){
 const optionsOf = el => [...el.options].map(o => clean(o.textContent) || o.value).filter(Boolean);
 
 // How an element is listed: what a step would do with it, the target a test
-// would write, and the key that joins the two. Coverage credits a step with
-// this same key, so what a run touched and what the catalog offers cannot
-// drift apart.
+// would write, and the key it is kept under.
 export function entryFor(el){
   const role = roleOf(el);
   const kind = kindOf(el, role); if (!kind) return null;
@@ -47,7 +45,6 @@ export function entryFor(el){
   const target = renderTarget(parts);
   return { kind, target, parts, role, key: `${kind} ${target}` };
 }
-export const keyFor = el => { const e = entryFor(el); return e ? e.key : null; };
 
 function addEl(cat, el){
   const base = entryFor(el); if (!base) return;

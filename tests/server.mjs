@@ -15,7 +15,8 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.yaml': 'text/yaml; charset=utf-8',
-  '.md': 'text/markdown; charset=utf-8'
+  '.md': 'text/markdown; charset=utf-8',
+  '.py': 'text/x-python; charset=utf-8'
 };
 
 createServer(async (req, res) => {
