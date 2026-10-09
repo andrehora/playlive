@@ -11,8 +11,7 @@
    or an object, and a const, let or var given an arrow or a function; a
    method is named after its class or object. Only those with a branch are
    kept, as in Python. Pure, so the unit tests can read it.               */
-import { tokenize } from './jscover.js';
-import { close, statements } from './jssmells.js';
+import { atTop, close, statements, tokenize } from './jstokens.js';
 
 const TERMINAL = new Set(['return', 'throw', 'break', 'continue']);
 const BRANCHY = new Set(['if', 'for', 'while', 'do', 'switch', 'try']);
@@ -40,12 +39,8 @@ export function flowsOf(src){
     const ifOf = (st, word) => {
       const shut = close(st, 1), rest = st.slice(shut + 1);
       // The then arm runs to an else at its own depth
-      let k = 0;
-      if (rest[0]?.value === '{') k = close(rest, 0) + 1;
-      else for (let d = 0; k < rest.length && !(d === 0 && rest[k].value === 'else' && rest[k - 1]?.value === ';'); k++){
-        if ('([{'.includes(rest[k].value) && rest[k].type === 'punct') d++;
-        else if (')]}'.includes(rest[k].value) && rest[k].type === 'punct') d--;
-      }
+      const k = rest[0]?.value === '{' ? close(rest, 0) + 1
+        : atTop(rest).find(j => rest[j].value === 'else' && rest[j - 1]?.value === ';') ?? rest.length;
       const then = rest[0]?.value === '{' ? rest.slice(1, k - 1) : rest.slice(0, k);
       const other = rest[k]?.value === 'else' ? rest.slice(k + 1) : [];
       return { t: 'if', line: st[0].line, text: `${word} ${text(st[1], st[shut])}`, then: seq(then),
@@ -73,11 +68,9 @@ export function flowsOf(src){
       if (v === 'switch'){
         const shut = close(st, 1), inside = st.slice(shut + 2, close(st, shut + 1));
         const cases = [];
-        for (let i = 0, d = 0; i < inside.length; i++){
+        for (const i of atTop(inside)){
           const t = inside[i];
-          if ('([{'.includes(t.value) && t.type === 'punct') d++;
-          else if (')]}'.includes(t.value) && t.type === 'punct') d--;
-          else if (!d && (t.value === 'case' || t.value === 'default') && t.type === 'name'){
+          if ((t.value === 'case' || t.value === 'default') && t.type === 'name'){
             const colon = inside.findIndex((x, j) => j > i && x.value === ':');
             cases.push({ line: t.line, text: text(t, inside[colon]), from: colon + 1, at: i });
           }

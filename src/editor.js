@@ -3,10 +3,10 @@ import { ACTIONS } from './actions.js';
 import { $id, errorEl, specEl } from './dom.js';
 import { completionOpen } from './state.js';
 import { toast } from './ui.js';
-import { escH } from './util.js';
+import { escH, escRe, plural } from './util.js';
 
 /* ---------- Editor: syntax highlighting, line numbers, error lines ---------- */
-export const hlEl = $id('hl'), gutterEl = $id('gutter');
+const hlEl = $id('hl'), gutterEl = $id('gutter');
 export { escH } from './util.js';
 // Built on first use: ACTIONS lives in a module that imports this one back
 let actionKeys = null;
@@ -61,8 +61,7 @@ export function commentLines(text, start, end, open, close = ''){
   stop = text.indexOf('\n', stop); if (stop < 0) stop = text.length;
   const lines = text.slice(from, stop).split('\n');
   const used = lines.filter(l => l.trim());
-  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const isOn = new RegExp(`^(\\s*)${esc(open)} ?(.*?)${close ? ` ?${esc(close)}` : ''}\\s*$`);
+  const isOn = new RegExp(`^(\\s*)${escRe(open)} ?(.*?)${close ? ` ?${escRe(close)}` : ''}\\s*$`);
   const on = used.length > 0 && used.every(l => isOn.test(l));
   const indent = Math.min(...used.map(l => l.search(/\S/)));
   const out = lines.map(l => {
@@ -156,7 +155,7 @@ export function errorLinesFor(msg, text){
   }
   return out;
 }
-export let edText = null, errLines = new Set(), curLine = -1;
+let edText = null, errLines = new Set(), curLine = -1;
 // Find the editor line of a step from where it was defined: a test's steps or beforeEach
 export function lineForStep(text, src){
   if (!src) return -1;
@@ -192,7 +191,7 @@ export function lineForStep(text, src){
   return -1;
 }
 // The line box is taller on phones than on desktop, so it is read, not assumed
-export const lineH = () => parseFloat(getComputedStyle(specEl).lineHeight) || 20;
+const lineH = () => parseFloat(getComputedStyle(specEl).lineHeight) || 20;
 export function setCurrentLine(n){
   if (n === curLine) return;
   curLine = n; renderEditor(true);
@@ -201,7 +200,7 @@ export function setCurrentLine(n){
     if (top < specEl.scrollTop + lh || top > specEl.scrollTop + h - lh - 30) specEl.scrollTop = Math.max(0, top - h / 3);
   }
 }
-export function renderEditor(force){
+function renderEditor(force){
   const text = specEl.value;
   if (!force && text === edText) return;
   edText = text;
@@ -211,12 +210,12 @@ export function renderEditor(force){
   gutterEl.innerHTML = lines.map((_, i) => `<div class="${cls(i).trim()}">${i + 1}</div>`).join('');
   syncEditorScroll();
 }
-export function syncEditorScroll(){ hlEl.scrollTop = specEl.scrollTop; hlEl.scrollLeft = specEl.scrollLeft; gutterEl.scrollTop = specEl.scrollTop; }
+function syncEditorScroll(){ hlEl.scrollTop = specEl.scrollTop; hlEl.scrollLeft = specEl.scrollLeft; gutterEl.scrollTop = specEl.scrollTop; }
 specEl.addEventListener('scroll', syncEditorScroll);
 
 /* ---------- Folding: one button hides the code, leaving the panel's controls ---------- */
 // The textarea holds the whole file either way, so running, recording and exporting are untouched
-export const foldSpecBtn = $id('foldSpec'), editorEl = $id('editor');
+const foldSpecBtn = $id('foldSpec'), editorEl = $id('editor');
 let specFolded = false;
 export function setSpecFolded(folded){
   specFolded = folded;
@@ -292,14 +291,14 @@ export function setFileStatus(v){
   const el = $id('fileStatus');
   if (v.spec){
     const steps = v.spec.tests.reduce((n, t) => n + t.steps.length, 0);
-    el.textContent = `${v.spec.tests.length} ${v.spec.tests.length === 1 ? 'test' : 'tests'} · ${steps} ${steps === 1 ? 'step' : 'steps'}`;
+    el.textContent = `${plural(v.spec.tests.length, 'test')} · ${plural(steps, 'step')}`;
     el.className = 'file-status';
   } else if (v.empty){
     el.textContent = 'No tests';
     el.className = 'file-status none';
   } else {
     const n = v.error.split('\n').length;
-    el.textContent = `${n} ${n === 1 ? 'problem' : 'problems'}`;
+    el.textContent = plural(n, 'problem');
     el.className = 'file-status bad';
   }
 }

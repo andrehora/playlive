@@ -85,7 +85,7 @@ test.describe('Site picker', () => {
 
 test.describe('Shareable links', () => {
   test('a link with an example in the hash opens that example', async ({ page }) => {
-    const { errors } = await openApp(page, { hash: '#coupon-code' });
+    const { errors } = await openApp(page, { hash: '#html#coupon-code' });
     await expect(page.locator('#siteName')).toHaveText('Coupon code');
     await expect(page.locator('#tabs .tab[data-site="coupon-code"]')).toHaveAttribute('aria-pressed', 'true');
     expect(await page.inputValue('#spec')).toContain('test:');
@@ -97,11 +97,11 @@ test.describe('Shareable links', () => {
     const { errors } = await openApp(page, { hash: '#no-such-example' });
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
     await expect(page.locator('#siteName')).toHaveText('Calculator');
-    expect(new URL(page.url()).hash).toBe('');
+    expect(new URL(page.url()).hash).toBe('#python');
     expect(errors).toEqual([]);
   });
 
-  test('home is Python on its first example, and the first site is "#explore"', async ({ page }) => {
+  test('home is Python on its first example, and the first site is "#html"', async ({ page }) => {
     // "/" is Python on its first example and stays "/".
     const { errors } = await openApp(page, { hash: '' });
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
@@ -110,32 +110,41 @@ test.describe('Shareable links', () => {
     expect(new URL(page.url()).pathname).toBe('/');
     expect(new URL(page.url()).hash).toBe('');
 
-    // A site is Explore's, so naming the first one settles on "#explore".
-    await openApp(page, { hash: '#' + HOME });
+    // "#python" and "#python#calculator" are home spelled out, and stay as typed
+    for (const hash of ['#python', '#python#calculator']){
+      await openApp(page, { hash });
+      expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
+      await expect(page.locator('#siteName')).toHaveText('Calculator');
+      expect(new URL(page.url()).hash).toBe(hash);
+    }
+
+    // The first site is "#html", and naming it is the same place, kept as typed
+    await openApp(page, { hash: '#html#' + HOME });
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('explore');
     await expect(page.locator('#siteName')).toHaveText(homeName);
     expect(new URL(page.url()).pathname).toBe('/');
-    expect(new URL(page.url()).hash).toBe('#explore');
+    expect(new URL(page.url()).hash).toBe('#html#' + HOME);
+    expect(await page.evaluate(() => window.playlive.share.url())).toMatch(/\/#html$/);
     await expect(page.frameLocator('#app').locator('h1')).toBeVisible();
     expect(errors).toEqual([]);
   });
 
   test('walking back to the first example leaves only the mode in the hash', async ({ page }) => {
     await openApp(page, { site: 'newsletter-signup' });
-    expect(new URL(page.url()).hash).toBe('#newsletter-signup');
+    expect(new URL(page.url()).hash).toBe('#html#newsletter-signup');
     await selectSite(page, HOME);
-    expect(new URL(page.url()).hash).toBe('#explore');
+    expect(new URL(page.url()).hash).toBe('#html');
   });
 
   test('opening the page again starts at the first example, not the last one visited', async ({ page }) => {
     await openApp(page, { site: 'coupon-code' });
     await openApp(page);
     await expect(page.locator('#siteName')).toHaveText(homeName);
-    expect(new URL(page.url()).hash).toBe('#explore');
+    expect(new URL(page.url()).hash).toBe('#html');
   });
 
   test('the name and icon link home', async ({ page }) => {
-    await openApp(page, { hash: '#coupon-code' });
+    await openApp(page, { hash: '#html#coupon-code' });
     await page.click('.brand');
     await expect.poll(() => page.evaluate(() => window.playlive?.modes.get())).toBe('python');
     await expect(page.locator('#siteName')).toHaveText('Calculator');
@@ -143,14 +152,14 @@ test.describe('Shareable links', () => {
     expect(new URL(page.url()).hash).toBe('');
   });
 
-  test('the URL drops index.html, so a link reads ".../#newsletter-signup"', async ({ page }) => {
+  test('the URL drops index.html, so a link reads ".../#html#newsletter-signup"', async ({ page }) => {
     const { errors } = await openApp(page);
     await selectSite(page, 'newsletter-signup');
     const url = new URL(page.url());
     expect(url.pathname).toBe('/');
-    expect(url.hash).toBe('#newsletter-signup');
+    expect(url.hash).toBe('#html#newsletter-signup');
     expect(await page.evaluate(() => window.playlive.share.url('newsletter-signup')))
-      .toBe(`${url.origin}/#newsletter-signup`);
+      .toBe(`${url.origin}/#html#newsletter-signup`);
     // The page is still the page: relative paths resolve from the same folder.
     await expect(page.frameLocator('#app').locator('h1')).toBeVisible();
     expect(errors).toEqual([]);
@@ -158,9 +167,9 @@ test.describe('Shareable links', () => {
 
   test('choosing an example writes it to the URL without filling the back button', async ({ page }) => {
     await openApp(page);
-    expect(new URL(page.url()).hash).toBe('#explore');
+    expect(new URL(page.url()).hash).toBe('#html');
     await selectSite(page, 'coupon-code');
-    expect(new URL(page.url()).hash).toBe('#coupon-code');
+    expect(new URL(page.url()).hash).toBe('#html#coupon-code');
 
   });
 
@@ -182,7 +191,7 @@ test.describe('Shareable links', () => {
   test('editing the hash switches the example, and Share copies the link', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await openApp(page);
-    await page.evaluate(() => { location.hash = '#coupon-code'; });
+    await page.evaluate(() => { location.hash = '#html#coupon-code'; });
     await expect(page.locator('#siteName')).toHaveText('Coupon code');
     await expect(page.locator('#spec')).not.toHaveValue('');
 
@@ -190,7 +199,7 @@ test.describe('Shareable links', () => {
     await expect(page.locator('#toast')).toHaveText('Link copied!');
     const copied = await page.evaluate(() => navigator.clipboard.readText());
     expect(copied).toBe(page.url());
-    expect(copied.endsWith('/#coupon-code')).toBe(true);
+    expect(copied.endsWith('/#html#coupon-code')).toBe(true);
   });
 });
 
@@ -460,17 +469,19 @@ test.describe('HTML view', () => {
     expect(errors).toEqual([]);
   });
 
-  test('edits the markup, saves it to the page, and Reset brings the original back', async ({ page }) => {
+  test('edits the markup, puts it on the page on ⌘/Ctrl+Enter, and Reset brings the original back', async ({ page }) => {
     const { errors } = await openApp(page, { site: 'login' });
     await page.click('.view-seg [data-view="html"]');
     const markup = await page.inputValue('#htmlEdit');
     expect(markup).toContain('<button id="loginBtn"');
-    await expect(page.locator('#htmlApply')).toBeDisabled();
+    await expect(page.locator('#htmlBar')).toBeHidden();      // nothing to say until a mutation is on
 
     await page.fill('#htmlEdit', markup.replace('>Log in</button>', '>Sign in</button>'));
-    await expect(page.locator('#htmlApply')).toBeEnabled();
-    await page.click('#htmlApply');
-    await expect(page.locator('#htmlApply')).toBeDisabled();
+    // Typing alone leaves the page as it was
+    await expect(page.frameLocator('#app').locator('#loginBtn')).toHaveText('Log in');
+    expect(await page.evaluate(() => window.playlive.html.edited())).toBe(true);
+    await page.keyboard.press('ControlOrMeta+Enter');
+    await expect.poll(() => page.evaluate(() => window.playlive.html.edited())).toBe(false);
     await expect(page.frameLocator('#app').locator('#loginBtn')).toHaveText('Sign in');
     expect(await page.inputValue('#htmlEdit')).toContain('>Sign in</button>');
 
@@ -491,7 +502,7 @@ test.describe('HTML view', () => {
     await page.click('.view-seg [data-view="html"]');
     const markup = await page.inputValue('#htmlEdit');
     await page.fill('#htmlEdit', markup.replace('<p id="err"', '<p id="note">Edited page</p><p id="err"'));
-    await page.click('#htmlApply');
+    await page.keyboard.press('ControlOrMeta+Enter');
     await expect(page.frameLocator('#app').locator('#note')).toHaveText('Edited page');
 
     // Every test starts from a fresh page, and the fresh page is this one.
@@ -506,15 +517,15 @@ test.describe('HTML view', () => {
     expect(await page.inputValue('#htmlEdit')).not.toContain('Edited page');
   });
 
-  test('what Save puts on the page is offered by autocomplete', async ({ page }) => {
+  test('what is put on the page is offered by autocomplete', async ({ page }) => {
     await openApp(page, { site: 'login' });
     await page.click('.view-seg [data-view="html"]');
     const markup = await page.inputValue('#htmlEdit');
     await page.fill('#htmlEdit', markup.replace('<p id="err"', '<button id="sp" type="button">Sparkle</button><p id="err"'));
-    await page.click('#htmlApply');
+    await page.keyboard.press('ControlOrMeta+Enter');
     await expect(page.frameLocator('#app').locator('#sp')).toBeVisible();
 
-    // Saving harvests the page again, so the new button is a target like any other.
+    // Applying harvests the page again, so the new button is a target like any other.
     const items = await page.evaluate(() => {
       const text = 'test: t\nsteps:\n  - click: { role: button, name: ';
       return window.playlive.complete.suggest(text, text.length).items.map(i => i.insert);
@@ -522,17 +533,16 @@ test.describe('HTML view', () => {
     expect(items).toContain('Sparkle');
   });
 
-  test('Revert throws the edits away and reads the page again', async ({ page }) => {
+  test('leaving the markup puts it on the page, with no buttons to press', async ({ page }) => {
     await openApp(page, { site: 'login' });
     await page.click('.view-seg [data-view="html"]');
+    await expect(page.locator('#htmlApply, #htmlRevert')).toHaveCount(0);
     const markup = await page.inputValue('#htmlEdit');
 
-    await page.fill('#htmlEdit', markup.replace('>Log in</button>', '>Nonsense</button>'));
-    expect(await page.evaluate(() => window.playlive.html.edited())).toBe(true);
-    await page.click('#htmlRevert');
+    await page.fill('#htmlEdit', markup.replace('>Log in</button>', '>Sign in</button>'));
+    await page.click('.view-seg [data-view="site"]');
+    await expect(page.frameLocator('#app').locator('#loginBtn')).toHaveText('Sign in');
     expect(await page.evaluate(() => window.playlive.html.edited())).toBe(false);
-    expect(await page.inputValue('#htmlEdit')).toBe(markup);
-    await expect(page.frameLocator('#app').locator('#loginBtn')).toHaveText('Log in');
   });
 
   test('remembers the view, and going back shows the site again', async ({ page }) => {

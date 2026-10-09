@@ -10,7 +10,7 @@ import { toast } from './ui.js';
 import { clean } from './util.js';
 
 /* ---------- Recorder: use the site, get YAML steps ---------- */
-export let recOriginal = '', recCount = 0;
+let recOriginal = '', recCount = 0;
 // YAML-safe scalar: plain when harmless, double-quoted otherwise
 export function yq(s){
   s = String(s);
@@ -37,7 +37,7 @@ export function targetFor(el){
   const parts = targetParts(el);
   return parts ? renderTarget(parts) : null;
 }
-export function addStep(yamlStep){
+function addStep(yamlStep){
   const ind = '  ';
   if (specEl.value && !specEl.value.endsWith('\n')) specEl.value += '\n';   // a step always starts its own line
   specEl.value += yamlStep.split('\n').map(l => ind + l).join('\n') + '\n';
@@ -92,7 +92,7 @@ export function startRecording(){
   prepareRecording(validate(recOriginal).spec);
 }
 // Record from where tests start: a fresh page with the file's beforeEach steps already done
-export async function prepareRecording(spec){
+async function prepareRecording(spec){
   const pre = spec && spec.tests.length ? spec.tests[0].steps.filter(s => s.from === 'beforeEach') : [];
   setRunning(true); syncUI();
   await loadApp();

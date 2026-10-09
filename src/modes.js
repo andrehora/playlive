@@ -1,8 +1,8 @@
 import { repair } from './bugs.js';
 import { enterCreate, leaveCreate } from './create.js';
 import { reclamp } from './layout.js';
-import { LABS, enterLab, isLab, isLabCreate, labOf, leaveLab } from './lab.js';
-import { setResultsTab } from './results.js';
+import { enterLab, leaveLab } from './lab.js';
+import { LABS, isLab, isLabCreate, labOf } from './labcore.js';
 import { syncUrl } from './share.js';
 import { mode, setAppMode } from './state.js';
 
@@ -35,9 +35,6 @@ import { mode, setAppMode } from './state.js';
 
 // In the bar's order, and the first is home: "/" opens Python on its first example.
 export const MODES = ['python', 'python-create', 'javascript', 'javascript-create', 'explore', 'create'];
-// Mutation and Smells were modes once. A link or a browser that still names one
-// opens Explore on that tab.
-export const OLD_MODES = ['mutation', 'smells'];
 
 const areaOf = m => labOf(m) || 'html';
 const sideOf = m => (m === 'create' || isLabCreate(m) ? 'create' : 'explore');
@@ -50,7 +47,6 @@ let side = 'explore';                 // the side chosen, kept through a languag
 // to come from and nothing on screen yet, so the handovers below would only
 // stash an empty editor over whichever file they were handed.
 export function setMode(m, { initial = false } = {}){
-  if (OLD_MODES.includes(m)) setResultsTab(m);
   const next = MODES.includes(m) ? m : 'explore';
   const was = mode;
   setAppMode(next);

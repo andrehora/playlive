@@ -14,7 +14,7 @@ const choose = async (page, name) => {
 };
 
 test.describe('Python mode', () => {
-  test('has its own panels, its own examples, and unittest first', async ({ page }) => {
+  test('has its own panels, its own examples, and pytest first', async ({ page }) => {
     const { errors } = await openApp(page);
     await setMode(page, 'python');
     // Choosing the mode is what starts the download, and Results says so
@@ -28,26 +28,27 @@ test.describe('Python mode', () => {
     await expect(page.locator('#siteCount')).toHaveText('1 of 11');
     await expect(page.locator('#labCodeFile')).toHaveText('calculator.py');
     await expect(page.locator('#labTestsFile')).toHaveText('test_calculator.py');
-    await expect(page.locator('.lab-fw [data-fw="unittest"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#labTestsEd textarea')).toHaveValue(/class CalculatorTest\(unittest\.TestCase\)/);
+    await expect(page.locator('.lab-fw [data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.lab-fw button').first()).toHaveAttribute('data-fw', 'pytest');
+    await expect(page.locator('#labTestsEd textarea')).toHaveValue(/^def test_add\(\)/m);
     await expect(page.locator('#labCount')).toHaveText('5 tests');
     await expect(page.locator('#labResults .lab-name').first()).toHaveText('test_add');
-    expect(new URL(page.url()).hash).toBe('');
+    expect(new URL(page.url()).hash).toBe('#python');
 
     // Another example, and the link follows
     await choose(page, 'Stack');
     await expect(page.locator('#labCodeFile')).toHaveText('stack.py');
-    expect(new URL(page.url()).hash).toBe('#stack');
+    expect(new URL(page.url()).hash).toBe('#python#stack');
     await page.click('#nextSite');
     await expect(page.locator('#siteName')).toHaveText('Notes file');
 
-    // The same tests in pytest, and edits survive the switch back
+    // The same tests in unittest, and edits survive the switch back
     const tests = page.locator('#labTestsEd textarea');
-    await expect(tests).toHaveValue(/class NotesFileTest/);
-    await tests.fill((await tests.inputValue()) + '\n# mine\n');
-    await page.click('.lab-fw [data-fw="pytest"]');
     await expect(tests).toHaveValue(/def test_saved_notes_load_back\(tmp_path\)/);
+    await tests.fill((await tests.inputValue()) + '\n# mine\n');
     await page.click('.lab-fw [data-fw="unittest"]');
+    await expect(tests).toHaveValue(/class NotesFileTest/);
+    await page.click('.lab-fw [data-fw="pytest"]');
     await expect(tests).toHaveValue(/# mine/);
 
     // Leaving the mode brings the sites back to the picker
@@ -97,6 +98,7 @@ test.describe('Python mode', () => {
     test.setTimeout(4 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Cart');
+    await page.click('.lab-fw [data-fw="unittest"]');
     await ready(page);
     const summary = page.locator('#labSummary'), rows = page.locator('#labResults .test');
 
@@ -161,6 +163,7 @@ test.describe('Python mode', () => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Bank account');
+    await page.click('.lab-fw [data-fw="unittest"]');
     await ready(page);
     const show = page.locator('#labCovShow'), score = page.locator('#labCodeCov'), branch = page.locator('#labCodeBranch');
     const note = page.locator('#labCodeCovNote');
@@ -234,6 +237,7 @@ test.describe('Python mode', () => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Bank account');
+    await page.click('.lab-fw [data-fw="unittest"]');
     await ready(page);
     const panel = page.locator('#labMutation'), runBtn = panel.locator('.mut-run'), score = panel.locator('.mut-score');
     const group = state => panel.locator(`.bug-group[data-state="${state}"]`);
@@ -312,6 +316,7 @@ test.describe('Python mode', () => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Bank account');
+    await page.click('.lab-fw [data-fw="unittest"]');
     await ready(page);
     const panel = page.locator('#labSmells'), score = panel.locator('.smell-score');
     const group = id => panel.locator(`.smell-group[data-smell="${id}"]`);
@@ -436,6 +441,7 @@ test.describe('Python mode', () => {
     await expect(page.locator('.area-seg [data-area="python"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.lab-seg [data-labview="create"]')).toHaveAttribute('aria-pressed', 'true');
     const tests = page.locator('#labTestsEd textarea');
+    await page.click('.lab-fw [data-fw="unittest"]');
     await expect(tests).toHaveValue(/^import unittest\nfrom calculator import add, subtract, multiply, divide\n\n\n# test_add\n/);
     const group = state => page.locator(`#labCreate .create-group[data-state="${state}"] .create-what`);
     await expect(group('todo')).toHaveText(['test_add', 'test_subtract', 'test_multiply', 'test_divide', 'test_divide_by_zero_is_refused']);
@@ -506,8 +512,6 @@ class MyTest(unittest.TestCase):
     test.setTimeout(2 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     const tests = page.locator('#labTestsEd textarea'), pop = page.locator('#labAc');
-    await expect(tests).toHaveValue(/import unittest/);
-    await page.click('.lab-fw [data-fw="pytest"]');
     await expect(tests).toHaveValue(/import pytest/);
     // At the end of the file, on a line of its own
     await tests.evaluate(t => { t.focus(); t.setSelectionRange(t.value.length, t.value.length); });
@@ -542,6 +546,7 @@ class MyTest(unittest.TestCase):
   test('⌘/Ctrl+/ comments the selected lines, again uncomments them, and ⌘/Ctrl+Z undoes', async ({ page }) => {
     await openApp(page, { mode: 'python' });
     const tests = page.locator('#labTestsEd textarea');
+    await page.click('.lab-fw [data-fw="unittest"]');
     await expect(tests).toHaveValue(/import unittest/);
     await tests.evaluate(t => { t.focus(); t.setSelectionRange(0, 0); });
     await page.keyboard.press('ControlOrMeta+/');

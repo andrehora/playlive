@@ -1,25 +1,25 @@
 import { $id } from './dom.js';
 
 /* ---------- Layout: resizable panels and screen sizes, remembered ---------- */
-export const LAYOUT = 'live-test-runner:layout';
+const LAYOUT = 'live-test-runner:layout';
 export let layout = {};
 try { layout = JSON.parse(localStorage.getItem(LAYOUT) || '{}') || {}; } catch {}
-export const rootStyle = document.documentElement.style;
-export function applyLayout(){
+const rootStyle = document.documentElement.style;
+function applyLayout(){
   if (layout.leftW) rootStyle.setProperty('--left-w', layout.leftW + 'px'); else rootStyle.removeProperty('--left-w');
   if (layout.editorH) rootStyle.setProperty('--editor-h', layout.editorH + 'px'); else rootStyle.removeProperty('--editor-h');
   if (layout.createH) rootStyle.setProperty('--create-h', layout.createH + 'px'); else rootStyle.removeProperty('--create-h');
   if (layout.labH) rootStyle.setProperty('--lab-h', layout.labH + 'px'); else rootStyle.removeProperty('--lab-h');
 }
 export function saveLayout(){ try { localStorage.setItem(LAYOUT, JSON.stringify(layout)); } catch {} }
-export const clampLeft = w => Math.round(Math.min(Math.max(w, 360), $id('workspace').clientWidth * 0.62));
+const clampLeft = w => Math.round(Math.min(Math.max(w, 360), $id('workspace').clientWidth * 0.62));
 // What the editor may not take: whatever the panels below it are using, the
 // Results panel's own floor, the gaps and this panel's toolbar. No handle can
 // squeeze a panel away, which is what keeps the desktop page from scrolling —
 // in Create, where three panels share the column, as much as in Explore.
 // Explore hides the Create panel, and a hidden panel measures zero, so the
 // clamps need no second rule for which mode is on: they measure what is there.
-export const createPanelEl = () => $id('create').closest('.panel');
+const createPanelEl = () => $id('create').closest('.panel');
 const createH = () => createPanelEl().getBoundingClientRect().height;
 // Results collapsed is its one row, so the floor the editor must leave below it
 // shrinks to that row.
@@ -35,20 +35,20 @@ const resultsFloor = () => collapsedResults()
 // measures zero and asks for nothing.
 const createFloor = () => (createH() ? (collapsedSpec() ? 100 : createH()) : 0);
 const gap = () => 12 * (1 + (createH() ? 1 : 0));
-export const clampEditor = h => {
+const clampEditor = h => {
   const below = createFloor() + resultsFloor() + gap() + 76;
   return Math.round(Math.min(Math.max(h, 110), $id('left').clientHeight - below));
 };
 // Create's panel is the last in its column, so what it may not take is
 // everything above it.
-export const clampCreate = h => {
+const clampCreate = h => {
   const tests = document.querySelector('.tests-panel').getBoundingClientRect().height;
   const room = $id('left').clientHeight - tests - gap() - 130;
   return Math.round(Math.min(Math.max(h, 100), Math.max(100, room)));
 };
 // The code modes' tests may not take what the rest of their panel and the
 // Results/Console floor below them need (its head alone when collapsed).
-export const clampLab = h => {
+const clampLab = h => {
   const ed = $id('labTestsEd'), panel = ed.closest('.panel'), below = $id('labResults').closest('.panel');
   const chrome = panel.getBoundingClientRect().height - ed.getBoundingClientRect().height;
   const floor = $id('left').dataset.lab === 'collapsed' ? below.getBoundingClientRect().height : 130;
@@ -64,7 +64,7 @@ export function reclamp(){
   applyLayout();
   saveLayout();
 }
-export function makeResizer(handle, onDrag, onKey, prop){
+function makeResizer(handle, onDrag, onKey, prop){
   const propNow = () => (typeof prop === 'function' ? prop() : prop);
   handle.addEventListener('pointerdown', e => {
     e.preventDefault(); handle.setPointerCapture(e.pointerId);
@@ -121,7 +121,7 @@ makeResizer($id('labResizer'),
   },
   k => { const h = $id('labTestsEd').clientHeight; if (k === 'ArrowUp') return layout.labH = clampLab(h - 24); if (k === 'ArrowDown') return layout.labH = clampLab(h + 24); },
   'labH');
-export function setViewport(vp){
+function setViewport(vp){
   $id('device').dataset.vp = vp;
   document.querySelectorAll('.seg [data-vp]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vp === vp)));
   layout.vp = vp; saveLayout();

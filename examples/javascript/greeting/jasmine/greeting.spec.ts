@@ -1,7 +1,6 @@
 import { clock, greet } from "./greeting";
 
-// The real clock changes, so the tests replace it with a fixed hour.
-// A spy is put back by itself after each test.
+// The real clock changes, so the tests replace it with a fixed hour
 describe("Greeting", () => {
   it("says good morning", () => {
     spyOn(clock, "hour").and.returnValue(9);

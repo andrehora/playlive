@@ -1,4 +1,5 @@
-import { LABS, labOf, labState } from './lab.js';
+import { labState } from './lab.js';
+import { LABS, labOf } from './labcore.js';
 import { expand, match } from './snippets.js';
 import { mode } from './state.js';
 import { suggestionList } from './suggestlist.js';
@@ -20,7 +21,6 @@ let found = null;
 let next = null;
 
 const list = suggestionList({ input: ta, id: 'labAc', box: () => ta.closest('.lab-ed'), onAccept: accept });
-export const closeCodeCompletion = () => list.close();
 
 function accept(s){
   const { from } = found, to = ta.selectionStart;
@@ -32,7 +32,7 @@ function accept(s){
   next = after == null ? null : ta.value.length - (from + after);
   ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
-export function updateCodeCompletion(forced = false){
+function updateCodeCompletion(forced = false){
   const L = LABS[labOf(mode)];
   if (!L || ta.readOnly || document.activeElement !== ta || ta.selectionStart !== ta.selectionEnd) return list.close();
   const { example, framework, lang } = labState();

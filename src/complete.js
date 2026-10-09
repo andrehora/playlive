@@ -267,7 +267,7 @@ export function accept(i){
   if (TRIGGER.test(it.insert)) update();
 }
 // Ctrl/⌘+Space opens the list anywhere.
-export function update(forced){
+function update(forced){
   if (running || recording || specEl.readOnly || document.activeElement !== specEl) return closeCompletion();
   const caret = specEl.selectionStart;
   if (caret !== specEl.selectionEnd) return closeCompletion();

@@ -12,7 +12,7 @@
    or export are left alone, and a template literal is one token, so it is
    never changed inside. The same file mutated the same way twice is one
    mutant. Pure, so the unit tests can read it; jsworker.js is its one user. */
-import { tokenize } from './jscover.js';
+import { close, opens, shuts, tokenize } from './jstokens.js';
 
 const SWAPS = { '<': '<=', '<=': '<', '>': '>=', '>=': '>', '===': '!==', '!==': '===', '==': '!=', '!=': '==',
   '+': '-', '-': '+', '*': '/', '/': '*', '%': '*', '+=': '-=', '-=': '+=', '*=': '/=', '/=': '*=', '&&': '||', '||': '&&' };
@@ -41,15 +41,12 @@ export function mutantsOf(src){
       changes.push([t.start, t.start + v.length, v === 'true' ? 'false' : 'true', `${v} → ${v === 'true' ? 'false' : 'true'}`, t.line]);
     else if (t.type === 'name' && v === 'return'){
       // To the ; that ends it on this line, outside any brackets
-      let depth = 0, j = i + 1;
-      for (; j < toks.length && toks[j].line === t.line; j++){
-        const w = toks[j].value;
-        if ('([{'.includes(w) && toks[j].type === 'punct') depth++;
-        else if (')]}'.includes(w) && toks[j].type === 'punct'){ if (!depth) break; depth--; }
-        else if (w === ';' && !depth) break;
-      }
+      let j = i + 1;
+      for (; j < toks.length && toks[j].line === t.line && !shuts(toks[j]) && toks[j].value !== ';'; j++)
+        if (opens(toks[j])){ j = close(toks, j); if (j < 0) break; }
       const last = toks[j - 1];
-      if (j > i + 1 && toks[j]?.value === ';' && !(j === i + 2 && last.value === 'undefined'))
+      // the whole of it on the return's line, as every change here is
+      if (j > i + 1 && toks[j]?.value === ';' && toks[j].line === t.line && !(j === i + 2 && last.value === 'undefined'))
         changes.push([toks[i + 1].start, last.start + last.value.length, 'undefined', 'returns undefined', t.line]);
     }
   });

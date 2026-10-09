@@ -8,7 +8,7 @@ export const STEP_OPTS = new Set(['value', 'timeout']);
 // nothing, which is what Create counts and what the Unknown Test smell names.
 export const ASSERTIONS = new Set(['expectText', 'expectNoText', 'expectNumber', 'expectVisible']);
 export const stripFences = t => t.replace(/^\s*```[\w-]*[ \t]*\n/, '').replace(/\n```\s*$/, '\n');   // LLMs love code fences
-export const isMap = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+const isMap = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 export function normalizeStep(raw, n){
   if (!isMap(raw)) throw `${n}: each step must be "- action: ...".`;
@@ -75,7 +75,7 @@ export function normalizeStep(raw, n){
 }
 // Normalize a list of steps, remembering where each one was written: the line
 // Results and the editor point at, and "beforeEach" when it came from there.
-export function expandSteps(list, label, problems, from){
+function expandSteps(list, label, problems, from){
   const out = [];
   list.forEach((raw, i) => {
     const n = `${label}, step ${i + 1}`;
@@ -84,7 +84,7 @@ export function expandSteps(list, label, problems, from){
   });
   return out;
 }
-export function parseTest(raw, label, file){
+function parseTest(raw, label, file){
   if (!isMap(raw)) throw [`${label}: write "test: <title>" with a "steps:" list below it.`];
   if (!Array.isArray(raw.steps) || !raw.steps.length) throw [`${label}: needs a "steps:" list with at least one step.`];
   const problems = [];

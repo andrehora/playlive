@@ -30,10 +30,10 @@ const dots = (box, n) => { box.innerHTML = '<i class="todo"></i>'.repeat(n); };
 
 export let nextResolve = null;
 // Step by step: the Run button turns into Next step and waits for a click (or Ctrl/⌘+Enter)
-export function waitNext(){ return new Promise(res => { nextResolve = res; syncUI(); runBtn.focus({ preventScroll: true }); }); }
+function waitNext(){ return new Promise(res => { nextResolve = res; syncUI(); runBtn.focus({ preventScroll: true }); }); }
 export function releaseNext(){ const r = nextResolve; nextResolve = null; syncUI(); if (r) r(); }
 
-export async function runTest(t, sec, opts){
+async function runTest(t, sec, opts){
   sec.dataset.state = 'running';
   followInResults(sec);
   setView(editorSite);

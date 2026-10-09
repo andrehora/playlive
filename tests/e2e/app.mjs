@@ -29,7 +29,7 @@ export async function siteName(id){
 // Loads the app and starts collecting errors from the page that hosts it.
 // The iframe's own errors are collected by the app and surfaced as warnings.
 // Home is Python, so the sites are opened in Explore unless a test names a link.
-export async function openApp(page, { site, hash = '#explore', mode, tab } = {}){
+export async function openApp(page, { site, hash = '#html', mode, tab } = {}){
   const errors = [];
   page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
   page.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text()}`); });

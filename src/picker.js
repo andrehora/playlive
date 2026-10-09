@@ -2,7 +2,8 @@ import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
 import { createSkeleton } from './create.js';
 import { catIconSvg } from './icons.js';
-import { LABS, exampleOf, labOf, selectExample } from './lab.js';
+import { selectExample } from './lab.js';
+import { LABS, exampleOf, labOf } from './labcore.js';
 import { preview } from './run.js';
 import { syncUrl } from './share.js';
 import { loadApp, persist, stashEditor, testsFor } from './sites.js';
@@ -37,7 +38,7 @@ function renderLabTabs(){
   }
   tabsEl.appendChild(group);
 }
-export function setLabView(id){
+function setLabView(id){
   const p = lab();
   tabsEl.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === id)));
   const swatch = $id('siteSwatch');
@@ -101,7 +102,7 @@ function setCount(id){
 // The All smells tab in the panel is where "which examples have one" is
 // answered now, and it names them.
 export const listed = () => (lab() ? lab().ids : SITE_IDS);
-export function filterSites(q){
+function filterSites(q){
   q = q.trim().toLowerCase();
   const inList = new Set(listed());
   let shown = 0;
@@ -132,7 +133,7 @@ const relist = () => {
   if (!sitePop.hidden) filterSites(siteSearch.value);
 };
 document.addEventListener('playlive:mode', relist);
-export function openPicker(){
+function openPicker(){
   sitePop.hidden = false; siteBtn.setAttribute('aria-expanded', 'true');
   siteSearch.value = ''; filterSites('');
   siteSearch.focus({ preventScroll: true });
@@ -159,7 +160,7 @@ sitePop.addEventListener('keydown', e => {
   }
   else if (e.key === 'Enter' && document.activeElement === siteSearch && items[0]){ e.preventDefault(); items[0].click(); }
 });
-export function stepSite(d){
+function stepSite(d){
   if (running || recording) return;
   const list = listed();
   if (list.length < 2) return;

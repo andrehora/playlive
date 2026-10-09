@@ -5,11 +5,12 @@ import { closeCompletion, completion, context, suggest } from './complete.js';
 import { $id, errorEl, recordBtn, reloadBtn, resetBtn, runBtn, specEl, speedMode, stopBtn, summaryEl } from './dom.js';
 import { setSpecFolded } from './editor.js';
 import { toCypress, toPlaywright } from './exports.js';
-import { applyHtml, htmlDirty, htmlEdit, revertHtml } from './htmlview.js';
+import { applyHtml, htmlDirty, htmlEdit } from './htmlview.js';
 import { query } from './find.js';
 import { HIST, runHistory } from './history.js';
 import { setMode } from './modes.js';
-import { isLab, labOf, labState, resetLab, runLab, selectExample, setFramework, setLang } from './lab.js';
+import { labState, resetLab, runLab, selectExample, setFramework, setLang } from './lab.js';
+import { isLab, labOf } from './labcore.js';
 import { validate } from './parse.js';
 import { renderTabs, selectSite, setView } from './picker.js';
 import { createSkeleton, report as createReport, setCreateFolded, titlesOf } from './create.js';
@@ -45,7 +46,7 @@ recordBtn.addEventListener('click', () => recording ? stopRecording() : startRec
 // Reset = a clean slate for every example, not only the one showing: the example
 // tests back, and every site's saved data, run history, last result, catalog and
 // edited markup cleared, with nothing of ours left in storage.
-export async function resetAll(){
+async function resetAll(){
   const site = editorSite;
   // the example pages' own data: the keys they reported writing, plus any they are known to use
   const keys = new Set();
@@ -85,9 +86,9 @@ reloadBtn.addEventListener('click', () => {
   if (running || recording) return;
   loadApp();
 });
-// A link like "#coupon-code" names the example to open; with no hash the page
-// opens the first example
-const linked = siteFromHash(), opening = linkedMode(), linkedLab = labFromHash(location.hash, opening);
+// A link like "#html#coupon-code" names the mode and the example to open; with
+// no hash the page opens home
+const linked = siteFromHash(), opening = linkedMode(), linkedLab = labFromHash();
 if (linked) setEditorSite(linked);
 if (linkedLab) setLabExample(labOf(opening), linkedLab);
 renderTabs();
@@ -119,7 +120,7 @@ window.playlive = {
   create: { report: createReport, fold: setCreateFolded, skeleton: createSkeleton, titles: titlesOf },
   share: { copy: copyLink, url: shareUrl, linked: siteFromHash, linkedMode: modeFromHash },
   complete: { suggest, context, showing: completion, close: closeCompletion },
-  html: { markup: () => htmlEdit.value, apply: applyHtml, revert: revertHtml, edited: () => htmlDirty() },
+  html: { markup: () => htmlEdit.value, apply: applyHtml, edited: () => htmlDirty() },
   lab: { select: selectExample, framework: setFramework, lang: setLang, state: labState, run: runLab },
   query
 };

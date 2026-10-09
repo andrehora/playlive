@@ -49,6 +49,16 @@ FILES = set()
 def tell(kind, **data):
     emit(json.dumps({'type': kind, **data}))
 
+# The files of a job, written where the runners import them from; the names of
+# their modules, which each run forgets so it imports them afresh
+def write_files(files):
+    FILES.clear()
+    for name, src in files.items():
+        with open(name, 'w') as f:
+            f.write(src)
+        FILES.add(name)
+    return [n.removesuffix('.py') for n in files]
+
 def frames(pairs):
     out = []
     for path, lineno in pairs:
@@ -472,19 +482,6 @@ if MON:
             raise TimeoutError('The code ran on and on, so it was stopped')
     MON.register_callback(MON.PROFILER_ID, MON.events.JUMP, on_jump)
 
-# The tests, run without a word to the page: 0 when every test passed
-def quietly(target, framework, modules):
-    for m in modules:
-        sys.modules.pop(m, None)
-    sink = io.StringIO()
-    with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
-        if framework == 'pytest':
-            return int(pytest.main([target, '-x', '-q', '--color=no', '--capture=sys', '-p', 'no:cacheprovider']))
-        file, *rest = target.split('::')
-        suite = unittest.TestLoader().loadTestsFromName('.'.join([file.removesuffix('.py'), *rest]))
-        result = unittest.TextTestRunner(stream=sink, failfast=True, verbosity=0).run(suite)
-        return 5 if not result.testsRun else 0 if result.wasSuccessful() else 1
-
 # ---------- Test smells: what is wrong with the tests themselves ----------
 # The four the site modes look for, read from the test file's syntax tree, and
 # as quiet when unsure: a test with no check of its own (Unknown Test), one
@@ -670,13 +667,8 @@ def list_mutants(src):
 
 # only, a mutant's id, runs that one alone
 def mutate(files, target, framework, cover, only=None):
-    FILES.clear()
     files = json.loads(files)
-    for name, src in files.items():
-        with open(name, 'w') as f:
-            f.write(src)
-        FILES.add(name)
-    modules = [n.removesuffix('.py') for n in files]
+    modules = write_files(files)
     mutants = mutants_of(files[cover])
     tell('mutants', mutants=[m for m, _ in mutants])
     if not MON:
@@ -690,13 +682,13 @@ def mutate(files, target, framework, cover, only=None):
     MON.set_events(MON.COVERAGE_ID, MON.events.LINE)
     MON.set_events(MON.PROFILER_ID, MON.events.JUMP)
     try:
-        code = quietly(target, framework, modules)
+        base = failing(target, framework, modules)
     finally:
         MON.set_events(MON.COVERAGE_ID, 0)
     ran = set(HIT)
-    if code != 0:
+    if not base or not all(base.values()):
         MON.set_events(MON.PROFILER_ID, 0)
-        tell('mutation-refused', reason='none' if code == 5 else 'failing')
+        tell('mutation-refused', reason='none' if base == {} else 'failing')
         return
     LIMIT[0] = max(100 * JUMPS[0], 100000)
     try:
@@ -710,8 +702,8 @@ def mutate(files, target, framework, cover, only=None):
                 f.write(src)
             JUMPS[0], STOPPED[0] = 0, False
             MON.restart_events()
-            code = quietly(target, framework, modules)
-            tell('mutant', id=meta['id'], outcome='escaped' if code == 0 else 'caught', timeout=STOPPED[0])
+            r = failing(target, framework, modules)
+            tell('mutant', id=meta['id'], outcome='escaped' if r and all(r.values()) else 'caught', timeout=STOPPED[0])
     finally:
         MON.set_events(MON.PROFILER_ID, 0)
         LIMIT[0] = 0
@@ -760,15 +752,10 @@ def failing(target, framework, modules):
 BRIEFS = {}
 
 def brief(files, cover, mine, original, framework):
-    FILES.clear()
     files = json.loads(files)
     theirs = 'brief_' + mine
     files[theirs] = original
-    for name, src in files.items():
-        with open(name, 'w') as f:
-            f.write(src)
-        FILES.add(name)
-    modules = [n.removesuffix('.py') for n in files]
+    modules = write_files(files)
     if not MON:
         tell('brief', refused='unsupported')
         return
@@ -829,13 +816,9 @@ def brief(files, cover, mine, original, framework):
         os.remove(theirs)
 
 def run(files, target, framework, cover=None):
-    FILES.clear()
     files = json.loads(files)
-    for name, src in files.items():
-        with open(name, 'w') as f:
-            f.write(src)
-        FILES.add(name)
-        sys.modules.pop(name.removesuffix('.py'), None)
+    for m in write_files(files):
+        sys.modules.pop(m, None)
     measure = bool(MON and cover in files)
     if measure:
         HIT.clear()

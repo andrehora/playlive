@@ -6,8 +6,8 @@ import { highlighter } from './highlight.js';
    Python is Pyodide, which is CPython compiled to WebAssembly, run in a worker
    (pyworker.js) that is only fetched when the mode is entered. It is slow to
    start, so it is kept for the next run rather than started afresh. Every
-   example's tests are written twice, with unittest (the default) and with
-   pytest, and each runs on its own runner. Every run also measures which
+   example's tests are written twice, with pytest (the default) and with
+   unittest, and each runs on its own runner. Every run also measures which
    lines of the code ran (pyworker.js), for the Coverage check.               */
 export const filesFor = id => ({ code: `${moduleOf(id)}.py`, tests: `test_${moduleOf(id)}.py` });
 
@@ -121,8 +121,8 @@ export const PYTHON = {
   label: (v, fw) => `Python ${v.python} · ${fw === 'pytest' ? `pytest ${v.pytest}` : 'unittest'}`,
   examples: PY_EXAMPLES, ids: PY_IDS, accent: PY_ACCENT, icon: 'Python',
   frameworks: [
-    { id: 'unittest', label: 'unittest', logo: 'python', title: 'Tests with unittest' },
-    { id: 'pytest', label: 'pytest', logo: 'pytest', title: 'Tests with pytest' }
+    { id: 'pytest', label: 'pytest', logo: 'pytest', title: 'Tests with pytest' },
+    { id: 'unittest', label: 'unittest', logo: 'python', title: 'Tests with unittest' }
   ],
   langs: null,
   codeTitle: () => 'Python code',

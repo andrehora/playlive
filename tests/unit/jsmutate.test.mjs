@@ -27,8 +27,9 @@ test('a generic, a sign, a template, a string and the imports and exports are le
   assert.deepEqual(whats('const { add } = require("./calc");\nimport { a } from "./a";\nmodule.exports = { add: 1 };\nexport { a };\n'), []);
 });
 
-test('returning undefined is not changed to returning undefined, nor a return with no value', () => {
+test('returning undefined is not changed to returning undefined, nor a return with no value or over lines', () => {
   assert.deepEqual(whats('return undefined;\nreturn;\n'), []);
+  assert.deepEqual(whats('return (\n  a\n);\n'), []);
 });
 
 test('the same change twice is one mutant, and there are at most MAX_MUTANTS', () => {

@@ -161,48 +161,54 @@ test.describe('Modes', () => {
   });
 
   // A link that names the mode is a link to what you were doing, not only to
-  // what you were looking at. Each half is left out when it is the default, so
-  // every link written before modes existed still means what it meant.
+  // what you were looking at. The example is left out when it is the mode's first.
   test('the mode is half the link, and the default half is left out', async ({ page }) => {
     await openApp(page, { site: SITE });
-    expect(new URL(page.url()).hash).toBe('#coupon-code');
+    expect(new URL(page.url()).hash).toBe('#html#coupon-code');
 
     await setMode(page, 'create');
-    await expect.poll(() => new URL(page.url()).hash).toBe('#create#coupon-code');
-    expect(await page.evaluate(() => window.playlive.share.url())).toMatch(/#create#coupon-code$/);
+    await expect.poll(() => new URL(page.url()).hash).toBe('#html-create#coupon-code');
+    expect(await page.evaluate(() => window.playlive.share.url())).toMatch(/#html-create#coupon-code$/);
 
     // Home is the first example, so a link to it in a mode names only the mode.
     await page.evaluate(() => window.playlive.selectSite(window.playlive.SITE_IDS[0]));
-    await expect.poll(() => new URL(page.url()).hash).toBe('#create');
+    await expect.poll(() => new URL(page.url()).hash).toBe('#html-create');
     // Home is Python, so Explore on the first example names the mode too.
     await setMode(page, 'explore');
-    await expect.poll(() => new URL(page.url()).hash).toBe('#explore');
+    await expect.poll(() => new URL(page.url()).hash).toBe('#html');
   });
 
   test('a pasted link opens the mode and the example it names', async ({ page }) => {
     await openApp(page);
-    await page.evaluate(() => { location.hash = '#create#coupon-code'; });
+    await page.evaluate(() => { location.hash = '#html-create#coupon-code'; });
     await expect.poll(() => page.evaluate(() => window.playlive.modes.get())).toBe('create');
     await expect(page.locator('#siteName')).toHaveText('Coupon code');
     await expect(page.locator('.create-panel')).toBeVisible();
 
-    // A link from when Mutation was a mode opens Explore on its tab.
-    await page.evaluate(() => { location.hash = '#mutation#coupon-code'; });
-    await expect.poll(() => page.evaluate(() => window.playlive.modes.get())).toBe('explore');
-    await expect(page.locator('#bugTab')).toBeVisible();
-    await expect.poll(() => new URL(page.url()).hash).toBe('#coupon-code');
-
-    // A link from before modes existed names only the example, and still does.
-    await page.evaluate(() => { location.hash = '#click-counter'; });
+    // Explore names the sites' language and the example
+    await page.evaluate(() => { location.hash = '#html#click-counter'; });
     await expect.poll(() => page.evaluate(() => window.playlive.modes.get())).toBe('explore');
     await expect(page.locator('#siteName')).toHaveText('Counter');
 
+    // A code mode's link names its own example, read before the mode changes the address
+    await page.evaluate(() => { location.hash = '#python-create#stack'; });
+    await expect.poll(() => page.evaluate(() => window.playlive.modes.get())).toBe('python-create');
+    await expect(page.locator('#siteName')).toHaveText('Stack');
+    await expect.poll(() => new URL(page.url()).hash).toBe('#python-create#stack');
+
     // And opening one cold works the same way.
-    const { errors } = await openApp(page, { hash: '#smells#login' });
+    const { errors } = await openApp(page, { hash: '#html#login' });
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('explore');
     await expect(page.locator('#siteName')).toHaveText('Login');
-    await expect(page.locator('#smellTab')).toBeVisible();
-    expect(new URL(page.url()).hash).toBe('#login');
+    expect(new URL(page.url()).hash).toBe('#html#login');
+
+    // A hash in any other shape is home, and says so
+    for (const hash of ['#login', '#explore', '#create#login', '#stack']){
+      await openApp(page, { hash });
+      expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
+      await expect(page.locator('#siteName')).toHaveText('Calculator');
+      expect(new URL(page.url()).hash).toBe('#python');
+    }
     expect(errors).toEqual([]);
   });
 

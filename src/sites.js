@@ -13,7 +13,7 @@ export const savedTests = {};             // only the sites visited in this brow
 // showing is the mode's business, and everything that reads or writes the
 // editor goes through bufferFor so neither can overwrite the other.
 export const createTests = {};
-export const bufferFor = (m = mode) => (m === 'create' ? createTests : savedTests);
+const bufferFor = (m = mode) => (m === 'create' ? createTests : savedTests);
 export const exampleCache = {};
 // The tests that ship with a site, fetched once and kept for Reset
 export async function exampleTests(id){
@@ -36,7 +36,7 @@ export async function testsFor(id, m = mode){
 // editor is handed to another site or another mode.
 export const stashEditor = (id = editorSite, m = mode) => { bufferFor(m)[id] = specEl.value; };
 // The site's markup as it ships, fetched once: what a bug patch is applied to
-export const sourceCache = {};
+const sourceCache = {};
 export async function pageSource(id){
   if (sourceCache[id] === undefined){
     try {
@@ -80,7 +80,7 @@ window.__trRecordKey = (site, area, key) => {
 };
 export const pageErrors = () => (frame.contentWindow && frame.contentWindow.__trErrors) || [];
 // Reloading the same URL needs a new one, so each load gets a fresh token.
-export let loadCount = 0;
+let loadCount = 0;
 export function loadApp(){
   hideSnapshot();
   const site = currentSite;

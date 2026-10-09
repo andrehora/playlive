@@ -6,7 +6,9 @@ import { setView } from './picker.js';
 import { run, syncUI } from './run.js';
 import { loadApp, pageSource } from './sites.js';
 import { clearBugHtml, editorSite, hunting, recording, running, setBugHtml, setHunting } from './state.js';
+import { listGroup, listNote } from './lists.js';
 import { toast } from './ui.js';
+import { band } from './util.js';
 
 /* ---------- Bugs: what the tests would catch if the page broke ----------
 
@@ -24,7 +26,7 @@ import { toast } from './ui.js';
    A patch that no longer matches the page is reported as stale rather than
    scoring for free, so editing the page cannot quietly inflate the number.  */
 
-export const bugLists = {};               // site -> the site's bugs, fetched once
+const bugLists = {};               // site -> the site's bugs, fetched once
 export async function bugsFor(site){
   if (bugLists[site] === undefined){
     if (!SITES[site] || !SITES[site].bugs) bugLists[site] = [];
@@ -38,7 +40,7 @@ export async function bugsFor(site){
   return bugLists[site];
 }
 
-export const outcomes = {};               // site -> Map(bug id -> 'caught' | 'escaped' | 'stale')
+const outcomes = {};               // site -> Map(bug id -> 'caught' | 'escaped' | 'stale')
 const outcomesOf = site => (outcomes[site] ||= new Map());
 export const clearBugs = site => { delete outcomes[site]; };
 export let injected = null;               // { site, id } while a bug is on the page
@@ -155,13 +157,12 @@ export function report(site = editorSite){
   };
 }
 export const percent = r => Math.round(r.score * 100);
-export const band = p => p === 100 ? 'ok' : p >= 60 ? 'warn' : 'bad';
 
 /* ---------- The tab ----------
    The Mutation tab of the Results panel: Results folds it with the rest. */
-export const bugsEl = $id('bugs'), bugScore = $id('bugScore'), bugBar = $id('bugbar');
-export const bugPanel = $id('bugTab');   // the band is the tab's, its head included
-export const huntBtn = $id('hunt');
+const bugsEl = $id('bugs'), bugScore = $id('bugScore'), bugBar = $id('bugbar');
+const bugPanel = $id('bugTab');   // the band is the tab's, its head included
+const huntBtn = $id('hunt');
 const GROUPS = [
   ['escaped', 'Escaped', 'Every test still passed'],
   ['stale', 'No longer applies', 'The page has changed'],
@@ -178,7 +179,7 @@ export function renderBugs(){
     bugScore.textContent = '';
     huntBtn.disabled = true;
     bugsEl.innerHTML = '';
-    bugsEl.appendChild(note('Reading this example’s mutations…'));
+    bugsEl.appendChild(listNote('Reading this example’s mutations…'));
     return;
   }
   const r = report();
@@ -198,38 +199,22 @@ export function renderBugs(){
   bugBar.hidden = !live || inHtml;
   $id('bugbarText').textContent = text;
   $id('htmlBugText').textContent = text;
-  $id('htmlBugText').hidden = !live;
-  $id('htmlBugRepair').hidden = !live;
+  $id('htmlBar').hidden = !live;
 
   const top = bugsEl.scrollTop;
   bugsEl.innerHTML = '';
   if (!r.total){
-    bugsEl.appendChild(note('This example ships no mutations yet. The ones that do can break their own page a dozen ways and ask whether your tests notice.'));
+    bugsEl.appendChild(listNote('This example ships no mutations yet. The ones that do can break their own page a dozen ways and ask whether your tests notice.'));
     return;
   }
   for (const [state, title, why] of GROUPS){
     const rows = r.items.filter(i => i.state === state);
     if (!rows.length) continue;
-    const g = document.createElement('div');
-    g.className = 'bug-group'; g.dataset.state = state;
-    const h = document.createElement('div');
-    h.className = 'list-head'; h.title = why;
-    h.innerHTML = '<span class="bug-dot" aria-hidden="true"></span><span class="list-title"></span><span class="list-n"></span>';
-    h.querySelector('.list-title').textContent = title;
-    h.querySelector('.list-n').textContent = rows.length;
-    g.appendChild(h);
-    const ul = document.createElement('ul');
-    ul.className = 'list-list';
-    for (const b of rows) ul.appendChild(row(b));
-    g.appendChild(ul);
+    const g = listGroup('bug', { state, title, n: rows.length, why });
+    for (const b of rows) g.lastChild.appendChild(row(b));
     bugsEl.appendChild(g);
   }
   bugsEl.scrollTop = top;
-}
-function note(text){
-  const p = document.createElement('p');
-  p.className = 'list-note'; p.textContent = text;
-  return p;
 }
 // An escaped bug says why it got through: that sentence is the test the file is
 // missing, in the words a person would use to describe it.

@@ -108,6 +108,9 @@ const MOCHA = (lang, from) => [
   { label: 'after', start: true, detail: 'runs once, after the tests', body: 'after(() => {\n  $0\n});' },
   { label: 'it.skip', start: true, detail: 'a test, skipped', body: 'it.skip("${1:does something}", () => {\n  $0\n});' },
   { label: 'chai', start: true, detail: 'Chai\'s expect', body: requireLine(lang, 'expect', 'chai') },
+  { label: 'sinon', start: true, detail: 'Sinon, to replace things', body: lang === 'ts' ? 'import * as sinon from "sinon";\n$0' : 'const sinon = require("sinon");\n$0' },
+  { label: 'sinon.stub', detail: 'replace a method in this test', body: 'sinon.stub(${1:object}, "method").returns(value);' },
+  { label: 'sinon.restore', detail: 'put back what was replaced', body: 'sinon.restore();' },
   { label: lang === 'ts' ? 'import' : 'require', start: true, detail: 'the code under test', body: requireLine(lang, '${1:name}', from) },
   { label: 'expect', detail: 'a check', body: 'expect(${1:actual}).to.equal(expected);' },
   { label: 'expect to.throw', detail: 'the call throws', body: 'expect(() => ${1:call()}).to.throw(Error);' },
@@ -137,7 +140,7 @@ export const JAVASCRIPT = {
   runtime: fw => (fw === 'mocha' ? 'Mocha' : 'Jasmine'), title: 'JS/TS',
   // What runs the tests, language first: JavaScript's version is the browser's
   label: (v, fw, lang) => `${lang === 'ts' ? `TypeScript ${v.typescript}` : `JavaScript (${v.browser})`} · `
-    + (fw === 'mocha' ? `Mocha ${v.mocha} + Chai ${v.chai}` : `Jasmine ${v.jasmine}`),
+    + (fw === 'mocha' ? `Mocha ${v.mocha} + Chai ${v.chai} + Sinon ${v.sinon}` : `Jasmine ${v.jasmine}`),
   examples: JS_EXAMPLES, ids: JS_IDS, accent: JS_ACCENT, icon: 'JavaScript',
   frameworks: [
     { id: 'jasmine', label: 'Jasmine', logo: 'jasmine', title: 'Tests with Jasmine' },

@@ -10,6 +10,8 @@
    code still names the editor's lines. Should the instrumented code not parse,
    whoever runs it falls back to the code as written. Pure, so the unit tests
    can read it; jsworker.js is its one user.                               */
+import { atTop, close, tokenize } from './jstokens.js';
+
 export const PROBE = '$cov';
 export const BRANCH = '$brc';
 
@@ -18,72 +20,7 @@ const NOT_END = new Set(('case catch class const default delete do else export e
   + 'instanceof let new of static switch throw try typeof var void while with yield await async').split(' '));
 // Names that carry on what came before, so no statement starts with them
 const CARRY_ON = new Set(['in', 'of', 'instanceof', 'as', 'satisfies', 'else', 'catch', 'finally']);
-// After these a slash starts a regular expression rather than dividing
-const BEFORE_REGEX = new Set(['return', 'typeof', 'case', 'do', 'else', 'in', 'of', 'new', 'delete', 'void', 'throw', 'instanceof', 'yield', 'await']);
 const CONTROL = new Set(['if', 'for', 'while', 'with', 'switch', 'catch']);
-const PUNCT = ['>>>=', '...', '===', '!==', '**=', '<<=', '>>=', '>>>', '?.', '??=', '&&=', '||=', '=>', '==', '!=', '<=', '>=',
-  '&&', '||', '??', '++', '--', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**', '<<', '>>'];
-
-/* ---------- Tokens ----------
-   { type, value, start, line, end }: type is name, num, str, tmpl, regex or
-   punct; `line` is where it starts and `end` the line it ends on, from 0.
-   Comments and white space are skipped. A template literal is one token. */
-export function tokenize(src){
-  const out = [];
-  let i = 0, line = 0;
-  const lines = (a, b) => { for (let k = a; k < b; k++) if (src[k] === '\n') line++; };
-  // From the character after a quote to just after the closing one
-  const quoted = (k, q) => { while (k < src.length && src[k] !== q && src[k] !== '\n'){ if (src[k] === '\\') k++; k++; } return k + 1; };
-  // From just after a backquote to just after its closing one, ${…} and all
-  function template(k){
-    while (k < src.length && src[k] !== '`'){
-      if (src[k] === '\\') k += 2;
-      else if (src[k] === '$' && src[k + 1] === '{'){
-        let depth = 1;
-        k += 2;
-        while (k < src.length && depth){
-          const c = src[k];
-          if (c === '{') depth++;
-          else if (c === '}') depth--;
-          if (c === '"' || c === "'") k = quoted(k + 1, c);
-          else if (c === '`') k = template(k + 1);
-          else k++;
-        }
-      } else k++;
-    }
-    return k + 1;
-  }
-  while (i < src.length){
-    const c = src[i];
-    if (c === '\n'){ line++; i++; continue; }
-    if (/\s/.test(c)){ i++; continue; }
-    if (c === '/' && src[i + 1] === '/'){ while (i < src.length && src[i] !== '\n') i++; continue; }
-    if (c === '/' && src[i + 1] === '*'){
-      const e = src.indexOf('*/', i + 2), end = e < 0 ? src.length : e + 2;
-      lines(i, end); i = end; continue;
-    }
-    const start = i, first = line, prev = out.at(-1);
-    let type;
-    if (c === '"' || c === "'"){ type = 'str'; i = quoted(i + 1, c); }
-    else if (c === '`'){ type = 'tmpl'; i = template(i + 1); lines(start, i); }
-    else if (/[\w$#\u0080-￿]/.test(c) && !/\d/.test(c)){ type = 'name'; i = start + /^[\w$#\u0080-￿]+/.exec(src.slice(i))[0].length; }
-    else if (/\d/.test(c) || (c === '.' && /\d/.test(src[i + 1]))){ type = 'num'; i = start + /^\.?[\w.]+/.exec(src.slice(i))[0].length; }
-    else if (c === '/' && (!prev || (prev.type === 'punct' && !')]}'.includes(prev.value)) || (prev.type === 'name' && BEFORE_REGEX.has(prev.value)))){
-      type = 'regex';
-      let k = i + 1, cls = false;
-      while (k < src.length && src[k] !== '\n' && (cls || src[k] !== '/')){
-        if (src[k] === '\\') k++;
-        else if (src[k] === '[') cls = true;
-        else if (src[k] === ']') cls = false;
-        k++;
-      }
-      i = k + 1;
-      while (/\w/.test(src[i] || '')) i++;
-    } else { type = 'punct'; i += (PUNCT.find(p => src.startsWith(p, i)) || c).length; }
-    out.push({ type, value: src.slice(start, i), start, line: first, end: line });
-  }
-  return out;
-}
 
 /* ---------- Probes ----------
    Where statements start: right inside a block, after a `;` or a case label
@@ -159,21 +96,14 @@ export function instrument(src, probe = PROBE, { branches = false } = {}){
    Nothing is put across lines, so the lines stay the lines written. */
 function branchesIn(toks){
   const out = [];
-  const closing = i => { for (let d = 0, j = i; j < toks.length; j++){ const v = toks[j].type === 'punct' ? toks[j].value : ''; if (v === '(' || v === '[' || v === '{') d++; else if ((v === ')' || v === ']' || v === '}') && --d === 0) return j; } return -1; };
   toks.forEach((t, i) => {
     if (t.type !== 'name' || !['if', 'while', 'for'].includes(t.value) || toks[i - 1]?.value === '.' || toks[i + 1]?.value !== '(') return;
-    const open = i + 1, shut = closing(open);
+    const open = i + 1, shut = close(toks, open);
     if (shut < 0 || shut === open + 1) return;
     const id = out.length, wrap = (a, b, fn) => out.push({ id, line: t.line, put: [[toks[a].start, `${BRANCH}.${fn}(${id}, `], [toks[b].start + toks[b].value.length, ')']] });
     if (t.value !== 'for') return wrap(open + 1, shut - 1, 'b');
     // for (…; condition; …), or for (… of iterable)
-    const top = [];
-    for (let d = 0, j = open + 1; j < shut; j++){
-      const v = toks[j].type === 'punct' ? toks[j].value : toks[j].type === 'name' ? toks[j].value : '';
-      if (v === '(' || v === '[' || v === '{') d++;
-      else if (v === ')' || v === ']' || v === '}') d--;
-      else if (!d && (v === ';' || v === 'of' || v === 'in')) top.push([v, j]);
-    }
+    const top = atTop(toks, open + 1, shut).map(j => [toks[j].value, j]).filter(([v]) => v === ';' || v === 'of' || v === 'in');
     const [first, second] = top;
     if (first?.[0] === ';' && second?.[0] === ';' && second[1] > first[1] + 1) wrap(first[1] + 1, second[1] - 1, 'b');
     else if (first?.[0] === 'of' && !top.some(([v]) => v === ';') && shut > first[1] + 1) wrap(first[1] + 1, shut - 1, 'i');

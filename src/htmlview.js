@@ -14,15 +14,15 @@ import { currentSite, lastEl, setEditedHtml } from './state.js';
    can highlight the line the running step is working on.
 
    The markup is editable, like the test editor: a textarea over a highlighted
-   copy of itself. Edits sit in the textarea until Save writes them back into
-   the frame, which re-parses the page so its own scripts run again. While
-   there are unsaved edits the view stops reading the page, so a running step
-   cannot overwrite what is being typed. Reset brings the original page back. */
+   copy of itself. Edits sit in the textarea until you leave it (or press
+   ⌘/Ctrl+Enter), which writes them back into the frame and re-parses the page
+   so its own scripts run again. While there are edits the page has not seen
+   the view stops reading the page, so a running step cannot overwrite what is
+   being typed. Undo takes edits back; Reset brings the original page back.  */
 export const htmlPane = $id('htmlPane'), htmlCode = $id('htmlCode'), htmlGutter = $id('htmlGutter');
 export const htmlEdit = $id('htmlEdit');
-const applyBtn = $id('htmlApply'), revertBtn = $id('htmlRevert');
 export const viewSeg = document.querySelectorAll('.view-seg [data-view]');
-export let viewMode = 'site';            // 'site' shows the page, 'html' shows its markup
+let viewMode = 'site';            // 'site' shows the page, 'html' shows its markup
 
 const INDENT = '  ';
 const VOID = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
@@ -57,7 +57,7 @@ function attrsOf(el){
 }
 // One line of markup, coloured as text: the view reads the same lines whether
 // they came from the page or from what is being typed over them.
-export function hlMarkupLine(line){
+function hlMarkupLine(line){
   let out = '', i = 0, inTag = false;
   while (i < line.length){
     const rest = line.slice(i);
@@ -168,19 +168,16 @@ function followLine(i){
   if (top >= htmlEdit.scrollTop + lh && top <= htmlEdit.scrollTop + h - lh) return;
   htmlEdit.scrollTo({ top: Math.max(0, top - h / 3), behavior: reduceMotion ? 'auto' : 'smooth' });
 }
-export function syncHtmlScroll(){
+function syncHtmlScroll(){
   htmlCode.scrollTop = htmlEdit.scrollTop; htmlCode.scrollLeft = htmlEdit.scrollLeft;
   htmlGutter.scrollTop = htmlEdit.scrollTop;
 }
 htmlEdit.addEventListener('scroll', syncHtmlScroll);
 
 /* ---------- Editing the markup ---------- */
-// Typing changes nothing on the page until Save: half-written markup would
-// break it, and a running step would overwrite it on the way past.
-export function setHtmlDirty(on){
-  dirty = on;
-  applyBtn.disabled = revertBtn.disabled = !on;
-}
+// Typing changes nothing on the page until you leave the editor: half-written
+// markup would break it, and a running step would overwrite it on the way past.
+function setHtmlDirty(on){ dirty = on; }
 // The markup goes back through the parser, so the page's own scripts run again
 // and its buttons keep working. What the page kept in its variables starts over.
 // It stays the site's page from here on, so a run starts every test from it;
@@ -203,7 +200,6 @@ export function withBase(markup, href){
   const at = dt ? dt.index + dt[0].length : 0;
   return markup.slice(0, at) + tag + markup.slice(at);
 }
-export function revertHtml(){ setHtmlDirty(false); renderHtmlView(); }
 export const htmlDirty = () => dirty;
 htmlEdit.addEventListener('input', () => {
   setHtmlDirty(htmlEdit.value !== shown);
@@ -214,12 +210,13 @@ htmlEdit.addEventListener('keydown', e => {
 });
 commentKey(htmlEdit, '<!--', '-->');
 undoable(htmlEdit);
-applyBtn.addEventListener('click', applyHtml);
-revertBtn.addEventListener('click', revertHtml);
+// Leaving the editor applies it, unless it is the whole window that lost focus:
+// coming back to another app's half-typed tag would find it already on the page.
+htmlEdit.addEventListener('blur', () => { if (document.hasFocus()) applyHtml(); });
 
 // The site stays laid out underneath, covered by the markup rather than hidden:
 // a step can only see an element that the browser is still giving a size to.
-export function setViewMode(mode, remember = true){
+function setViewMode(mode, remember = true){
   viewMode = mode === 'html' ? 'html' : 'site';
   viewSeg.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === viewMode)));
   htmlPane.hidden = viewMode !== 'html';

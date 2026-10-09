@@ -1,4 +1,4 @@
-/* ---------- JS/TS mode's runner: Jasmine, or Mocha with Chai, off the page ----------
+/* ---------- JS/TS mode's runner: Jasmine, or Mocha with Chai and Sinon, off the page ----------
 
    A module worker, started afresh for every run (the profile's `fresh`), so no
    global a test file defines can leak into the next run, and Stop can end a
@@ -27,10 +27,13 @@ import { BRANCH, PROBE, instrument } from './jscover.js';
 import { flowsOf } from './jsflow.js';
 import { mutantsOf } from './jsmutate.js';
 import { lineMap } from './sourcemap.js';
+import { escRe, plural } from './util.js';
 
 const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/';
 const LIBS = { jasmine: CDN + 'jasmine/7.0.2/jasmine.min.js', mocha: CDN + 'mocha/12.0.3/mocha.min.js' };
 const CHAI = CDN + 'chai/5.2.0/chai.js';         // an ES module, imported rather than evaluated
+// Mocha has no stubs of its own (Jasmine has spyOn), so Sinon comes with it
+const SINON = CDN + 'sinon.js/22.1.0/sinon.min.js';
 const TS = CDN + 'typescript/5.9.3/typescript.min.js';
 
 const tell = (type, data = {}) => postMessage({ type, ...data });
@@ -59,11 +62,11 @@ const version = url => url.match(/\/(\d+\.\d+\.\d+)\//)[1];
 let chai = null;
 const ready = (async () => {
   await script(LIBS[FW]);
-  if (FW === 'mocha') chai = await import(CHAI);
+  if (FW === 'mocha') [chai] = await Promise.all([import(CHAI), script(SINON)]);
   if (LANG === 'ts') await script(TS);
   tell('ready', { versions: {
     [FW]: version(LIBS[FW]),
-    ...(chai && { chai: version(CHAI) }),
+    ...(chai && { chai: version(CHAI), sinon: version(SINON) }),
     ...(LANG === 'ts' && { typescript: version(TS) }),
     browser: browser()
   } });
@@ -190,6 +193,7 @@ function makeRequire(){
     const bare = spec.replace(/^node:/, '');
     if (base[bare]) return base[bare];
     if (spec === 'chai' && chai) return chai;
+    if (spec === 'sinon' && globalThis.sinon) return globalThis.sinon;
     const name = spec.startsWith('.') && resolve(spec);
     if (!name) throw new Error(`Cannot find module '${spec}'`);
     if (cache[name]) return cache[name].exports;
@@ -203,8 +207,17 @@ function makeRequire(){
   return require;
 }
 
+/* ---------- The runners ----------
+   Each runs the file's tests, or `target` alone, and says how each went:
+   aloud (`out` is the console and the page), or quietly for a run of the
+   mutations or Create's check (QUIET). Each returns the exit code, each
+   test's title and whether it passed (a title that runs more than once
+   passes only if every run does), and whether the file broke outside any
+   test, which leaves nothing to judge by. */
+const LOUD = { print, tell }, QUIET = { print(){}, tell(){} };
+
 /* ---------- Jasmine ---------- */
-async function runJasmine(testsFile, target){
+async function runJasmine(testsFile, target, out = LOUD){
   // Loaded in a browser, Jasmine has already put describe, it and expect on
   // the globals; running is left to whoever boots it, which is us
   const env = globalThis.jasmine.getEnv();
@@ -220,65 +233,68 @@ async function runJasmine(testsFile, target){
       else { const id = `${testsFile}::${p.join(' > ')}`; ids.set(c.id, id); list.push({ id, name: c.description }); }
     }
   })(env.topSuite(), []);
-  tell('collected', { tests: list });
+  out.tell('collected', { tests: list });
 
   let depth = 0, t0 = 0;
-  const failures = [], counts = { specs: 0, failed: 0, pending: 0 };
+  const failures = [], counts = { specs: 0, failed: 0, pending: 0 }, results = new Map();
   const pad = () => '  '.repeat(depth);
   env.addReporter({
-    suiteStarted: r => { print(pad() + r.description); depth++; },
+    suiteStarted: r => { out.print(pad() + r.description); depth++; },
     suiteDone: () => { depth--; },
-    specStarted: r => { t0 = performance.now(); tell('start', { id: ids.get(r.id) }); },
+    specStarted: r => { t0 = performance.now(); out.tell('start', { id: ids.get(r.id) }); },
     specDone: r => {
       const id = ids.get(r.id), ms = Math.round(performance.now() - t0);
       if (r.status === 'excluded') return;
       counts.specs++;
-      if (r.status === 'passed'){ print(`${pad()}✓ ${r.description}`); tell('result', { id, outcome: 'passed', ms }); return; }
-      if (r.status === 'pending'){ counts.pending++; print(`${pad()}- ${r.description} (pending)`); tell('result', { id, outcome: 'skipped', ms, message: r.pendingReason || 'Pending', frames: [] }); return; }
+      results.set(r.description, results.get(r.description) !== false && r.status !== 'failed');
+      if (r.status === 'passed'){ out.print(`${pad()}✓ ${r.description}`); out.tell('result', { id, outcome: 'passed', ms }); return; }
+      if (r.status === 'pending'){ counts.pending++; out.print(`${pad()}- ${r.description} (pending)`); out.tell('result', { id, outcome: 'skipped', ms, message: r.pendingReason || 'Pending', frames: [] }); return; }
       counts.failed++;
       const f = r.failedExpectations[0] || {};
-      print(`${pad()}✗ ${r.description}`);
+      out.print(`${pad()}✗ ${r.description}`);
       failures.push([r.fullName, r.failedExpectations]);
-      tell('result', { id, outcome: 'failed', ms, message: f.message, frames: frames(f.stack) });
+      out.tell('result', { id, outcome: 'failed', ms, message: f.message, frames: frames(f.stack) });
     }
   });
   const result = await env.execute(target === testsFile ? undefined : [...ids].filter(([, v]) => v === target).map(([k]) => k));
 
   failures.forEach(([name, fails], i) => {
-    print('');
-    print(`${i + 1}) ${name}`);
-    for (const f of fails){ print(`  Message:`); print(`    ${f.message}`); print(`  Stack:`); for (const l of String(f.stack || '').split('\n').slice(0, 6)) print(`    ${l.trim()}`); }
+    out.print('');
+    out.print(`${i + 1}) ${name}`);
+    for (const f of fails){ out.print(`  Message:`); out.print(`    ${f.message}`); out.print(`  Stack:`); for (const l of String(f.stack || '').split('\n').slice(0, 6)) out.print(`    ${l.trim()}`); }
   });
-  print('');
-  print(`${counts.specs} ${counts.specs === 1 ? 'spec' : 'specs'}, ${counts.failed} ${counts.failed === 1 ? 'failure' : 'failures'}`
+  out.print('');
+  out.print(`${plural(counts.specs, 'spec')}, ${plural(counts.failed, 'failure')}`
     + (counts.pending ? `, ${counts.pending} pending ${counts.pending === 1 ? 'spec' : 'specs'}` : ''));
-  for (const e of result?.failedExpectations || []) print(`Error: ${e.message}`);
-  if (!counts.specs) return 5;
-  return counts.failed || result?.overallStatus === 'failed' ? 1 : 0;
+  for (const e of result?.failedExpectations || []) out.print(`Error: ${e.message}`);
+  const code = !counts.specs ? 5 : counts.failed || result?.overallStatus === 'failed' ? 1 : 0;
+  return { code, results, broken: !!result?.failedExpectations?.length };
 }
 
 /* ---------- Mocha, with its spec reporter's words ---------- */
-async function runMocha(testsFile, target){
+async function runMocha(testsFile, target, out = LOUD){
   const { mocha } = globalThis;
-  const ids = new Map(), failures = [];
-  let depth = 0, passing = 0, pending = 0, t0 = 0;
+  const ids = new Map(), failures = [], passed = new Set(), failed = new Set();
+  let depth = 0, passing = 0, pending = 0, t0 = 0, broken = false;
   const pad = () => '  '.repeat(depth + 1);
   const idOf = t => `${testsFile}::${t.titlePath().join(' > ')}`;
   // A reporter is the one thing Mocha is told about the page: here there is none
   function Reporter(runner){
-    runner.on('suite', s => { if (s.title){ print(pad() + s.title); depth++; } });
+    runner.on('suite', s => { if (s.title){ out.print(pad() + s.title); depth++; } });
     runner.on('suite end', s => { if (s.title) depth--; });
-    runner.on('test', t => { t0 = performance.now(); tell('start', { id: idOf(t) }); });
-    runner.on('pass', t => { passing++; print(`${pad()}✔ ${t.title}`); tell('result', { id: idOf(t), outcome: 'passed', ms: t.duration ?? 0 }); });
-    runner.on('pending', t => { pending++; print(`${pad()}- ${t.title}`); tell('result', { id: idOf(t), outcome: 'skipped', ms: 0, message: 'Pending', frames: [] }); });
+    runner.on('test', t => { t0 = performance.now(); out.tell('start', { id: idOf(t) }); });
+    runner.on('pass', t => { passing++; passed.add(t.title); out.print(`${pad()}✔ ${t.title}`); out.tell('result', { id: idOf(t), outcome: 'passed', ms: t.duration ?? 0 }); });
+    runner.on('pending', t => { pending++; passed.add(t.title); out.print(`${pad()}- ${t.title}`); out.tell('result', { id: idOf(t), outcome: 'skipped', ms: 0, message: 'Pending', frames: [] }); });
     runner.on('fail', (t, err) => {
       failures.push([t, err]);
-      print(`${pad()}${failures.length}) ${t.title}`);
+      out.print(`${pad()}${failures.length}) ${t.title}`);
       const info = { message: `${err.name || 'Error'}: ${err.message}`, frames: frames(err.stack) };
       // A hook that fails is not a test: it fails the test it ran for
       const test = t.type === 'hook' ? t.ctx?.currentTest : t;
-      if (test) tell('result', { id: idOf(test), outcome: t.type === 'hook' ? 'error' : 'failed', ms: Math.round(performance.now() - t0), ...info });
-      else tell('collect-error', info);
+      if (test) failed.add(test.title);
+      else broken = true;
+      if (test) out.tell('result', { id: idOf(test), outcome: t.type === 'hook' ? 'error' : 'failed', ms: Math.round(performance.now() - t0), ...info });
+      else out.tell('collect-error', info);
     });
   }
   mocha.setup({ ui: 'bdd', reporter: Reporter, checkLeaks: false });
@@ -290,24 +306,24 @@ async function runMocha(testsFile, target){
     for (const t of suite.tests){ const id = idOf(t); ids.set(id, t); list.push({ id, name: t.title }); }
     for (const s of suite.suites) walk(s);
   })(mocha.suite);
-  tell('collected', { tests: list });
+  out.tell('collected', { tests: list });
   if (target !== testsFile && ids.has(target))
-    mocha.grep(new RegExp(`^${ids.get(target).fullTitle().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
+    mocha.grep(new RegExp(`^${escRe(ids.get(target).fullTitle())}$`));
 
-  print('');
+  out.print('');
   const start = performance.now();
   await new Promise(done => mocha.run(done));
-  print('');
-  print(`  ${passing} passing (${Math.round(performance.now() - start)}ms)`);
-  if (pending) print(`  ${pending} pending`);
-  if (failures.length) print(`  ${failures.length} failing`);
+  out.print('');
+  out.print(`  ${passing} passing (${Math.round(performance.now() - start)}ms)`);
+  if (pending) out.print(`  ${pending} pending`);
+  if (failures.length) out.print(`  ${failures.length} failing`);
   failures.forEach(([t, err], i) => {
-    print('');
-    print(`  ${i + 1}) ${t.fullTitle()}:`);
-    for (const l of String(err.stack || `${err.name}: ${err.message}`).split('\n').slice(0, 6)) print(`     ${l.trim()}`);
+    out.print('');
+    out.print(`  ${i + 1}) ${t.fullTitle()}:`);
+    for (const l of String(err.stack || `${err.name}: ${err.message}`).split('\n').slice(0, 6)) out.print(`     ${l.trim()}`);
   });
-  if (!passing && !failures.length && !pending) return 5;
-  return failures.length ? 1 : 0;
+  const code = !passing && !failures.length && !pending ? 5 : failures.length ? 1 : 0;
+  return { code, results: new Map(list.map(t => [t.name, passed.has(t.name) && !failed.has(t.name)])), broken };
 }
 
 /* ---------- Create: does a test you wrote catch what the example's own catches? ----------
@@ -320,31 +336,14 @@ async function runMocha(testsFile, target){
 async function failing(testsFile){
   (0, eval)(TEXT[LIBS[FW]]);
   try {
-    if (FW === 'mocha'){
-      const { mocha } = globalThis, passed = new Set(), failed = new Set(), names = [];
-      mocha.setup({ ui: 'bdd', reporter: function (runner){
-        runner.on('pass', t => passed.add(t.title));
-        runner.on('pending', t => passed.add(t.title));
-        runner.on('fail', t => { const test = t.type === 'hook' ? t.ctx?.currentTest : t; if (test) failed.add(test.title); });
-      }, checkLeaks: false });
-      makeRequire()(`./${testsFile}`);
-      (function walk(s){ for (const t of s.tests) names.push(t.title); for (const c of s.suites) walk(c); })(mocha.suite);
-      await new Promise(done => mocha.run(done));
-      return new Map(names.map(n => [n, passed.has(n) && !failed.has(n)]));
-    }
-    const env = globalThis.jasmine.getEnv(), out = new Map();
-    env.configure({ random: false });
-    makeRequire()(`./${testsFile}`);
-    env.addReporter({ specDone: r => { if (r.status !== 'excluded') out.set(r.description, out.get(r.description) !== false && r.status !== 'failed'); } });
-    const result = await env.execute();
-    if (result?.failedExpectations?.length) return null;
-    return out;
+    const r = await (FW === 'mocha' ? runMocha : runJasmine)(testsFile, testsFile, QUIET);
+    return r.broken ? null : r.results;
   } catch { return null; }
 }
 // A title written with ${…} runs once per case, each named for its values:
 // the cases are put back under the title as written, failing if any fails
 const asWritten = names => {
-  const res = names.map(n => [n, new RegExp(`^${n.split(/\$\{[^}]*\}/).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*?')}$`)]);
+  const res = names.map(n => [n, new RegExp(`^${n.split(/\$\{[^}]*\}/).map(escRe).join('.*?')}$`)]);
   return r => {
     if (!r) return r;
     const out = new Map();
@@ -435,7 +434,7 @@ onmessage = async ({ data }) => {
   // eslint-disable-next-line no-console -- the tests' own output, sent to the console tab
   console.log = console.info = console.warn = console.error = (...a) => print(a.map(x => (typeof x === 'string' ? x : JSON.stringify(x))).join(' '));
   let code;
-  try { code = await (FW === 'mocha' ? runMocha : runJasmine)(testsFile, data.target); }
+  try { ({ code } = await (FW === 'mocha' ? runMocha : runJasmine)(testsFile, data.target)); }
   catch (e){
     // The file did not load: a syntax error, or a require that failed
     print(String(e?.stack || e));

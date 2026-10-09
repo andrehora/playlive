@@ -58,6 +58,11 @@ test('each framework and language offers its own', () => {
   const body = (snips, label) => snips.find(s => s.label === label).body;
   assert.equal(body(js('mocha', 'js', 'cart'), 'chai'), 'const { expect } = require("chai");\n$0');
   assert.equal(body(js('mocha', 'ts', 'cart'), 'chai'), 'import { expect } from "chai";\n$0');
+  // Mocha stubs with Sinon; Jasmine has spyOn of its own
+  assert.equal(body(js('mocha', 'js', 'cart'), 'sinon'), 'const sinon = require("sinon");\n$0');
+  assert.equal(body(js('mocha', 'ts', 'cart'), 'sinon'), 'import * as sinon from "sinon";\n$0');
+  assert.ok(labels(js('mocha', 'js', 'cart'), 'sinon.').includes('sinon.stub'));
+  assert.ok(!labels(js('jasmine', 'js', 'cart'), 'sin').includes('sinon'));
   assert.equal(body(js('jasmine', 'ts', 'cart'), 'import'), 'import { ${1:name} } from "./cart";\n$0', 'the example\'s own module');
   assert.equal(body(py('pytest', null, 'bank-account'), 'from bank_account import'), 'from bank_account import ${1:name}\n$0');
 });

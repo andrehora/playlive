@@ -2,10 +2,12 @@ import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id, specEl } from './dom.js';
 import { jumpToLine, lineForStep } from './editor.js';
 import { describeStep } from './find.js';
+import { lineRow, listGroup, listNote } from './lists.js';
 import { ASSERTIONS, validate } from './parse.js';
 import { selectSite } from './picker.js';
 import { testsFor } from './sites.js';
 import { editorSite } from './state.js';
+import { plural } from './util.js';
 
 /* ---------- Test smells: what is wrong with the tests themselves ----------
 
@@ -180,7 +182,6 @@ export async function scanSites(){
   })();
   return scanning;
 }
-export const scanDone = () => scanned;
 // One example's findings, and whether it has any. Both lists are written here
 // so they can never disagree about an example.
 function record(id, r){
@@ -210,8 +211,8 @@ function rescanEditor(r){
    writing one, and a row goes to the example and the line that has it, so the
    catalogue is a way into the hundred examples rather than a glossary.       */
 export const smellsEl = $id('smells'), smellScore = $id('smellScore');
-export const smellPanel = $id('smellTab');
-export const smellSeg = document.querySelector('.smell-seg');
+const smellPanel = $id('smellTab');
+const smellSeg = document.querySelector('.smell-seg');
 
 // Which tab is showing. It is about this browser rather than the examples and
 // it costs nothing to choose again, so like the catalog it is never stored.
@@ -244,25 +245,22 @@ function renderFile(r){
   // saying the one thing that matters about it.
   smellPanel.dataset.band = !r.parsed ? '' : r.total ? 'warn' : 'ok';
   smellScore.textContent = !r.parsed ? ''
-    : r.total ? `${r.total} ${r.total === 1 ? 'smell' : 'smells'} in ${r.tests} ${r.tests === 1 ? 'test' : 'tests'}`
-      : `No smells in ${r.tests} ${r.tests === 1 ? 'test' : 'tests'}`;
+    : r.total ? `${plural(r.total, 'smell')} in ${plural(r.tests, 'test')}`
+      : `No smells in ${plural(r.tests, 'test')}`;
 
   if (!r.parsed){
-    smellsEl.appendChild(note('Fix the problems in the file first: these are read from the tests, not from a run.'));
+    smellsEl.appendChild(listNote('Fix the problems in the file first: these are read from the tests, not from a run.'));
     return;
   }
   if (!r.total){
-    smellsEl.appendChild(note('Nothing to report.'));
+    smellsEl.appendChild(listNote('Nothing to report.'));
     return;
   }
   for (const s of SMELLS){
     const rows = r.items.filter(i => i.smell === s.id);
     if (!rows.length) continue;
     const g = group(s, rows.length);
-    const ul = document.createElement('ul');
-    ul.className = 'list-list';
-    for (const i of rows) ul.appendChild(row(i));
-    g.appendChild(ul);
+    for (const i of rows) g.lastChild.appendChild(row(i));
     smellsEl.appendChild(g);
   }
 }
@@ -286,79 +284,30 @@ function renderAll(){
       // The smell is still named and still explained: a catalogue that only
       // listed what is broken today would teach half of what it knows.
       g.dataset.none = '';
-      g.appendChild(note(scanned ? 'No example has this one.' : 'Reading the examples…'));
-    } else {
-      const ul = document.createElement('ul');
-      ul.className = 'list-list';
-      for (const x of rows) ul.appendChild(siteRow(x.id, x.item));
-      g.appendChild(ul);
-    }
+      g.lastChild.replaceWith(listNote(scanned ? 'No example has this one.' : 'Reading the examples…'));
+    } else for (const x of rows) g.lastChild.appendChild(siteRow(x.id, x.item));
     smellsEl.appendChild(g);
   }
 }
 
 // One smell's heading and its sentence: the name is the point, so the sentence
 // that explains it is printed rather than hidden in a tooltip.
-function group(s, n){
-  const g = document.createElement('div');
-  g.className = 'smell-group'; g.dataset.smell = s.id;
-  const h = document.createElement('div');
-  h.className = 'list-head'; h.title = s.why;
-  h.innerHTML = '<span class="smell-dot" aria-hidden="true"></span><span class="list-title"></span><span class="list-n"></span>';
-  h.querySelector('.list-title').textContent = s.name;
-  h.querySelector('.list-n').textContent = n;
-  g.appendChild(h);
-  const p = document.createElement('p');
-  p.className = 'smell-why'; p.textContent = s.why;
-  g.appendChild(p);
-  return g;
-}
-function note(text){
-  const p = document.createElement('p');
-  p.className = 'list-note'; p.textContent = text;
-  return p;
-}
+const group = (s, n) => listGroup('smell', { smell: s.id, title: s.name, n, why: s.why, sentence: s.why });
 // A row names the thing and goes to its line: a smell you cannot find is a
 // complaint, not a lesson.
-function row(i){
-  const li = document.createElement('li');
-  li.className = 'smell-row';
-  const el = i.line >= 0 ? document.createElement('button') : document.createElement('div');
-  el.className = 'smell-line';
-  if (i.line >= 0){
-    el.type = 'button';
-    el.title = 'Go to the line';
-    el.setAttribute('aria-label', `Go to ${i.what}`);
-    el.addEventListener('click', () => jumpToLine(i.line));
-  }
-  el.innerHTML = '<span class="smell-what"></span><span class="smell-m"></span>';
-  el.querySelector('.smell-what').textContent = i.what;
-  el.querySelector('.smell-m').textContent = i.detail;
-  li.appendChild(el);
-  return li;
-}
+const row = i => lineRow('smell', { what: i.what, detail: i.detail, go: i.line >= 0 && (() => jumpToLine(i.line)),
+  title: 'Go to the line', label: `Go to ${i.what}` });
 
 // A row in the catalogue names the example, not the file on screen, so it opens
 // that example first and then goes to the line — the same promise the other
 // rows make, kept across a hundred files.
-function siteRow(id, i){
-  const li = document.createElement('li');
-  li.className = 'smell-row';
-  const el = document.createElement('button');
-  el.type = 'button'; el.className = 'smell-line';
-  el.title = `Open ${SITES[id].name} at this line`;
-  el.setAttribute('aria-label', `Open ${SITES[id].name} at ${i.what}`);
-  el.innerHTML = '<span class="smell-what"></span><span class="smell-m"></span>';
-  el.querySelector('.smell-what').textContent = SITES[id].name;
-  el.querySelector('.smell-m').textContent = i.what;
-  el.addEventListener('click', async () => {
+const siteRow = (id, i) => lineRow('smell', { what: SITES[id].name, detail: i.what,
+  title: `Open ${SITES[id].name} at this line`, label: `Open ${SITES[id].name} at ${i.what}`,
+  go: async () => {
     if (id !== editorSite) await selectSite(id);
     setSmellView('file');
     if (i.line >= 0) jumpToLine(i.line);
-  });
-  li.appendChild(el);
-  return li;
-}
+  } });
 
 // The catalogue is read the first time the tab is opened, not at boot.
 document.addEventListener('playlive:restab', () => { if (!$id('smellTab').hidden) scanSites(); });

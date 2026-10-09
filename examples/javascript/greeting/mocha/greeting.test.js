@@ -1,27 +1,25 @@
 const { expect } = require("chai");
+const sinon = require("sinon");
 const { clock, greet } = require("./greeting");
 
-// The real clock changes, so the tests replace it with a fixed hour,
-// and put the real one back after each test
+// The real clock changes, so the tests replace it with a fixed hour
 describe("Greeting", () => {
-  const realHour = clock.hour;
-
   afterEach(() => {
-    clock.hour = realHour;
+    sinon.restore();
   });
 
   it("says good morning", () => {
-    clock.hour = () => 9;
+    sinon.stub(clock, "hour").returns(9);
     expect(greet("Ana")).to.equal("Good morning, Ana");
   });
 
   it("says good afternoon", () => {
-    clock.hour = () => 15;
+    sinon.stub(clock, "hour").returns(15);
     expect(greet("Ana")).to.equal("Good afternoon, Ana");
   });
 
   it("says good evening", () => {
-    clock.hour = () => 20;
+    sinon.stub(clock, "hour").returns(20);
     expect(greet("Ana")).to.equal("Good evening, Ana");
   });
 });

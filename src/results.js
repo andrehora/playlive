@@ -63,8 +63,8 @@ document.querySelectorAll('.res-seg [data-resview]')
    panel itself down to its one row, which gives the panel below the space. The
    button always says what the next press does. Collapsed, the head still
    carries the summary, so a run is still readable from one line. */
-export const foldAllBtn = $id('foldAll');
-export let resultsView = 'folded';          // 'expanded' | 'folded' | 'collapsed'
+const foldAllBtn = $id('foldAll');
+let resultsView = 'folded';          // 'expanded' | 'folded' | 'collapsed'
 let lastOpen = 'folded';                    // what a collapsed panel opens back to
 const NEXT = { expanded: 'folded', folded: 'collapsed', collapsed: 'expanded' };
 const SAYS = {
@@ -72,7 +72,7 @@ const SAYS = {
   collapsed: ['Collapse the panel', 'Collapse Results', 'M5 12h14'],
   expanded: ['Expand all', 'Expand all steps', 'M7 9l5-5 5 5M7 15l5 5 5-5']
 };
-export function setResultsView(v){
+function setResultsView(v){
   resultsView = v;
   if (v !== 'collapsed') lastOpen = v;
   $id('left').dataset.results = v;
@@ -84,7 +84,7 @@ export function setResultsView(v){
 // other tabs have no steps either: the panel opens back to how Results was.
 const nextView = () => (resultsView === 'collapsed' ? (resultsTab === 'results' ? NEXT.collapsed : lastOpen)
   : resultsTab === 'results' && resultsEl.querySelector('.test') ? NEXT[resultsView] : 'collapsed');
-export function updateFoldAll(){
+function updateFoldAll(){
   const secs = [...resultsEl.querySelectorAll('.test')];
   // A fold opened by hand moves the cycle to where the panel actually is
   if (resultsView !== 'collapsed' && secs.length)
@@ -100,7 +100,7 @@ foldAllBtn.addEventListener('click', () => setResultsView(nextView()));
 // Folded tests stay folded when the list is redrawn (every run and every edit redraws it)
 export const expandedTests = new Set();   // tests start folded; only the ones you open are remembered as open
 export const foldKey = sec => sec.dataset.site + '::' + sec.dataset.title;
-export function setCollapsed(sec, c){
+function setCollapsed(sec, c){
   sec.classList.toggle('collapsed', c);
   if (c) expandedTests.delete(foldKey(sec)); else expandedTests.add(foldKey(sec));
   updateFoldAll();

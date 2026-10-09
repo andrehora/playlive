@@ -7,7 +7,8 @@ import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, load } from './env.mjs';
 
-const { BRANCH, PROBE, instrument, tokenize } = await load('src/jscover.js');
+const { BRANCH, PROBE, instrument } = await load('src/jscover.js');
+const { tokenize } = await load('src/jstokens.js');
 
 // The lines (from 1, as the editor numbers them) that have a probe
 const probed = src => instrument(src).lines.map(l => l + 1).sort((a, b) => a - b);

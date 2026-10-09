@@ -1,10 +1,11 @@
 import { $id, specEl } from './dom.js';
 import { jumpToLine } from './editor.js';
-import { ASSERTIONS } from './parse.js';
-import { validate } from './parse.js';
+import { ASSERTIONS, validate } from './parse.js';
+import { lineRow, listGroup, listNote } from './lists.js';
 import { preview } from './run.js';
 import { exampleCache, exampleTests, persist, stashEditor, testsFor } from './sites.js';
 import { editorSite } from './state.js';
+import { band, plural } from './util.js';
 
 /* ---------- Create: write the example's tests yourself ----------
 
@@ -122,9 +123,8 @@ function lineOf(lines, title, done){
 
 /* ---------- The panel ---------- */
 export const createEl = $id('create'), createScore = $id('createScore');
-export const createPanel = createEl.closest('.panel');
-export const foldCreateBtn = $id('foldCreate');
-export const band = p => (p === 100 ? 'ok' : p >= 60 ? 'warn' : 'bad');
+const createPanel = createEl.closest('.panel');
+const foldCreateBtn = $id('foldCreate');
 const GROUPS = [
   ['todo', 'TODO', 'No test with this title yet'],
   ['nocheck', 'DOING', 'Missing some of the original checks'],
@@ -140,13 +140,13 @@ export function renderCreate(){
     createPanel.dataset.band = '';
     createScore.textContent = '';
     createEl.innerHTML = '';
-    createEl.appendChild(note('Reading this example’s tests…'));
+    createEl.appendChild(listNote('Reading this example’s tests…'));
     return;
   }
   const pct = Math.round(r.score * 100);
   createPanel.dataset.band = band(pct);
   createScore.textContent = r.done === r.total
-    ? `All ${r.total} ${r.total === 1 ? 'test' : 'tests'} written`
+    ? `All ${plural(r.total, 'test')} written`
     : `${r.done} of ${r.total} done`;
 
   const top = createEl.scrollTop;
@@ -156,46 +156,15 @@ export function renderCreate(){
   for (const [state, title, why] of GROUPS){
     const rows = r.items.filter(i => i.state === state);
     if (!rows.length) continue;
-    const g = document.createElement('div');
-    g.className = 'create-group'; g.dataset.state = state;
-    const h = document.createElement('div');
-    h.className = 'list-head'; h.title = why;
-    h.innerHTML = '<span class="create-dot" aria-hidden="true"></span><span class="list-title"></span><span class="list-n"></span>';
-    h.querySelector('.list-title').textContent = title;
-    h.querySelector('.list-n').textContent = rows.length;
-    g.appendChild(h);
-    const ul = document.createElement('ul');
-    ul.className = 'list-list';
-    for (const i of rows) ul.appendChild(row(i));
-    g.appendChild(ul);
+    const g = listGroup('create', { state, title, n: rows.length, why });
+    for (const i of rows) g.lastChild.appendChild(row(i));
     createEl.appendChild(g);
   }
   createEl.scrollTop = top;
 }
-function note(text){
-  const p = document.createElement('p');
-  p.className = 'list-note'; p.textContent = text;
-  return p;
-}
-function row(i){
-  const li = document.createElement('li');
-  li.className = 'create-row';
-  const el = i.line >= 0 ? document.createElement('button') : document.createElement('div');
-  el.className = 'create-line';
-  if (i.line >= 0){
-    el.type = 'button';
-    el.title = i.state === 'todo' ? 'Go to its comment' : 'Go to the test';
-    el.setAttribute('aria-label', `Go to ${i.title}`);
-    el.addEventListener('click', () => jumpToLine(i.line));
-  }
-  el.innerHTML = '<span class="create-what"></span><span class="create-m"></span>';
-  el.querySelector('.create-what').textContent = i.title;
-  // What is missing is the group's name, so the row says only how far it is
-  el.querySelector('.create-m').textContent = i.state === 'todo' ? ''
-    : `${i.steps} ${i.steps === 1 ? 'step' : 'steps'}`;
-  li.appendChild(el);
-  return li;
-}
+// What is missing is the group's name, so the row says only how far it is
+const row = i => lineRow('create', { what: i.title, detail: i.state === 'todo' ? '' : plural(i.steps, 'step'),
+  go: i.line >= 0 && (() => jumpToLine(i.line)), title: i.state === 'todo' ? 'Go to its comment' : 'Go to the test', label: `Go to ${i.title}` });
 
 /* ---------- Folding ---------- */
 let folded = false;

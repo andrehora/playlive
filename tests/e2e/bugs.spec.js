@@ -125,7 +125,7 @@ test.describe('Bugs', () => {
     expect(bad.state).toBe('bad');
     expect(bad.tests.find(t => t.state === 'failed').error).toContain('Discount: -$6.00');
 
-    // Repair sits with Revert and Save while the markup is showing.
+    // Repair sits over the markup while it is showing.
     await page.click('#htmlBugRepair');
     await expect(page.locator('#htmlBugText')).toBeHidden();
     await expect(page.locator('.htmlcode .l.bug')).toHaveCount(0);

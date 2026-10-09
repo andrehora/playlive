@@ -15,49 +15,12 @@
    anything, so it is not counted, and nor is a name the rest of beforeEach or
    an afterEach reads. Each finding is { smell, what, detail, line }, from 0.
    Pure, so the unit tests can read it; javascript.js is its one user.        */
-import { tokenize } from './jscover.js';
+import { close, statements, tokenize } from './jstokens.js';
 
 export const ROULETTE = 5;
 const HOOKS = new Set(['beforeEach', 'afterEach', 'beforeAll', 'afterAll', 'before', 'after']);
 const TESTS = new Set(['it', 'test', 'fit', 'xit']);
 
-// The tokens between an opening bracket at `i` and its partner: the index of the partner
-export function close(toks, i){
-  for (let depth = 0, j = i; j < toks.length; j++){
-    const v = toks[j].type === 'punct' ? toks[j].value : '';
-    if ('([{'.includes(v) && v) depth++;
-    else if (')]}'.includes(v) && v && --depth === 0) return j;
-  }
-  return -1;
-}
-// A block's statements, at its own depth: cut at ; and, where a line ends
-// one, at a new line (a line ending in an operator or an opening carries on,
-// and so does an else, a catch, a finally, or the while of a do)
-const CARRY = new Set(['else', 'catch', 'finally']);
-export function statements(toks){
-  const out = [];
-  let cur = [];
-  const push = () => { if (cur.length) out.push(cur); cur = []; };
-  for (let i = 0; i < toks.length; i++){
-    const t = toks[i], prev = cur.at(-1);
-    if (prev && t.line > prev.end && ends(prev) && !(t.type === 'punct' && '.?)]}'.includes(t.value[0]))
-      && !(t.type === 'name' && (CARRY.has(t.value) || (t.value === 'while' && cur[0]?.value === 'do')))) push();
-    // `if (a) b();` ended at its ; and an else still belongs to it
-    if (!cur.length && t.type === 'name' && out.length && (CARRY.has(t.value) || (t.value === 'while' && out.at(-1)[0].value === 'do'))) cur = out.pop();
-    if ('([{'.includes(t.value) && t.type === 'punct'){
-      const j = close(toks, i);
-      if (j < 0) return null;
-      cur.push(...toks.slice(i, j + 1));
-      i = j;
-      continue;
-    }
-    if (t.type === 'punct' && t.value === ';'){ cur.push(t); push(); continue; }
-    cur.push(t);
-  }
-  push();
-  return out;
-}
-const ends = t => (t.type === 'punct' ? [')', ']', '}', '++', '--'].includes(t.value) : !['return', 'new', 'typeof', 'await', 'const', 'let', 'var'].includes(t.value));
 const textOf = st => st.map(t => t.value).join(' ');
 // A call to `name(` that is not a method (no "." before it)
 const calls = (toks, names) => toks.filter((t, i) => t.type === 'name' && names.has(t.value) && toks[i + 1]?.value === '(' && toks[i - 1]?.value !== '.');

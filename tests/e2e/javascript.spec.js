@@ -36,12 +36,19 @@ test.describe('JS/TS mode', () => {
     await expect(page.locator('#labCodeFile')).toHaveText('calculator.ts');
     await expect(page.locator('#labTestsEd textarea')).toHaveValue(/import \{ expect \} from "chai"/);
 
-    // Python keeps its own place, and coming back finds this one as it was
+    // Python keeps its own framework, and coming back finds this one as it was
     await setMode(page, 'python');
     await expect(page.locator('#labCodeFile')).toHaveText('calculator.py');
     await expect(page.locator('.lab-lang')).toBeHidden();
     await setMode(page, 'javascript');
     await expect(page.locator('#labCodeFile')).toHaveText('calculator.ts');
+
+    // Changing language keeps the example
+    await page.evaluate(() => window.playlive.lab.select('stack'));
+    await setMode(page, 'python');
+    await expect(page.locator('#labCodeFile')).toHaveText('stack.py');
+    await setMode(page, 'javascript');
+    await expect(page.locator('#labCodeFile')).toHaveText('stack.ts');
     expect(errors).toEqual([]);
   });
 
@@ -337,7 +344,7 @@ describe("Mine", () => {
 
     // Mocha with Chai: the same bug, in Chai's words
     await page.click('.lab-fw [data-fw="mocha"]');
-    await ready(page, /^JavaScript \(\w+ \d+\) · Mocha \d+\.\d+\.\d+ \+ Chai \d+\.\d+\.\d+$/);
+    await ready(page, /^JavaScript \(\w+ \d+\) · Mocha \d+\.\d+\.\d+ \+ Chai \d+\.\d+\.\d+ \+ Sinon \d+\.\d+\.\d+$/);
     expect(await run(page)).toMatch(/^1 of 4 tests failed \([\d.]+s\)$/);
     await expect(failed.locator('.err')).toHaveText('AssertionError: expected 44 to equal 36');
     await page.click('.lab-seg [data-labview="console"]');
@@ -346,7 +353,7 @@ describe("Mine", () => {
 
     // TypeScript is compiled, and a line in the code is still the line written
     await page.click('.lab-lang [data-lang="ts"]');
-    await ready(page, /^TypeScript \d+\.\d+\.\d+ · Mocha \d+\.\d+\.\d+ \+ Chai \d+\.\d+\.\d+$/);
+    await ready(page, /^TypeScript \d+\.\d+\.\d+ · Mocha \d+\.\d+\.\d+ \+ Chai \d+\.\d+\.\d+ \+ Sinon \d+\.\d+\.\d+$/);
     const ts = (await code.inputValue()).replace('let subtotal = 0;', 'let subtotal = 0;\n    throw new Error("broken total");');
     await code.fill(ts);
     await run(page);

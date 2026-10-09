@@ -20,11 +20,11 @@ export async function highlight(el, label, color = '#EAB308', ms){
   el.style.outline = prev[0]; el.style.outlineOffset = prev[1];
   if (tag) tag.remove();
 }
-export function setNativeValue(el, v){
+function setNativeValue(el, v){
   const proto = Object.getPrototypeOf(el);
   Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, v); // works with React-controlled inputs too
 }
-export function mouse(el, type){
+function mouse(el, type){
   const W = el.ownerDocument.defaultView;
   el.dispatchEvent(new W.MouseEvent(type, { bubbles: true, cancelable: true, view: W }));
 }
@@ -32,7 +32,7 @@ export function mouse(el, type){
 // The first number on the first visible line that holds the text, with any
 // thousands separators taken out: "Ends in 7 hours" beside "Ends in" is 7, and
 // a line with no number at all is NaN. The exporters read the page the same way.
-export function numberBeside(text){
+function numberBeside(text){
   const body = doc() && doc().body;
   if (!body) return NaN;
   const line = body.innerText.split('\n').find(l => norm(l).includes(norm(text)));

@@ -4,8 +4,8 @@ import { setView } from './picker.js';
 import { lastEl, recording, running } from './state.js';
 
 /* ---------- Time travel: a snapshot of the page after every step ---------- */
-export const snapBar = $id('snapbar');
-export let viewingSnapshot = false;
+const snapBar = $id('snapbar');
+let viewingSnapshot = false;
 export function captureSnapshot(){
   const d = doc(); if (!d || !d.documentElement) return null;
   const root = d.documentElement, clone = root.cloneNode(true);

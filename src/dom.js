@@ -8,7 +8,7 @@ export const tabsEl = $id('tabs'), recBar = $id('recbar');
 
 export const doc = () => frame.contentDocument;
 
-export const SPEEDS = { slow:{step:800,type:110}, normal:{step:350,type:45}, fast:{step:40,type:0}, step:{step:0,type:45} };
+const SPEEDS = { slow:{step:800,type:110}, normal:{step:350,type:45}, fast:{step:40,type:0}, step:{step:0,type:45} };
 export const speedMode = () => $id('speed').value;
 export const speed = () => SPEEDS[speedMode()];
 
