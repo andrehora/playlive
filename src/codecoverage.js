@@ -1,6 +1,6 @@
 import { $id } from './dom.js';
 import { FLOW_DEFS, flowSvg } from './flow.js';
-import { codeEd } from './labcore.js';
+import { codeEd, onWorker } from './codecore.js';
 import { band, escH } from './util.js';
 
 /* ---------- Coverage: which lines of the code the last run ran ----------
@@ -13,13 +13,18 @@ import { band, escH } from './util.js';
    branches, as chosen on top of it. An edit to the code moves its
    lines, so it makes the measure stale until the next run. `note` says why
    there is none, on top of the code while the check is on. */
-const covShow = $id('labCovShow'), codeCov = $id('labCodeCov'), codeBranch = $id('labCodeBranch'), covNote = $id('labCodeCovNote');
-const covSeg = document.querySelector('.cov-seg'), viewSeg = document.querySelector('.lab-codeview'), flowEl = $id('labFlow');
+const covShow = $id('codeCovShow'), codeCov = $id('codeCov'), codeBranch = $id('codeBranch'), covNote = $id('codeCovNote');
+const covSeg = document.querySelector('.cov-seg'), viewSeg = document.querySelector('.code-flowseg'), flowEl = $id('codeFlow');
 export let coverage = null, coverageNote = '';
 let covBy = 'lines', codeView = 'code';    // what colours the code, and code or flow
 // The code, not its flow: where a row of another panel takes you
 export function showCode(){ codeView = 'code'; renderFlow(); }
 export function setCoverage(c, note = ''){ coverage = c; coverageNote = note; renderCoverage(); }
+// What a run measured, or the file it could not
+onWorker(['coverage'], data => (data.lines
+  ? setCoverage({ file: data.file, lines: data.lines, hit: new Set(data.hit),
+    branches: data.branches && new Map(data.branches.map(([l, of, taken]) => [l, [of, taken]])), flows: data.flows || [] })
+  : setCoverage(null, `${data.file} could not be measured, so it ran as written.`)));
 // One score on top of the code: `of` 0 when there is nothing to count
 function score(el, done, of, noun){
   const pct = of ? Math.floor(done / of * 100) : 100;
@@ -68,7 +73,7 @@ function renderFlow(){
   for (const b of viewSeg.querySelectorAll('[data-codeview]')) b.setAttribute('aria-pressed', String(b.dataset.codeview === codeView));
   const flow = codeView === 'flow';
   flowEl.hidden = !flow;
-  $id('labCodeEd').hidden = flow;
+  $id('codeEd').hidden = flow;
   if (!flow) return;
   flowEl.innerHTML = FLOW_DEFS + coverage.flows.map(fn => `<section class="flow-fn"><h3>${escH(fn.name)}</h3>${flowSvg(fn, boxClass)}</section>`).join('');
 }

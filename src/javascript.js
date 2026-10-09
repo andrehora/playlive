@@ -2,7 +2,7 @@ import { JS_ACCENT, JS_EXAMPLES, JS_IDS } from '../examples/javascript/examples.
 import { highlighter } from './highlight.js';
 import { smellsOf } from './jssmells.js';
 
-/* ---------- JS/TS mode's profile: what lab.js needs to know about JavaScript ----------
+/* ---------- JS/TS mode's profile: what code.js needs to know about JavaScript ----------
 
    The tests run in a worker (jsworker.js) on the framework's own runner,
    fetched when the mode is entered. A worker is cheap to start, so every run

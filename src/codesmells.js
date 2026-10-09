@@ -1,6 +1,6 @@
 import { $id } from './dom.js';
-import { boot, selectExample } from './lab.js';
-import { P, S, active, creating, exampleOf, key, shipped, testsEd, view } from './labcore.js';
+import { boot, selectExample } from './code.js';
+import { P, S, active, creating, exampleOf, key, onWorker, shipped, testsEd, view } from './codecore.js';
 import { lineRow, listGroup, listNote } from './lists.js';
 import { plural } from './util.js';
 
@@ -15,20 +15,20 @@ import { plural } from './util.js';
    in the framework (and language) on screen. `all` is { key, found }: each
    example's report, read again each time the tab opens, and the example on
    screen followed as it is typed. Never stored. */
-export const smellsEl = $id('labSmells'), smellsBtn = document.querySelector('.lab-seg [data-labview="smells"]');
+export const smellsEl = $id('codeSmells'), smellsBtn = document.querySelector('.code-seg [data-codetab="smells"]');
 smellsEl.innerHTML = `<div class="mut-head"><div class="seg smell-seg" role="group" aria-label="What to list">
-  <button type="button" data-labsmells="file" aria-pressed="true" title="Smells in these tests">This file</button>
-  <button type="button" data-labsmells="all" aria-pressed="false" title="All smells">All smells</button>
-  </div><span class="smell-score" aria-live="polite"></span></div><div class="lab-smells"></div>`;
-const smellScoreEl = smellsEl.querySelector('.smell-score'), smellList = smellsEl.querySelector('.lab-smells');
+  <button type="button" data-codesmells="file" aria-pressed="true" title="Smells in these tests">This file</button>
+  <button type="button" data-codesmells="all" aria-pressed="false" title="All smells">All smells</button>
+  </div><span class="smell-score" aria-live="polite"></span></div><div class="code-smells"></div>`;
+const smellScoreEl = smellsEl.querySelector('.smell-score'), smellList = smellsEl.querySelector('.code-smells');
 export let smells = null, smellsAsked = null, smellView = 'file', all = null;
 function setSmellView(v){
   smellView = v === 'all' ? 'all' : 'file';
-  smellsEl.querySelectorAll('[data-labsmells]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.labsmells === smellView)));
+  smellsEl.querySelectorAll('[data-codesmells]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.codesmells === smellView)));
   if (smellView === 'all') scanAll();
   renderSmells();
 }
-smellsEl.querySelectorAll('[data-labsmells]').forEach(b => b.addEventListener('click', () => setSmellView(b.dataset.labsmells)));
+smellsEl.querySelectorAll('[data-codesmells]').forEach(b => b.addEventListener('click', () => setSmellView(b.dataset.codesmells)));
 // Another example, framework or language: read again
 export function resetSmells(){ smells = null; renderSmells(); listSmells(); }
 export function listSmells(){
@@ -130,4 +130,4 @@ function renderAllSmells(){
     smellList.append(g);
   }
 }
-
+onWorker(['smells'], data => onSmells(data.report, data.example));

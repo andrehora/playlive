@@ -1,8 +1,8 @@
 import { repair } from './bugs.js';
 import { enterCreate, leaveCreate } from './create.js';
 import { reclamp } from './layout.js';
-import { enterLab, leaveLab } from './lab.js';
-import { LABS, isLab, isLabCreate, labOf } from './labcore.js';
+import { enterCodeMode, leaveCodeMode } from './code.js';
+import { CODE_MODES, isCodeMode, isCodeCreate, codeModeOf } from './codecore.js';
 import { syncUrl } from './share.js';
 import { mode, setAppMode } from './state.js';
 
@@ -25,20 +25,20 @@ import { mode, setAppMode } from './state.js';
 
    **Python** and **JS/TS** are experiments that leave the sites altogether:
    unit tests on a module, run in the browser, each with examples of its own
-   (lab.js).
+   (code.js).
 
    The bar asks it as two questions: which language (Python, JS/TS, or HTML for
    the sites), then Explore or Create. They are still one value here, so links
    and the stylesheet read it as one: "python" and "python-create" are Python's
-   two (lab.js), "explore" and "create" the sites'. Changing the language keeps
+   two (code.js), "explore" and "create" the sites'. Changing the language keeps
    the side you were on.                                                  */
 
 // In the bar's order, and the first is home: "/" opens Python on its first example.
 export const MODES = ['python', 'python-create', 'javascript', 'javascript-create', 'explore', 'create'];
 
-const areaOf = m => labOf(m) || 'html';
-const sideOf = m => (m === 'create' || isLabCreate(m) ? 'create' : 'explore');
-const canCreate = area => area === 'html' || !!LABS[area]?.create;
+const areaOf = m => codeModeOf(m) || 'html';
+const sideOf = m => (m === 'create' || isCodeCreate(m) ? 'create' : 'explore');
+const canCreate = area => area === 'html' || !!CODE_MODES[area]?.create;
 // The mode a language and a side make, Explore where the language has no Create
 const modeFor = (area, side) => (area === 'html' ? side : side === 'create' && canCreate(area) ? `${area}-create` : area);
 let side = 'explore';                 // the side chosen, kept through a language without Create
@@ -56,7 +56,7 @@ export function setMode(m, { initial = false } = {}){
   document.documentElement.dataset.mode = next;
   // A code mode's runtime is only downloaded once somebody comes to it, and
   // from then on kept.
-  if (isLab(next)) enterLab(next); else leaveLab();
+  if (isCodeMode(next)) enterCodeMode(next); else leaveCodeMode();
   // The list the picker offers is the mode's, so it is told rather than asked.
   document.dispatchEvent(new CustomEvent('playlive:mode'));
   const area = areaOf(next), can = canCreate(area);

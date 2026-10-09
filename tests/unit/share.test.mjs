@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { siteFromHash, modeFromHash, linkedMode, labFromHash, shareUrl } = await load('src/share.js');
+const { siteFromHash, modeFromHash, linkedMode, codeExampleFromHash, shareUrl } = await load('src/share.js');
 const { PY_IDS } = await load('examples/python/examples.js');
 const { JS_IDS } = await load('examples/javascript/examples.js');
 const { MODES } = await load('src/modes.js');
@@ -30,13 +30,13 @@ test('a site is named after "#html", and Create after "#html-create"', () => {
 test('a code mode is named, then its own example', () => {
   for (const m of ['python', 'python-create']) {
     assert.equal(modeFromHash(`#${m}#${PY_IDS[2]}`), m);
-    assert.equal(labFromHash(`#${m}#${PY_IDS[2]}`), PY_IDS[2]);
+    assert.equal(codeExampleFromHash(`#${m}#${PY_IDS[2]}`), PY_IDS[2]);
   }
   for (const m of ['javascript', 'javascript-create']) {
     assert.equal(modeFromHash(`#${m}#${JS_IDS[2]}`), m);
-    assert.equal(labFromHash(`#${m}#${JS_IDS[2]}`), JS_IDS[2]);
+    assert.equal(codeExampleFromHash(`#${m}#${JS_IDS[2]}`), JS_IDS[2]);
   }
-  assert.equal(labFromHash('#python'), null);
+  assert.equal(codeExampleFromHash('#python'), null);
   assert.equal(siteFromHash(`#python#${OTHER}`), null, 'a site is not a Python example');
 });
 
@@ -44,7 +44,7 @@ test('an example the mode does not have is its first', () => {
   assert.equal(modeFromHash('#html#create'), 'explore');
   assert.equal(siteFromHash('#html#create'), null);
   assert.equal(modeFromHash('#javascript#no-such-example'), 'javascript');
-  assert.equal(labFromHash('#javascript#no-such-example'), null);
+  assert.equal(codeExampleFromHash('#javascript#no-such-example'), null);
 });
 
 test('a slash after the hash and stray space are ignored', () => {
@@ -57,7 +57,7 @@ test('any other hash names nothing, and opens home', () => {
     `#${PY_IDS[2]}`, '#mutation', '#smells', '#brainstorm', `#${OTHER}#html`]) {
     assert.equal(modeFromHash(hash), null, hash);
     assert.equal(siteFromHash(hash), null, hash);
-    assert.equal(labFromHash(hash), null, hash);
+    assert.equal(codeExampleFromHash(hash), null, hash);
     assert.equal(linkedMode(hash), 'python', hash);
   }
 });
@@ -103,7 +103,7 @@ test('what a link says is what reading it back gives', () => {
     for (const ex of [ids[0], ids[2]]) {
       const { hash } = new URL(shareUrl(OTHER, m, ex));
       assert.equal(linkedMode(hash), m, `${m} ${ex}`);
-      assert.equal(labFromHash(hash) || ids[0], ex, `${m} ${ex}`);
+      assert.equal(codeExampleFromHash(hash) || ids[0], ex, `${m} ${ex}`);
     }
   }
 });

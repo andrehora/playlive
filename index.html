@@ -193,15 +193,15 @@
         </div>
         <div id="create"></div>
       </section>
-      <section class="panel labtests-panel lab-panel">
+      <section class="panel code-tests-panel code-panel">
         <div class="panel-head">
-          <h2>Tests <span class="lab-file" id="labTestsFile"></span> <span id="labCount" class="file-status" aria-live="polite"></span></h2>
+          <h2>Tests <span class="code-file" id="codeTestsFile"></span> <span id="codeCount" class="file-status" aria-live="polite"></span></h2>
           <div class="head-actions">
-            <div class="seg lab-lang" role="group" aria-label="Language" hidden></div>
-            <div class="seg lab-fw" role="group" aria-label="Test framework"></div>
+            <div class="seg code-lang" role="group" aria-label="Language" hidden></div>
+            <div class="seg code-fw" role="group" aria-label="Test framework"></div>
           </div>
         </div>
-        <div class="lab-ed" id="labTestsEd">
+        <div class="code-ed" id="codeTestsEd">
           <div class="gutter" aria-hidden="true"></div>
           <div class="code">
             <pre class="hl code-view" aria-hidden="true"></pre>
@@ -210,48 +210,48 @@
           </div>
         </div>
         <div class="toolbar">
-          <button id="labRun" class="primary" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+          <button id="codeRun" class="primary" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none" />
             </svg><span class="lbl">Run</span></button>
-          <button id="labStop" type="button" disabled title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24">
+          <button id="codeStop" type="button" disabled title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24">
               <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" />
             </svg>Stop</button>
-          <span id="labState" class="lab-state" aria-live="polite"></span>
+          <span id="codeState" class="code-state" aria-live="polite"></span>
         </div>
       </section>
-      <div class="resizer row-resizer lab-panel" id="labResizer" role="separator" aria-orientation="horizontal"
+      <div class="resizer row-resizer code-panel" id="codeResizer" role="separator" aria-orientation="horizontal"
         aria-label="Resize the tests" tabindex="0" title="Drag to resize"></div>
-      <section class="panel console-panel lab-panel">
+      <section class="panel console-panel code-panel">
         <div class="panel-head">
-          <h2><span class="seg lab-seg" role="group" aria-label="What to show">
-              <button type="button" data-labview="create" aria-pressed="false" hidden
+          <h2><span class="seg code-seg" role="group" aria-label="What to show">
+              <button type="button" data-codetab="create" aria-pressed="false" hidden
                 title="The tests to write">Create</button>
-              <button type="button" data-labview="results" aria-pressed="true"
+              <button type="button" data-codetab="results" aria-pressed="true"
                 title="Test results">Results</button>
-              <button type="button" data-labview="console" aria-pressed="false"
+              <button type="button" data-codetab="console" aria-pressed="false"
                 title="Test output">Console</button>
-              <button type="button" data-labview="mutation" aria-pressed="false" hidden
+              <button type="button" data-codetab="mutation" aria-pressed="false" hidden
                 title="Mutation testing">Mutation</button>
-              <button type="button" data-labview="smells" aria-pressed="false" hidden
+              <button type="button" data-codetab="smells" aria-pressed="false" hidden
                 title="Smells in these tests">Smells</button>
-            </span><span id="labSummary" aria-live="polite"></span><span id="labDots" class="sdots"
+            </span><span id="codeSummary" aria-live="polite"></span><span id="codeDots" class="sdots"
               aria-hidden="true"></span></h2>
           <div class="head-actions">
             <label class="cov-toggle" title="Show coverage in the code"><input type="checkbox"
-                id="labCovShow">Coverage</label>
-            <button id="foldLab" type="button" class="ghost icon-btn" aria-label="Collapse the panel"
-              aria-expanded="true" aria-controls="labCreate labResults labConsole labMutation labSmells" title="Collapse"><svg class="i"
+                id="codeCovShow">Coverage</label>
+            <button id="foldCode" type="button" class="ghost icon-btn" aria-label="Collapse the panel"
+              aria-expanded="true" aria-controls="codeCreate codeResults codeConsole codeMutation codeSmells" title="Collapse"><svg class="i"
                 viewBox="0 0 24 24" aria-hidden="true">
-                <path id="foldLabIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
+                <path id="foldCodeIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
               </svg></button>
           </div>
-          <div class="progress" id="labProgress" hidden><span></span></div>
+          <div class="progress" id="codeProgress" hidden><span></span></div>
         </div>
-        <div id="labCreate" class="lab-mutation" hidden></div>
-        <div id="labResults" class="lab-results"></div>
-        <pre id="labConsole" class="lab-console" tabindex="0" aria-label="Console output" hidden></pre>
-        <div id="labMutation" class="lab-mutation" hidden></div>
-        <div id="labSmells" class="lab-mutation" hidden></div>
+        <div id="codeCreate" class="code-mutation" hidden></div>
+        <div id="codeResults" class="code-results"></div>
+        <pre id="codeConsole" class="code-console" tabindex="0" aria-label="Console output" hidden></pre>
+        <div id="codeMutation" class="code-mutation" hidden></div>
+        <div id="codeSmells" class="code-mutation" hidden></div>
       </section>
     </div>
     <div class="resizer col-resizer" id="colResizer" role="separator" aria-orientation="vertical"
@@ -319,26 +319,26 @@
         </div>
       </div>
     </section>
-    <section class="panel lab-code-panel lab-panel">
+    <section class="panel code-module-panel code-panel">
       <div class="panel-head">
-        <h2><span id="labCodeTitle">Code</span> <span class="lab-file" id="labCodeFile"></span></h2>
+        <h2><span id="codeTitle">Code</span> <span class="code-file" id="codeFile"></span></h2>
         <div class="head-actions">
-          <div class="seg lab-codeview" role="group" aria-label="What to show" hidden>
+          <div class="seg code-flowseg" role="group" aria-label="What to show" hidden>
             <button type="button" data-codeview="code" aria-pressed="true" title="Show the code">Code</button>
             <button type="button" data-codeview="flow" aria-pressed="false"
               title="Show the control flow">Flow</button>
           </div>
           <div class="seg cov-seg" role="group" aria-label="Colour by" hidden>
-            <button type="button" id="labCodeCov" class="cov-score" data-covby="lines" aria-pressed="true"
+            <button type="button" id="codeCov" class="cov-score" data-covby="lines" aria-pressed="true"
               title="Colour by line">Line: <strong></strong><span></span></button>
-            <button type="button" id="labCodeBranch" class="cov-score" data-covby="branches" aria-pressed="false"
+            <button type="button" id="codeBranch" class="cov-score" data-covby="branches" aria-pressed="false"
               title="Colour by branch">Branch: <strong></strong><span></span></button>
           </div>
-          <span id="labCodeCovNote" class="cov-note" hidden></span>
+          <span id="codeCovNote" class="cov-note" hidden></span>
         </div>
       </div>
-      <div id="labFlow" class="lab-flow" hidden></div>
-      <div class="lab-ed" id="labCodeEd">
+      <div id="codeFlow" class="code-flow" hidden></div>
+      <div class="code-ed" id="codeEd">
           <div class="gutter" aria-hidden="true"></div>
           <div class="code">
             <pre class="hl code-view" aria-hidden="true"></pre>

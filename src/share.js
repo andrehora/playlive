@@ -2,8 +2,8 @@ import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id } from './dom.js';
 import { MODES, setMode } from './modes.js';
 import { selectSite } from './picker.js';
-import { selectExample } from './lab.js';
-import { LABS, exampleOf, labOf } from './labcore.js';
+import { selectExample } from './code.js';
+import { CODE_MODES, exampleOf, codeModeOf } from './codecore.js';
 import { editorSite, mode, recording, running } from './state.js';
 import { toast } from './ui.js';
 
@@ -35,12 +35,12 @@ const read = (hash = location.hash) => {
   const [link, ex] = parts(hash), m = MODE_OF[link] || null;
   return {
     mode: m,
-    site: m && !labOf(m) && SITES[ex] ? ex : null,
-    lab: m && labOf(m) && LABS[labOf(m)].examples[ex] ? ex : null
+    site: m && !codeModeOf(m) && SITES[ex] ? ex : null,
+    codeExample: m && codeModeOf(m) && CODE_MODES[codeModeOf(m)].examples[ex] ? ex : null
   };
 };
 export const siteFromHash = hash => read(hash).site;
-export const labFromHash = hash => read(hash).lab;
+export const codeExampleFromHash = hash => read(hash).codeExample;
 export const modeFromHash = hash => read(hash).mode;
 // The mode a link opens: the one it names, else home's
 export const linkedMode = hash => modeFromHash(hash) || MODES[0];
@@ -49,8 +49,8 @@ export const linkedMode = hash => modeFromHash(hash) || MODES[0];
 const homePath = () => location.pathname.replace(/(^|\/)index\.html$/, '$1');
 // The mode is always named, and the example unless it is the mode's first. In
 // a code mode the example is the mode's own, whichever site is given.
-export const shareUrl = (id = editorSite, m = mode, lab = labOf(m) && exampleOf(m)) => {
-  const [ex, first] = labOf(m) ? [lab, LABS[labOf(m)].ids[0]] : [id, SITE_IDS[0]];
+export const shareUrl = (id = editorSite, m = mode, codeExample = codeModeOf(m) && exampleOf(m)) => {
+  const [ex, first] = codeModeOf(m) ? [codeExample, CODE_MODES[codeModeOf(m)].ids[0]] : [id, SITE_IDS[0]];
   return `${location.origin}${homePath()}${location.search}#${LINKS[m] || m}${ex === first ? '' : '#' + ex}`;
 };
 // Whether the address already says this place, in any spelling: "/" and
@@ -58,7 +58,7 @@ export const shareUrl = (id = editorSite, m = mode, lab = labOf(m) && exampleOf(
 const says = (id, m) => {
   if (location.hash.replace(/^#/, '') && !modeFromHash()) return false;
   if (linkedMode() !== m) return false;
-  return labOf(m) ? (labFromHash() || LABS[labOf(m)].ids[0]) === exampleOf(m) : (siteFromHash() || SITE_IDS[0]) === id;
+  return codeModeOf(m) ? (codeExampleFromHash() || CODE_MODES[codeModeOf(m)].ids[0]) === exampleOf(m) : (siteFromHash() || SITE_IDS[0]) === id;
 };
 
 // Walking the 100 examples would fill the back button with steps nobody took on
@@ -93,7 +93,7 @@ window.addEventListener('hashchange', () => {
   // An emptied hash is home: Python, on its first example.
   const m = linkedMode();
   const id = siteFromHash() || SITE_IDS[0];
-  const ex = labOf(m) && (labFromHash() || LABS[labOf(m)].ids[0]);
+  const ex = codeModeOf(m) && (codeExampleFromHash() || CODE_MODES[codeModeOf(m)].ids[0]);
   applying = true;
   try {
     if (m !== mode) setMode(m);      // first: it decides which file the example gets

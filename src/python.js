@@ -1,7 +1,7 @@
 import { PY_ACCENT, PY_EXAMPLES, PY_IDS, moduleOf } from '../examples/python/examples.js';
 import { highlighter } from './highlight.js';
 
-/* ---------- Python mode's profile: what lab.js needs to know about Python ----------
+/* ---------- Python mode's profile: what code.js needs to know about Python ----------
 
    Python is Pyodide, which is CPython compiled to WebAssembly, run in a worker
    (pyworker.js) that is only fetched when the mode is entered. It is slow to

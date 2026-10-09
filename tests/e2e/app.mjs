@@ -116,14 +116,14 @@ export function describeFailures(res){
 
 // The code modes (Python, JS/TS). Their runtimes download on first use, so
 // waits are long.
-export const LAB_LOAD = 120_000;
+export const CODE_LOAD = 120_000;
 // Until the runtime says it is ready: a label such as "Python 3.14.2"
-export const labReady = (page, label, timeout = LAB_LOAD) => expect(page.locator('#labState')).toHaveText(label, { timeout });
+export const codeReady = (page, label, timeout = CODE_LOAD) => expect(page.locator('#codeState')).toHaveText(label, { timeout });
 // Run the tests on screen, and what the summary says when they are done
-export async function labRun(page, timeout = LAB_LOAD){
-  await page.click('#labRun');
-  await expect(page.locator('#labSummary')).not.toHaveText(/Running|^$/, { timeout });
-  return page.locator('#labSummary').textContent();
+export async function codeRun(page, timeout = CODE_LOAD){
+  await page.click('#codeRun');
+  await expect(page.locator('#codeSummary')).not.toHaveText(/Running|^$/, { timeout });
+  return page.locator('#codeSummary').textContent();
 }
 // How many tests a Results head says all passed, or null if it says otherwise
 export const allPassed = said => (/^The test passed in [\d.]+s$/.test(said) ? 1 : Number(/^All (\d+) tests passed in [\d.]+s$/.exec(said)?.[1]) || null);

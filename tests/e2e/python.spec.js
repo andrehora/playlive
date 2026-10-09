@@ -2,11 +2,11 @@
 // Pyodide. These download Python from jsDelivr, so like js-yaml they need
 // network access.
 import { test, expect } from '@playwright/test';
-import { LAB_LOAD as PYTHON, allPassed, labReady, labRun, openApp, setMode } from './app.mjs';
+import { CODE_LOAD as PYTHON, allPassed, codeReady, codeRun, openApp, setMode } from './app.mjs';
 
 const overflow = page => page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight);
 // Language first, then framework: "Python 3.14.2 · unittest"
-const ready = page => labReady(page, /^Python 3\.\d+\.\d+ · (unittest|pytest)/);
+const ready = page => codeReady(page, /^Python 3\.\d+\.\d+ · (unittest|pytest)/);
 const choose = async (page, name) => {
   await page.click('#siteBtn');
   await page.locator('#tabs .tab', { hasText: name }).click();
@@ -18,37 +18,37 @@ test.describe('Python mode', () => {
     const { errors } = await openApp(page);
     await setMode(page, 'python');
     // Choosing the mode is what starts the download, and Results says so
-    await expect(page.locator('#labResults .lab-note')).toContainText('Downloading Python');
-    for (const p of ['.labtests-panel', '.console-panel', '.lab-code-panel']) await expect(page.locator(p)).toBeVisible();
+    await expect(page.locator('#codeResults .code-note')).toContainText('Downloading Python');
+    for (const p of ['.code-tests-panel', '.console-panel', '.code-module-panel']) await expect(page.locator(p)).toBeVisible();
     for (const p of ['.tests-panel', '.results-panel', '.browser']) await expect(page.locator(p)).toBeHidden();
     expect(await overflow(page)).toBeLessThanOrEqual(0);
 
     // The picker lists the Python examples, Calculator first
     await expect(page.locator('#siteName')).toHaveText('Calculator');
     await expect(page.locator('#siteCount')).toHaveText('1 of 11');
-    await expect(page.locator('#labCodeFile')).toHaveText('calculator.py');
-    await expect(page.locator('#labTestsFile')).toHaveText('test_calculator.py');
-    await expect(page.locator('.lab-fw [data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.lab-fw button').first()).toHaveAttribute('data-fw', 'pytest');
-    await expect(page.locator('#labTestsEd textarea')).toHaveValue(/^def test_add\(\)/m);
-    await expect(page.locator('#labCount')).toHaveText('5 tests');
-    await expect(page.locator('#labResults .lab-name').first()).toHaveText('test_add');
+    await expect(page.locator('#codeFile')).toHaveText('calculator.py');
+    await expect(page.locator('#codeTestsFile')).toHaveText('test_calculator.py');
+    await expect(page.locator('.code-fw [data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.code-fw button').first()).toHaveAttribute('data-fw', 'pytest');
+    await expect(page.locator('#codeTestsEd textarea')).toHaveValue(/^def test_add\(\)/m);
+    await expect(page.locator('#codeCount')).toHaveText('5 tests');
+    await expect(page.locator('#codeResults .code-name').first()).toHaveText('test_add');
     expect(new URL(page.url()).hash).toBe('#python');
 
     // Another example, and the link follows
     await choose(page, 'Stack');
-    await expect(page.locator('#labCodeFile')).toHaveText('stack.py');
+    await expect(page.locator('#codeFile')).toHaveText('stack.py');
     expect(new URL(page.url()).hash).toBe('#python#stack');
     await page.click('#nextSite');
     await expect(page.locator('#siteName')).toHaveText('Notes file');
 
     // The same tests in unittest, and edits survive the switch back
-    const tests = page.locator('#labTestsEd textarea');
+    const tests = page.locator('#codeTestsEd textarea');
     await expect(tests).toHaveValue(/def test_saved_notes_load_back\(tmp_path\)/);
     await tests.fill((await tests.inputValue()) + '\n# mine\n');
-    await page.click('.lab-fw [data-fw="unittest"]');
+    await page.click('.code-fw [data-fw="unittest"]');
     await expect(tests).toHaveValue(/class NotesFileTest/);
-    await page.click('.lab-fw [data-fw="pytest"]');
+    await page.click('.code-fw [data-fw="pytest"]');
     await expect(tests).toHaveValue(/# mine/);
 
     // Leaving the mode brings the sites back to the picker
@@ -61,15 +61,15 @@ test.describe('Python mode', () => {
   test('the tests resize, and Results and Console collapse to their head', async ({ page }) => {
     const { errors } = await openApp(page, { mode: 'python' });
     const h = sel => page.locator(sel).boundingBox().then(b => Math.round(b.height));
-    const was = await h('#labTestsEd');
-    const handle = await page.locator('#labResizer').boundingBox();
+    const was = await h('#codeTestsEd');
+    const handle = await page.locator('#codeResizer').boundingBox();
     const y = handle.y + handle.height / 2;
     // Dragged down, the code grows by as much, and the page still does not scroll
     await page.mouse.move(handle.x + handle.width / 2, y);
     await page.mouse.down();
     await page.mouse.move(handle.x + handle.width / 2, y + 60, { steps: 4 });
     await page.mouse.up();
-    expect(Math.abs(await h('#labTestsEd') - (was + 60))).toBeLessThanOrEqual(2);
+    expect(Math.abs(await h('#codeTestsEd') - (was + 60))).toBeLessThanOrEqual(2);
     // and however far it is dragged, Results keeps its floor
     await page.mouse.move(handle.x + handle.width / 2, y + 60);
     await page.mouse.down();
@@ -78,19 +78,19 @@ test.describe('Python mode', () => {
     expect(await overflow(page)).toBeLessThanOrEqual(1);
     expect(await h('.console-panel')).toBeGreaterThanOrEqual(129);
     // Double-click puts it back
-    await page.locator('#labResizer').dblclick();
-    expect(Math.abs(await h('#labTestsEd') - was)).toBeLessThanOrEqual(2);
+    await page.locator('#codeResizer').dblclick();
+    expect(Math.abs(await h('#codeTestsEd') - was)).toBeLessThanOrEqual(2);
 
     // Collapsed, the panel is its head, the code takes the room, nothing scrolls
-    await page.click('#foldLab');
-    await expect(page.locator('#foldLab')).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('#labResults')).toBeHidden();
-    await expect(page.locator('#labSummary')).toBeAttached();
-    expect(await h('#labTestsEd')).toBeGreaterThan(was + 100);
+    await page.click('#foldCode');
+    await expect(page.locator('#foldCode')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#codeResults')).toBeHidden();
+    await expect(page.locator('#codeSummary')).toBeAttached();
+    expect(await h('#codeTestsEd')).toBeGreaterThan(was + 100);
     expect(await overflow(page)).toBeLessThanOrEqual(1);
-    await page.click('#foldLab');
-    await expect(page.locator('#labResults')).toBeVisible();
-    expect(Math.abs(await h('#labTestsEd') - was)).toBeLessThanOrEqual(2);
+    await page.click('#foldCode');
+    await expect(page.locator('#codeResults')).toBeVisible();
+    expect(Math.abs(await h('#codeTestsEd') - was)).toBeLessThanOrEqual(2);
     expect(errors).toEqual([]);
   });
 
@@ -98,63 +98,63 @@ test.describe('Python mode', () => {
     test.setTimeout(4 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Cart');
-    await page.click('.lab-fw [data-fw="unittest"]');
+    await page.click('.code-fw [data-fw="unittest"]');
     await ready(page);
-    const summary = page.locator('#labSummary'), rows = page.locator('#labResults .test');
+    const summary = page.locator('#codeSummary'), rows = page.locator('#codeResults .test');
 
-    await page.click('#labRun');
+    await page.click('#codeRun');
     await expect(summary).toHaveText(/^All 4 tests passed in [\d.]+s$/, { timeout: PYTHON });
     await expect(summary).toHaveClass('ok');
     await expect(rows.and(page.locator('[data-state="passed"]'))).toHaveCount(4);
     // unittest's own runner, not pytest's
-    await page.click('.lab-seg [data-labview="console"]');
-    await expect(page.locator('#labConsole')).toContainText('Ran 4 tests');
-    await page.click('.lab-seg [data-labview="results"]');
+    await page.click('.code-seg [data-codetab="console"]');
+    await expect(page.locator('#codeConsole')).toContainText('Ran 4 tests');
+    await page.click('.code-seg [data-codetab="results"]');
 
     // A bug in the code: the coupon test fails, and its row takes you to the line
-    const code = page.locator('#labCodeEd textarea');
+    const code = page.locator('#codeEd textarea');
     await code.fill((await code.inputValue()).replace('100 - self.discount', '100 + self.discount'));
     await page.keyboard.press('ControlOrMeta+Enter');
     await expect(summary).toHaveText(/^1 of 4 tests failed \([\d.]+s\)$/, { timeout: PYTHON });
     const failed = rows.and(page.locator('[data-state="failed"]'));
     await expect(failed.locator('.err')).toContainText('AssertionError: 44.0 != 36');
-    await expect(page.locator('#labTestsEd .hl .l.bad')).toHaveCount(1);
-    await failed.locator('.lab-at').click();
-    const at = await page.locator('#labTestsEd textarea').evaluate(t => t.value.slice(t.selectionStart, t.selectionEnd));
+    await expect(page.locator('#codeTestsEd .hl .l.bad')).toHaveCount(1);
+    await failed.locator('.code-at').click();
+    const at = await page.locator('#codeTestsEd textarea').evaluate(t => t.value.slice(t.selectionStart, t.selectionEnd));
     expect(at).toBe('self.assertEqual(cart.total(), 36)');
 
-    await expect(page.locator('#labState')).toHaveText(/^Python 3\.\d+\.\d+ · unittest$/);
+    await expect(page.locator('#codeState')).toHaveText(/^Python 3\.\d+\.\d+ · unittest$/);
     // pytest says the same thing in its own words, and the label names its version
-    await page.click('.lab-fw [data-fw="pytest"]');
-    await expect(page.locator('#labState')).toHaveText(/^Python 3\.\d+\.\d+ · pytest \d+\.\d+\.\d+$/);
-    await page.click('#labRun');
+    await page.click('.code-fw [data-fw="pytest"]');
+    await expect(page.locator('#codeState')).toHaveText(/^Python 3\.\d+\.\d+ · pytest \d+\.\d+\.\d+$/);
+    await page.click('#codeRun');
     await expect(summary).toHaveText(/^1 of 4 tests failed \([\d.]+s\)$/, { timeout: PYTHON });
     await expect(failed.locator('.err')).toContainText('assert 44.0 == 36');
-    await page.click('.lab-seg [data-labview="console"]');
-    await expect(page.locator('#labConsole')).toContainText('test session starts');
-    await page.click('.lab-seg [data-labview="results"]');
+    await page.click('.code-seg [data-codetab="console"]');
+    await expect(page.locator('#codeConsole')).toContainText('test session starts');
+    await page.click('.code-seg [data-codetab="results"]');
 
-    await expect(page.locator('#labDots i')).toHaveCount(4);
-    await expect(page.locator('#labDots i.bad')).toHaveCount(1);
+    await expect(page.locator('#codeDots i')).toHaveCount(4);
+    await expect(page.locator('#codeDots i.bad')).toHaveCount(1);
     // One test runs on its own, and the others keep what they had; the head
     // counts that run, so it has one circle
     await rows.first().locator('.run-one').click();
     await expect(summary).toHaveText(/^The test passed in [\d.]+s$/, { timeout: PYTHON });
-    await expect(page.locator('#labDots i')).toHaveCount(1);
-    await expect(page.locator('#labDots i.ok')).toHaveCount(1);
+    await expect(page.locator('#codeDots i')).toHaveCount(1);
+    await expect(page.locator('#codeDots i.ok')).toHaveCount(1);
     await expect(failed).toHaveCount(1);
 
     // A test that never ends is stopped, and Python comes back for the next run
-    const tests = page.locator('#labTestsEd textarea');
+    const tests = page.locator('#codeTestsEd textarea');
     await tests.fill('def test_forever():\n    while True:\n        pass\n');
-    await expect(page.locator('#labCount')).toHaveText('1 test');
-    await page.click('#labRun');
-    await expect(page.locator('#labStop')).toBeEnabled();
+    await expect(page.locator('#codeCount')).toHaveText('1 test');
+    await page.click('#codeRun');
+    await expect(page.locator('#codeStop')).toBeEnabled();
     await page.waitForTimeout(500);
-    await page.click('#labStop');
+    await page.click('#codeStop');
     await expect(summary).toHaveText('Stopped. 0 of 1 test passed.');
     await tests.fill('def test_quick():\n    assert True\n');
-    await page.click('#labRun');
+    await page.click('#codeRun');
     await expect(summary).toHaveText(/^The test passed in [\d.]+s$/, { timeout: PYTHON });
     expect(errors).toEqual([]);
   });
@@ -163,19 +163,19 @@ test.describe('Python mode', () => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Bank account');
-    await page.click('.lab-fw [data-fw="unittest"]');
+    await page.click('.code-fw [data-fw="unittest"]');
     await ready(page);
-    const show = page.locator('#labCovShow'), score = page.locator('#labCodeCov'), branch = page.locator('#labCodeBranch');
-    const note = page.locator('#labCodeCovNote');
-    const lines = cls => page.locator(`#labCodeEd .hl .l.${cls}`);
+    const show = page.locator('#codeCovShow'), score = page.locator('#codeCov'), branch = page.locator('#codeBranch');
+    const note = page.locator('#codeCovNote');
+    const lines = cls => page.locator(`#codeEd .hl .l.${cls}`);
     const texts = cls => lines(cls).evaluateAll(ls => ls.map(l => l.textContent.trim()));
-    const code = page.locator('#labCodeEd textarea');
-    await expect(page.locator('#labConsole')).toHaveText('Press Run to run the tests.');
+    const code = page.locator('#codeEd textarea');
+    await expect(page.locator('#codeConsole')).toHaveText('Press Run to run the tests.');
     // The Results head has the check alone, never a number
     await expect(page.locator('.cov-toggle')).toHaveText('Coverage');
 
     // Measured on every run, and the code stays plain until the check is on
-    await labRun(page);
+    await codeRun(page);
     await expect(score).toBeHidden();
     await expect(lines('cov-hit')).toHaveCount(0);
     await show.check();
@@ -196,9 +196,9 @@ test.describe('Python mode', () => {
     await expect(lines('cov-miss')).toHaveCount(0);
 
     // The flow of each method with a branch, coloured the same way; a box takes you to its line
-    const flow = page.locator('#labFlow');
+    const flow = page.locator('#codeFlow');
     await page.click('[data-codeview="flow"]');
-    await expect(page.locator('#labCodeEd')).toBeHidden();
+    await expect(page.locator('#codeEd')).toBeHidden();
     await expect(flow.locator('.flow-fn h3')).toHaveText(['Account.deposit', 'Account.withdraw']);
     const box = line => flow.locator(`.fnode[data-line="${line}"]`);
     await expect(box(9)).toHaveClass(/\bdec part\b/);
@@ -206,15 +206,15 @@ test.describe('Python mode', () => {
     await score.click();
     await expect(box(9)).toHaveClass(/\bdec hit\b/);
     await box(10).click();
-    await expect(page.locator('#labCodeEd')).toBeVisible();
+    await expect(page.locator('#codeEd')).toBeVisible();
     expect(await code.evaluate(t => t.value.slice(t.selectionStart, t.selectionEnd))).toBe('raise ValueError("Deposit must be positive")');
     await page.click('[data-codeview="flow"]');
     await expect(page.locator('.cov-toggle')).toHaveText('Coverage');
     // Unchecked, the code is plain, and the flow goes with the scores
     await show.uncheck();
-    await expect(page.locator('#labCodeEd')).toBeVisible();
+    await expect(page.locator('#codeEd')).toBeVisible();
     await expect(flow).toBeHidden();
-    await expect(page.locator('.lab-codeview')).toBeHidden();
+    await expect(page.locator('.code-flowseg')).toBeHidden();
     await expect(lines('cov-miss')).toHaveCount(0);
     await expect(score).toBeHidden();
     await expect(branch).toBeHidden();
@@ -227,8 +227,8 @@ test.describe('Python mode', () => {
     await expect(score).toBeHidden();
 
     // One test on its own measures only what it ran
-    await page.locator('#labResults .test').first().locator('.run-one').click();
-    await expect(page.locator('#labSummary')).toHaveText(/^The test passed/, { timeout: PYTHON });
+    await page.locator('#codeResults .test').first().locator('.run-one').click();
+    await expect(page.locator('#codeSummary')).toHaveText(/^The test passed/, { timeout: PYTHON });
     await expect(lines('cov-miss')).not.toHaveCount(0);
     expect(errors).toEqual([]);
   });
@@ -237,18 +237,18 @@ test.describe('Python mode', () => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Bank account');
-    await page.click('.lab-fw [data-fw="unittest"]');
+    await page.click('.code-fw [data-fw="unittest"]');
     await ready(page);
-    const panel = page.locator('#labMutation'), runBtn = panel.locator('.mut-run'), score = panel.locator('.mut-score');
+    const panel = page.locator('#codeMutation'), runBtn = panel.locator('.mut-run'), score = panel.locator('.mut-score');
     const group = state => panel.locator(`.bug-group[data-state="${state}"]`);
-    await page.click('.lab-seg [data-labview="mutation"]');
+    await page.click('.code-seg [data-codetab="mutation"]');
     await expect(panel).not.toContainText('Run mutations to change the code');
     // Before a run, what a run would try, none of it checked yet
     await expect(score).toHaveText('6 mutations');
     await expect(group('unchecked').locator('.mut-row')).toHaveCount(6);
     await expect(runBtn).toHaveText('Run mutations');
     // and the list follows the code
-    const codeTa = page.locator('#labCodeEd textarea');
+    const codeTa = page.locator('#codeEd textarea');
     await codeTa.evaluate(t => { t.value = t.value.replace('self.balance += amount', 'self.balance += amount * 1'); t.dispatchEvent(new Event('input')); });
     await expect(score).toHaveText(/^[7-9] mutations$/);
     await codeTa.evaluate(t => { t.value = t.value.replace('self.balance += amount * 1', 'self.balance += amount'); t.dispatchEvent(new Event('input')); });
@@ -259,9 +259,9 @@ test.describe('Python mode', () => {
     await plus.locator('.mut-inject').click();
     await expect(codeTa).toHaveValue(/self\.balance -= amount\n\n {4}def withdraw/);
     await expect(plus).toContainText('in the code now');
-    await expect(page.locator('#labCodeEd .hl .l.bad')).toHaveCount(1);
-    await page.click('#labRun');
-    await expect(page.locator('#labSummary')).toHaveText(/^1 of 3 tests failed/, { timeout: PYTHON });
+    await expect(page.locator('#codeEd .hl .l.bad')).toHaveCount(1);
+    await page.click('#codeRun');
+    await expect(page.locator('#codeSummary')).toHaveText(/^1 of 3 tests failed/, { timeout: PYTHON });
     await expect(score).toHaveText('6 mutations');
     await plus.locator('.mut-inject').click();
     await expect(codeTa).toHaveValue(/self\.balance \+= amount\n\n {4}def withdraw/);
@@ -289,11 +289,11 @@ test.describe('Python mode', () => {
     await expect(score).toHaveText('1 of 6 mutations caught (16%)');
     // A row takes you to the line it changed
     await group('escaped').locator('.mut-row', { hasText: '<= → <' }).click();
-    const code = page.locator('#labCodeEd textarea');
+    const code = page.locator('#codeEd textarea');
     expect(await code.evaluate(t => t.value.slice(t.selectionStart, t.selectionEnd))).toBe('if amount <= 0:');
 
     // A test for the boundary catches the < mutation, and an edit makes the last run stale
-    const tests = page.locator('#labTestsEd textarea');
+    const tests = page.locator('#codeTestsEd textarea');
     await tests.evaluate(t => {
       t.value = t.value.replace('class AccountTest(unittest.TestCase):\n', 'class AccountTest(unittest.TestCase):\n    def test_zero_is_refused(self):\n        with self.assertRaises(ValueError):\n            Account(100).deposit(0)\n\n');
       t.dispatchEvent(new Event('input'));
@@ -316,13 +316,13 @@ test.describe('Python mode', () => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Bank account');
-    await page.click('.lab-fw [data-fw="unittest"]');
+    await page.click('.code-fw [data-fw="unittest"]');
     await ready(page);
-    const panel = page.locator('#labSmells'), score = panel.locator('.smell-score');
+    const panel = page.locator('#codeSmells'), score = panel.locator('.smell-score');
     const group = id => panel.locator(`.smell-group[data-smell="${id}"]`);
-    const tests = page.locator('#labTestsEd textarea');
+    const tests = page.locator('#codeTestsEd textarea');
     const edit = (from, to) => tests.evaluate((t, [a, b]) => { t.value = t.value.replace(a, b); t.dispatchEvent(new Event('input')); }, [from, to]);
-    await page.click('.lab-seg [data-labview="smells"]');
+    await page.click('.code-seg [data-codetab="smells"]');
     // Every test opens by making the same account
     await expect(score).toHaveText('1 smell in 3 tests');
     await expect(group('duplication-of-setup').locator('.smell-what')).toHaveText(['account = Account(100)']);
@@ -349,7 +349,7 @@ test.describe('Python mode', () => {
     await expect(panel).toContainText('Fix the tests first');
 
     // pytest: a fixture a test replaces at once
-    await page.click('.lab-fw [data-fw="pytest"]');
+    await page.click('.code-fw [data-fw="pytest"]');
     await expect(score).toHaveText('1 smell in 3 tests');
     await edit('def test_deposit_adds_to_the_balance', [
       '@pytest.fixture', 'def account():', '    return Account(100)', '', '', 'def test_given(account):', '    account = Account(5)',
@@ -364,11 +364,11 @@ test.describe('Python mode', () => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await ready(page);
-    const panel = page.locator('#labSmells'), score = panel.locator('.smell-score');
+    const panel = page.locator('#codeSmells'), score = panel.locator('.smell-score');
     const group = id => panel.locator(`.smell-group[data-smell="${id}"]`);
-    await page.click('.lab-seg [data-labview="smells"]');
-    await panel.locator('[data-labsmells="all"]').click();
-    await expect(panel.locator('[data-labsmells="all"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.click('.code-seg [data-codetab="smells"]');
+    await panel.locator('[data-codesmells="all"]').click();
+    await expect(panel.locator('[data-codesmells="all"]')).toHaveAttribute('aria-pressed', 'true');
     // Bank account and Cart repeat their setup, on purpose
     await expect(score).toHaveText(/^\d+ of 11 examples have one$/);
     await expect(group('duplication-of-setup').locator('.smell-what')).toContainText(['Cart', 'Bank account']);
@@ -377,14 +377,14 @@ test.describe('Python mode', () => {
 
     // A row opens the example at its line, on This file
     await group('duplication-of-setup').locator('.smell-line', { hasText: 'Bank account' }).click();
-    await expect(page.locator('#labTestsFile')).toHaveText('test_bank_account.py');
-    await expect(panel.locator('[data-labsmells="file"]')).toHaveAttribute('aria-pressed', 'true');
-    const tests = page.locator('#labTestsEd textarea');
+    await expect(page.locator('#codeTestsFile')).toHaveText('test_bank_account.py');
+    await expect(panel.locator('[data-codesmells="file"]')).toHaveAttribute('aria-pressed', 'true');
+    const tests = page.locator('#codeTestsEd textarea');
     expect(await tests.evaluate(t => t.value.slice(t.selectionStart, t.selectionEnd))).toBe('account = Account(100)');
 
     // pytest has its own list
-    await page.click('.lab-fw [data-fw="pytest"]');
-    await panel.locator('[data-labsmells="all"]').click();
+    await page.click('.code-fw [data-fw="pytest"]');
+    await panel.locator('[data-codesmells="all"]').click();
     await expect(group('duplication-of-setup').locator('.smell-why')).toContainText('a fixture');
     await expect(group('duplication-of-setup').locator('.smell-what')).toContainText(['Cart', 'Bank account']);
     expect(errors).toEqual([]);
@@ -394,18 +394,18 @@ test.describe('Python mode', () => {
     test.setTimeout(4 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await ready(page);
-    await page.click('.lab-seg [data-labview="mutation"]');
+    await page.click('.code-seg [data-codetab="mutation"]');
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
     const runBtn = page.locator('.mut-run'), problems = [];
     for (const fw of ['unittest', 'pytest']){
-      await page.evaluate(fw => window.playlive.lab.framework(fw), fw);
+      await page.evaluate(fw => window.playlive.code.framework(fw), fw);
       for (const id of ids){
-        await page.evaluate(id => window.playlive.lab.select(id), id);
-        await expect(page.locator('#labCodeFile')).toHaveText(`${id.replace(/-/g, '_')}.py`);
+        await page.evaluate(id => window.playlive.code.select(id), id);
+        await expect(page.locator('#codeFile')).toHaveText(`${id.replace(/-/g, '_')}.py`);
         await runBtn.click();
         await expect(runBtn).toHaveText('Run again', { timeout: PYTHON });
         const said = await page.locator('.mut-score').textContent();
-        if (!/^\d+ of \d+ mutations caught/.test(said)) problems.push(`${fw} ${id}: ${await page.locator('#labMutation').innerText()}`);
+        if (!/^\d+ of \d+ mutations caught/.test(said)) problems.push(`${fw} ${id}: ${await page.locator('#codeMutation').innerText()}`);
       }
     }
     expect(problems).toEqual([]);
@@ -420,12 +420,12 @@ test.describe('Python mode', () => {
     expect(ids).toHaveLength(11);
     const failures = [];
     for (const fw of ['unittest', 'pytest']){
-      await page.evaluate(fw => window.playlive.lab.framework(fw), fw);
+      await page.evaluate(fw => window.playlive.code.framework(fw), fw);
       for (const id of ids){
-        await page.evaluate(id => window.playlive.lab.select(id), id);
-        await expect(page.locator('#labCodeFile')).toHaveText(`${id.replace(/-/g, '_')}.py`);
-        const n = Number((await page.locator('#labCount').textContent()).split(' ')[0]);
-        const said = await labRun(page);
+        await page.evaluate(id => window.playlive.code.select(id), id);
+        await expect(page.locator('#codeFile')).toHaveText(`${id.replace(/-/g, '_')}.py`);
+        const n = Number((await page.locator('#codeCount').textContent()).split(' ')[0]);
+        const said = await codeRun(page);
         // a parametrized test runs once per case, so pytest may count more
         if (!(allPassed(said) >= n)) failures.push(`${fw} ${id}: ${said}`);
       }
@@ -439,11 +439,11 @@ test.describe('Python mode', () => {
     const { errors } = await openApp(page, { hash: '#python-create' });
     await expect(page.locator('.mode-seg [data-mode="create"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.area-seg [data-area="python"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.lab-seg [data-labview="create"]')).toHaveAttribute('aria-pressed', 'true');
-    const tests = page.locator('#labTestsEd textarea');
-    await page.click('.lab-fw [data-fw="unittest"]');
+    await expect(page.locator('.code-seg [data-codetab="create"]')).toHaveAttribute('aria-pressed', 'true');
+    const tests = page.locator('#codeTestsEd textarea');
+    await page.click('.code-fw [data-fw="unittest"]');
     await expect(tests).toHaveValue(/^import unittest\nfrom calculator import add, subtract, multiply, divide\n\n\n# test_add\n/);
-    const group = state => page.locator(`#labCreate .create-group[data-state="${state}"] .create-what`);
+    const group = state => page.locator(`#codeCreate .create-group[data-state="${state}"] .create-what`);
     await expect(group('todo')).toHaveText(['test_add', 'test_subtract', 'test_multiply', 'test_divide', 'test_divide_by_zero_is_refused']);
     await expect(page.locator('.brief-score')).toHaveText('0 of 5 done');
 
@@ -460,13 +460,13 @@ class MyTest(unittest.TestCase):
         self.assertTrue(divide(10, 2))
 `);
     await expect(group('nocheck')).toHaveText(['test_add', 'test_divide']);
-    await expect(page.locator('#labCreate .create-group[data-state="nocheck"] .create-m').first()).toHaveText('not checked yet');
+    await expect(page.locator('#codeCreate .create-group[data-state="nocheck"] .create-m').first()).toHaveText('not checked yet');
     await ready(page);
     await page.click('.brief-run');
     await expect(page.locator('.brief-run')).toHaveText('Check', { timeout: PYTHON });
     await expect(group('done')).toHaveText(['test_add']);
     await expect(group('nocheck')).toHaveText(['test_divide']);
-    await expect(page.locator('#labCreate .create-group[data-state="nocheck"] .create-m')).toHaveText(/^misses 1 of \d+: line 16, \/ → \*$/);
+    await expect(page.locator('#codeCreate .create-group[data-state="nocheck"] .create-m')).toHaveText(/^misses 1 of \d+: line 16, \/ → \*$/);
     await expect(page.locator('.brief-score')).toHaveText('1 of 5 done');
     expect(new URL(page.url()).hash).toBe('#python-create');
 
@@ -478,7 +478,7 @@ class MyTest(unittest.TestCase):
     await page.click('.mode-seg [data-mode="explore"]');
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
     await expect(tests).toHaveValue(/class CalculatorTest/);
-    await expect(page.locator('.lab-seg [data-labview="create"]')).toBeHidden();
+    await expect(page.locator('.code-seg [data-codetab="create"]')).toBeHidden();
     await page.click('.mode-seg [data-mode="create"]');
     await expect(tests).toHaveValue(/class MyTest/);
     expect(errors).toEqual([]);
@@ -489,19 +489,19 @@ class MyTest(unittest.TestCase):
     const { errors } = await openApp(page, { hash: '#python-create' });
     await ready(page);
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    const tests = page.locator('#labTestsEd textarea'), problems = [];
+    const tests = page.locator('#codeTestsEd textarea'), problems = [];
     for (const fw of ['unittest', 'pytest']){
-      await page.evaluate(fw => window.playlive.lab.framework(fw), fw);
+      await page.evaluate(fw => window.playlive.code.framework(fw), fw);
       for (const id of ids){
-        await page.evaluate(id => window.playlive.lab.select(id), id);
+        await page.evaluate(id => window.playlive.code.select(id), id);
         const file = `test_${id.replace(/-/g, '_')}.py`;
-        await expect(page.locator('#labTestsFile')).toHaveText(file);
+        await expect(page.locator('#codeTestsFile')).toHaveText(file);
         await expect(page.locator('.brief-score')).toHaveText(/ done$/);
         await tests.fill(await page.evaluate(u => fetch(u).then(r => r.text()), `examples/python/${id}/${fw}/${file}`));
         await page.click('.brief-run');
         await expect(page.locator('.brief-run')).toHaveText('Check', { timeout: PYTHON });
         const said = await page.locator('.brief-score').textContent();
-        if (!/^All \d+ tests? written$/.test(said)) problems.push(`${fw} ${id}: ${await page.locator('#labCreate').innerText()}`);
+        if (!/^All \d+ tests? written$/.test(said)) problems.push(`${fw} ${id}: ${await page.locator('#codeCreate').innerText()}`);
       }
     }
     expect(problems).toEqual([]);
@@ -511,7 +511,7 @@ class MyTest(unittest.TestCase):
   test('autocomplete writes a test, and the checks the framework has', async ({ page }) => {
     test.setTimeout(2 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
-    const tests = page.locator('#labTestsEd textarea'), pop = page.locator('#labAc');
+    const tests = page.locator('#codeTestsEd textarea'), pop = page.locator('#codeAc');
     await expect(tests).toHaveValue(/import pytest/);
     // At the end of the file, on a line of its own
     await tests.evaluate(t => { t.focus(); t.setSelectionRange(t.value.length, t.value.length); });
@@ -531,7 +531,7 @@ class MyTest(unittest.TestCase):
     await page.keyboard.type('multiply(2, 3)');
     expect(await tests.inputValue()).toContain('def test_doubles():\n    assert multiply(2, 3) == expected');
     // unittest offers its own asserts, not pytest's
-    await page.click('.lab-fw [data-fw="unittest"]');
+    await page.click('.code-fw [data-fw="unittest"]');
     await expect(tests).toHaveValue(/import unittest/);
     await tests.evaluate(t => { t.focus(); const at = t.value.indexOf('self.assertEqual(add(2, 3), 5)'); t.setSelectionRange(at, at); });
     await page.keyboard.press('Enter');
@@ -545,8 +545,8 @@ class MyTest(unittest.TestCase):
 
   test('⌘/Ctrl+/ comments the selected lines, again uncomments them, and ⌘/Ctrl+Z undoes', async ({ page }) => {
     await openApp(page, { mode: 'python' });
-    const tests = page.locator('#labTestsEd textarea');
-    await page.click('.lab-fw [data-fw="unittest"]');
+    const tests = page.locator('#codeTestsEd textarea');
+    await page.click('.code-fw [data-fw="unittest"]');
     await expect(tests).toHaveValue(/import unittest/);
     await tests.evaluate(t => { t.focus(); t.setSelectionRange(0, 0); });
     await page.keyboard.press('ControlOrMeta+/');
@@ -561,7 +561,7 @@ class MyTest(unittest.TestCase):
       document.querySelector(sel).dispatchEvent(e);
       return e.defaultPrevented;
     }, sel);
-    expect(await pasteRefused('#labTestsEd textarea')).toBe(false);
+    expect(await pasteRefused('#codeTestsEd textarea')).toBe(false);
     // ⌘/Ctrl+Z takes back each, typing too, and ⇧ puts them back
     await page.keyboard.press('ControlOrMeta+z');
     await expect(tests).toHaveValue(/^# import unittest\n/);

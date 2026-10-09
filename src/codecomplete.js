@@ -1,5 +1,5 @@
-import { labState } from './lab.js';
-import { LABS, labOf } from './labcore.js';
+import { codeState } from './code.js';
+import { CODE_MODES, codeModeOf } from './codecore.js';
 import { expand, match } from './snippets.js';
 import { mode } from './state.js';
 import { suggestionList } from './suggestlist.js';
@@ -13,14 +13,14 @@ import { suggestionList } from './suggestlist.js';
    snippets.js, and the list itself suggestlist.js, the same one the YAML
    editor has. It opens as you type a word that begins a snippet, or after
    "expect(…)." for a matcher, and Ctrl/⌘+Space opens it anywhere. */
-const ta = document.querySelector('#labTestsEd textarea');
+const ta = document.querySelector('#codeTestsEd textarea');
 let found = null;
 // Where Tab goes next (a snippet's $0, the test's body once it is named),
 // counted back from the end of the file, so typing over the placeholder before
 // it does not move it
 let next = null;
 
-const list = suggestionList({ input: ta, id: 'labAc', box: () => ta.closest('.lab-ed'), onAccept: accept });
+const list = suggestionList({ input: ta, id: 'codeAc', box: () => ta.closest('.code-ed'), onAccept: accept });
 
 function accept(s){
   const { from } = found, to = ta.selectionStart;
@@ -33,9 +33,9 @@ function accept(s){
   ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
 function updateCodeCompletion(forced = false){
-  const L = LABS[labOf(mode)];
+  const L = CODE_MODES[codeModeOf(mode)];
   if (!L || ta.readOnly || document.activeElement !== ta || ta.selectionStart !== ta.selectionEnd) return list.close();
-  const { example, framework, lang } = labState();
+  const { example, framework, lang } = codeState();
   found = match(L.snippets(framework, lang, example), ta.value, ta.selectionStart, { forced, comment: L.comment });
   if (found) list.show(found.items); else list.close();
 }

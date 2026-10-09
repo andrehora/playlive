@@ -9,8 +9,8 @@ import { applyHtml, htmlDirty, htmlEdit } from './htmlview.js';
 import { query } from './find.js';
 import { HIST, runHistory } from './history.js';
 import { setMode } from './modes.js';
-import { labState, resetLab, runLab, selectExample, setFramework, setLang } from './lab.js';
-import { isLab, labOf } from './labcore.js';
+import { codeState, resetCodeModes, runCodeTests, selectExample, setFramework, setLang } from './code.js';
+import { isCodeMode, codeModeOf } from './codecore.js';
 import { validate } from './parse.js';
 import { renderTabs, selectSite, setView } from './picker.js';
 import { createSkeleton, report as createReport, setCreateFolded, titlesOf } from './create.js';
@@ -18,9 +18,9 @@ import { found as smellFound, scanSites, report as smellReport, setSmellView, sm
 import { startRecording, stopRecording } from './recorder.js';
 import { expandedTests, resultsTab, setResultsTab } from './results.js';
 import { nextResolve, preview, releaseNext, run, syncUI } from './run.js';
-import { copyLink, labFromHash, linkedMode, modeFromHash, shareUrl, siteFromHash, syncUrl } from './share.js';
+import { copyLink, codeExampleFromHash, linkedMode, modeFromHash, shareUrl, siteFromHash, syncUrl } from './share.js';
 import { CREATE, SITE_KEYS, STORE, createTests, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './sites.js';
-import { clearBugHtml, clearEditedHtml, editorSite, mode, previewTimer, recording, running, setEditorSite, setLabExample, setPreviewTimer, setStopRequested } from './state.js';
+import { clearBugHtml, clearEditedHtml, editorSite, mode, previewTimer, recording, running, setEditorSite, setCodeExample, setPreviewTimer, setStopRequested } from './state.js';
 import { STATUS, paintTabs, setProgress, siteStatus, toast } from './ui.js';
 import './dialog.js';          // registers the export dialog and its Copy button
 import './complete.js';       // registers the editor's suggestion list
@@ -34,7 +34,7 @@ specEl.addEventListener('input', () => {
   }, 400));
 });
 document.addEventListener('keydown', e => {
-  if (isLab(mode)) return;            // lab.js has the keys there
+  if (isCodeMode(mode)) return;            // code.js has the keys there
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); if (nextResolve) releaseNext(); else run(); }
   if (e.key === 'Escape' && running) stopBtn.click();
 });
@@ -69,7 +69,7 @@ async function resetAll(){
   for (const o of [siteKeys, runHistory, siteStatus]) for (const k of Object.keys(o)) delete o[k];
   expandedTests.clear();
   try { for (const k of [STORE, CREATE, SITE_KEYS, HIST, STATUS]) localStorage.removeItem(k); } catch {}
-  resetLab();                  // and the code modes' files back as they ship
+  resetCodeModes();                  // and the code modes' files back as they ship
   specEl.value = mode === 'create' ? await createSkeleton(site) : await exampleTests(site);
   errorEl.textContent = ''; summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
   // deliberately no persist(): after Reset nothing of ours is in storage until you type
@@ -88,9 +88,9 @@ reloadBtn.addEventListener('click', () => {
 });
 // A link like "#html#coupon-code" names the mode and the example to open; with
 // no hash the page opens home
-const linked = siteFromHash(), opening = linkedMode(), linkedLab = labFromHash();
+const linked = siteFromHash(), opening = linkedMode(), linkedCodeExample = codeExampleFromHash();
 if (linked) setEditorSite(linked);
-if (linkedLab) setLabExample(labOf(opening), linkedLab);
+if (linkedCodeExample) setCodeExample(codeModeOf(opening), linkedCodeExample);
 renderTabs();
 setView(editorSite);
 // The link says the mode, and a bare "/" is home, Python: every other mode is in
@@ -121,6 +121,6 @@ window.playlive = {
   share: { copy: copyLink, url: shareUrl, linked: siteFromHash, linkedMode: modeFromHash },
   complete: { suggest, context, showing: completion, close: closeCompletion },
   html: { markup: () => htmlEdit.value, apply: applyHtml, edited: () => htmlDirty() },
-  lab: { select: selectExample, framework: setFramework, lang: setLang, state: labState, run: runLab },
+  code: { select: selectExample, framework: setFramework, lang: setLang, state: codeState, run: runCodeTests },
   query
 };

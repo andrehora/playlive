@@ -1,20 +1,20 @@
 import { $id, KEY } from './dom.js';
 import { LOGOS } from './logos.js';
 import { syncUrl } from './share.js';
-import { mode, setLabExample } from './state.js';
+import { mode, setCodeExample } from './state.js';
 import { setProgress, toast } from './ui.js';
 import { escH, plural, runSummary } from './util.js';
-import { LABS, P, S, active, codeEd, creating, exampleOf, files, isLab, isLabCreate, job, key, label, labOf, progressEl, rt, session, sessions,
-  setActive, setCreating, setCurrentView, setJob, shipped, testsEd, view } from './labcore.js';
-import { coverage, setCoverage } from './labcoverage.js';
-import { createBtn, createEl, endCheck, onBrief, renderCreate, resetCreate } from './labcreate.js';
-import { endHunt, listMutations, mutationBtn, mutationEl, onMutation, resetMutation } from './labmutation.js';
-import { listSmells, onSmells, resetSmells, scanAll, smellView, smellsBtn, smellsEl } from './labsmells.js';
+import { CODE_MODES, P, S, active, codeEd, creating, exampleOf, files, handlerOf, isCodeMode, isCodeCreate, job, key, label, codeModeOf, onWorker, progressEl,
+  request, rt, session, sessions, setActive, setCreating, setCurrentView, setJob, shipped, testsEd, view } from './codecore.js';
+import { coverage, setCoverage } from './codecoverage.js';
+import { createBtn, createEl, endCheck, renderCreate, resetCreate } from './codecreate.js';
+import { endHunt, listMutations, mutationBtn, mutationEl, resetMutation } from './codemutation.js';
+import { listSmells, resetSmells, scanAll, smellView, smellsBtn, smellsEl } from './codesmells.js';
 
 /* ---------- The code modes' panels, and what runs them ----------
-   labcore.js holds what every panel shares (the profiles, the sessions, the
+   codecore.js holds what every panel shares (the profiles, the sessions, the
    two editors and the state they all read); each grader's tab is its own
-   module (labcoverage, labmutation, labsmells, labcreate). This is the rest:
+   module (codecoverage, codemutation, codesmells, codecreate). This is the rest:
    Results, the console, the runtime and the jobs it runs, and moving between
    examples, frameworks and languages. */
 
@@ -23,15 +23,15 @@ import { listSmells, onSmells, resetSmells, scanAll, smellView, smellsBtn, smell
    collected, from the runner, so a parametrized test shows each of its cases.
    The worker reports each test as it starts and ends, which is what the rows
    and their dots follow. */
-const resultsEl = $id('labResults');
-resultsEl.innerHTML = '<p class="lab-note" hidden></p><div class="lab-list"></div>';
+const resultsEl = $id('codeResults');
+resultsEl.innerHTML = '<p class="code-note" hidden></p><div class="code-list"></div>';
 const noteEl = resultsEl.firstChild, listEl = resultsEl.lastChild;
-const countEl = $id('labCount');
+const countEl = $id('codeCount');
 let tests = [], collectError = null, runTarget = null;
 // The tests the last run covered, in order, for the circles in the panel head;
 // null until a run, and again once the file is edited
 let runIds = null;
-const dotsEl = $id('labDots');
+const dotsEl = $id('codeDots');
 const DOT = { running: 'run', passed: 'ok', failed: 'bad', error: 'bad', skipped: 'skip' };
 // Updated in place, so a circle pops in once, when it first appears, and not
 // on every redraw of the list
@@ -53,13 +53,13 @@ const editorFor = file => (file === files().code ? codeEd : file === files().tes
 function detail(sec, { message, frames = [] }){
   const { file, line } = frames.at(-1) || {};
   const d = document.createElement('div');
-  d.className = 'lab-detail';
+  d.className = 'code-detail';
   const err = document.createElement('span');
   err.className = 'err'; err.textContent = message || 'Failed';
   d.append(err);
   if (editorFor(file) && line >= 0){
     const at = document.createElement('button');
-    at.type = 'button'; at.className = 'ghost small lab-at';
+    at.type = 'button'; at.className = 'ghost small code-at';
     at.textContent = `${file}, line ${line + 1}`;
     at.title = 'Go to the line';
     at.addEventListener('click', () => editorFor(file).jump(line));
@@ -71,8 +71,8 @@ function row(t){
   const sec = document.createElement('section');
   sec.className = 'test';
   sec.dataset.state = t.state;
-  sec.innerHTML = `<div class="test-head"><button type="button" class="chev">${CHEV}</button><span class="tstate" aria-hidden="true"></span><h3><button type="button" class="lab-name"></button></h3><span></span><span class="ms"></span><button type="button" class="run-one">Run</button></div>`;
-  const name = sec.querySelector('.lab-name');
+  sec.innerHTML = `<div class="test-head"><button type="button" class="chev">${CHEV}</button><span class="tstate" aria-hidden="true"></span><h3><button type="button" class="code-name"></button></h3><span></span><span class="ms"></span><button type="button" class="run-one">Run</button></div>`;
+  const name = sec.querySelector('.code-name');
   name.textContent = t.name;
   name.title = 'Go to the test';
   name.addEventListener('click', () => testsEd.jump(t.line));
@@ -80,7 +80,7 @@ function row(t){
   const one = sec.querySelector('.run-one');
   one.setAttribute('aria-label', `Run only ${t.name}`);
   one.disabled = !!job;
-  one.addEventListener('click', () => runLab(t.id));
+  one.addEventListener('click', () => runCodeTests(t.id));
   const chev = sec.querySelector('.chev');
   if (t.fail){
     detail(sec, t.fail);
@@ -165,7 +165,7 @@ function setView(v){
   // All smells is read again each time the tab opens
   if (v === 'smells' && view !== 'smells' && smellView === 'all') scanAll();
   setCurrentView(v);
-  document.querySelectorAll('.lab-seg [data-labview]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.labview === v)));
+  document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.codetab === v)));
   createEl.hidden = v !== 'create';
   resultsEl.hidden = v !== 'results';
   consoleEl.hidden = v !== 'console';
@@ -174,12 +174,12 @@ function setView(v){
   listMutations();
   listSmells();
 }
-document.querySelectorAll('.lab-seg [data-labview]').forEach(b => b.addEventListener('click', () => setView(b.dataset.labview)));
+document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => setView(b.dataset.codetab)));
 
 
 /* ---------- The console ---------- */
-const consoleEl = $id('labConsole'), summaryEl = $id('labSummary'), stateEl = $id('labState');
-const runBtn = $id('labRun'), stopBtn = $id('labStop');
+const consoleEl = $id('codeConsole'), summaryEl = $id('codeSummary'), stateEl = $id('codeState');
+const runBtn = $id('codeRun'), stopBtn = $id('codeStop');
 let out = [];
 function print(line, cls = P().consoleClass(line)){
   out.push(line);
@@ -218,7 +218,7 @@ function idle(){
 
 /* ---------- The runtime ---------- */
 export function boot(m = active){
-  const s = session(m), p = LABS[m];
+  const s = session(m), p = CODE_MODES[m];
   if (s.worker) return;
   s.ready = false;
   s.worker = p.worker(s.framework, s.lang);
@@ -226,25 +226,7 @@ export function boot(m = active){
   s.worker.onmessage = ({ data }) => {
     // A worker for the mode not on screen only gets itself ready
     if (data.type === 'ready'){ s.ready = true; s.versions = data.versions; }
-    if (m !== active) return;
-    if (data.type === 'status') setState(data.text);
-    else if (data.type === 'ready'){
-      setState(label());
-      if (s.pending){ t0 = performance.now(); s.worker.postMessage(s.pending); s.pending = null; }
-      listMutations();
-      listSmells();
-      if (view === 'smells' && smellView === 'all') scanAll();
-    }
-    else if (data.type === 'out') print(data.line);
-    else if (['collected', 'collect-error', 'start', 'result'].includes(data.type)) onTest(data);
-    else if (data.type === 'coverage' && !data.lines) setCoverage(null, `${data.file} could not be measured, so it ran as written.`);
-    else if (data.type === 'coverage') setCoverage({ file: data.file, lines: data.lines, hit: new Set(data.hit),
-      branches: data.branches && new Map(data.branches.map(([l, of, taken]) => [l, [of, taken]])), flows: data.flows || [] });
-    else if (['mutants', 'mutant', 'mutation-refused', 'mutation-done'].includes(data.type)) onMutation(data);
-    else if (data.type === 'smells') onSmells(data.report, data.example);
-    else if (data.type === 'brief' || data.type === 'brief-progress') onBrief(data);
-    else if (data.type === 'done') finish(data.code);
-    else if (data.type === 'error') fail(data.message);
+    if (m === active) handlerOf(data.type)?.(data);
   };
   // The worker's own script, or the runtime's, did not load: nothing to talk to
   s.worker.onerror = e => {
@@ -253,6 +235,19 @@ export function boot(m = active){
     else { s.worker?.terminate(); s.worker = null; }
   };
 }
+onWorker(['status'], data => setState(data.text));
+onWorker(['ready'], () => {
+  const s = S();
+  setState(label());
+  if (s.pending){ t0 = performance.now(); s.worker.postMessage(s.pending); s.pending = null; }
+  listMutations();
+  listSmells();
+  if (view === 'smells' && smellView === 'all') scanAll();
+});
+onWorker(['out'], data => print(data.line));
+onWorker(['collected', 'collect-error', 'start', 'result'], onTest);
+onWorker(['done'], data => finish(data.code));
+onWorker(['error'], data => fail(data.message));
 // Throw the worker away; a profile whose worker is cheap starts each run on a
 // fresh one, so no test can leave anything behind for the next.
 function drop(m = active){
@@ -290,11 +285,11 @@ function fail(message){
   if (job) ENDS[job].failed(message);
   else toast(message);
 }
+// Each panel disables its own buttons while a job runs (playlive:code-job)
 function syncButtons(){
   runBtn.disabled = !!job; stopBtn.disabled = !job;
-  mutationEl.querySelectorAll('.mut-run, .mut-one, .mut-inject').forEach(b => { b.disabled = !!job; });
-  createEl.querySelectorAll('.brief-run').forEach(b => { b.disabled = !!job; });
   listEl.querySelectorAll('.run-one').forEach(b => { b.disabled = !!job; });
+  document.dispatchEvent(new CustomEvent('playlive:code-job'));
 }
 // The lines of `file` that the run's tracebacks went through, counted from 0
 const marksIn = (fails, file) => new Set(fails.flatMap(f => f.frames || []).filter(f => f.file === file).map(f => f.line));
@@ -326,7 +321,7 @@ function finish(code, note = 'Stopped'){
 // The whole file, or one test by its id (what the Run on its row does)
 let ran = [];                       // how each test this run reported ended
 let started = 0, t0 = 0;            // tests begun this run, and when it began
-export function runLab(target = files().tests){
+export function runCodeTests(target = files().tests){
   if (job || !active) return;
   begin('run');
   runTarget = target; ran = []; started = 0; t0 = performance.now();
@@ -339,9 +334,9 @@ export function runLab(target = files().tests){
   runIds = target === files().tests ? tests.map(t => t.id) : [target];
   renderResults();
   setCoverage(null);
-  send({ files: { [files().code]: codeEd.value, [files().tests]: testsEd.value }, target, framework: S().framework, lang: S().lang, cover: files().code });
+  send(request({ target }));
 }
-function stopLab(){
+function stopCodeTests(){
   if (!job) return;
   const stopped = job;
   drop();
@@ -380,8 +375,8 @@ function drawSwitches(){
       el.append(b);
     }
   };
-  draw(document.querySelector('.lab-fw'), p.frameworks, s.framework, 'fw');
-  const lang = document.querySelector('.lab-lang');
+  draw(document.querySelector('.code-fw'), p.frameworks, s.framework, 'fw');
+  const lang = document.querySelector('.code-lang');
   lang.hidden = !(p.langs?.length > 1);
   if (!lang.hidden) draw(lang, p.langs, s.lang, 'lang', { logoOnly: true });
 }
@@ -406,9 +401,9 @@ function show(){
       codeEd.value = code; testsEd.value = testText ?? P().skeleton(original, files().tests);
     } catch { toast('The example did not load. Reload the page to try again.'); return; }
     const f = files();
-    $id('labCodeTitle').textContent = P().codeTitle(s.lang);
-    $id('labCodeFile').textContent = f.code;
-    $id('labTestsFile').textContent = f.tests;
+    $id('codeTitle').textContent = P().codeTitle(s.lang);
+    $id('codeFile').textContent = f.code;
+    $id('codeTestsFile').textContent = f.tests;
     tests = []; collectError = null; folded.clear(); runIds = null;
     clearConsole(); readTests(); setCoverage(null);
     resetMutation();
@@ -421,40 +416,35 @@ function show(){
 // The picker, the stepper and a link all come here
 export function selectExample(id){
   if (!active || !P().examples[id]) return;
-  stopLab();
+  stopCodeTests();
   stash();
-  setLabExample(active, id);
+  setCodeExample(active, id);
   syncUrl();
-  document.dispatchEvent(new CustomEvent('playlive:lab-example'));
+  document.dispatchEvent(new CustomEvent('playlive:code-example'));
   return show();
 }
-export function setFramework(fw){
-  const s = S();
-  if (!P().frameworks.some(f => f.id === fw) || fw === s.framework) return;
-  stopLab(); stash();
-  s.framework = fw;
-  if (P().fresh) s.versions = null; else if (s.ready) setState(label());
-  if (P().fresh){ drop(); boot(); }
+// A framework or a language: `{ framework }` or `{ lang }`, one of the profile's
+function switchTo(change){
+  const s = S(), [[k, v]] = Object.entries(change);
+  const choices = k === 'framework' ? P().frameworks : P().langs;
+  if (!choices?.some(c => c.id === v) || v === s[k]) return;
+  stopCodeTests(); stash();
+  s[k] = v;
+  if (P().fresh){ s.versions = null; drop(); boot(); }
+  else if (s.ready) setState(label());
   return show();
 }
-export function setLang(lang){
-  const s = S();
-  if (!P().langs?.some(l => l.id === lang) || lang === s.lang) return;
-  stopLab(); stash();
-  s.lang = lang;
-  if (P().fresh) s.versions = null;
-  if (P().fresh){ drop(); boot(); }
-  return show();
-}
-export const labState = () => ({ mode: active, create: creating, example: active && exampleOf(active), framework: active && S().framework, lang: active && S().lang });
+export const setFramework = framework => switchTo({ framework });
+export const setLang = lang => switchTo({ lang });
+export const codeState = () => ({ mode: active, create: creating, example: active && exampleOf(active), framework: active && S().framework, lang: active && S().lang });
 // Entering a code mode is what fetches its files and starts its runtime
 // downloading. Leaving one leaves its runtime loaded for coming back.
-export function enterLab(mode){
-  const m = labOf(mode), create = isLabCreate(mode);
+export function enterCodeMode(mode){
+  const m = codeModeOf(mode), create = isCodeCreate(mode);
   if (active === m && creating === create) return;
-  if (active){ stopLab(); stash(); }
+  if (active){ stopCodeTests(); stash(); }
   // From the other language, the same example, as both modes have the same ones
-  if (active && active !== m && LABS[m].examples[exampleOf(active)]) setLabExample(m, exampleOf(active));
+  if (active && active !== m && CODE_MODES[m].examples[exampleOf(active)]) setCodeExample(m, exampleOf(active));
   setActive(m); setCreating(create);
   mutationBtn.hidden = !P().mutation;
   smellsBtn.hidden = !P().smells;
@@ -468,39 +458,39 @@ export function enterLab(mode){
   setState(S().versions ? label() : `Downloading ${rt()}…`);
   return show();
 }
-export function leaveLab(){
+export function leaveCodeMode(){
   if (!active) return;
-  stopLab(); stash();
+  stopCodeTests(); stash();
   setActive(null); setCreating(false);
   codeEd.paint(null);
 }
 // Reset: every example of every code mode back as it ships
-export async function resetLab(){
-  stopLab();
+export async function resetCodeModes(){
+  stopCodeTests();
   for (const s of Object.values(sessions)){ s.edits.clear(); s.shown = null; }
   if (active) await show();
 }
 
 // Results and Console fold to their head, which still carries the summary and
 // the circles, and the code takes the room
-let labFolded = false;
-function setLabFolded(f){
-  labFolded = f;
-  $id('left').dataset.lab = f ? 'collapsed' : 'open';
-  const b = $id('foldLab');
+let codeFolded = false;
+function setCodeFolded(f){
+  codeFolded = f;
+  $id('left').dataset.code = f ? 'collapsed' : 'open';
+  const b = $id('foldCode');
   b.setAttribute('aria-expanded', String(!f));
   b.setAttribute('aria-label', f ? 'Expand the panel' : 'Collapse the panel');
   b.title = f ? 'Expand' : 'Collapse';
-  $id('foldLabIcon').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
+  $id('foldCodeIcon').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
 }
-$id('foldLab').addEventListener('click', () => setLabFolded(!labFolded));
-document.querySelector('.lab-fw').addEventListener('click', e => { const b = e.target.closest('[data-fw]'); if (b) setFramework(b.dataset.fw); });
-document.querySelector('.lab-lang').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); });
-runBtn.addEventListener('click', () => runLab());
-stopBtn.addEventListener('click', stopLab);
+$id('foldCode').addEventListener('click', () => setCodeFolded(!codeFolded));
+document.querySelector('.code-fw').addEventListener('click', e => { const b = e.target.closest('[data-fw]'); if (b) setFramework(b.dataset.fw); });
+document.querySelector('.code-lang').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); });
+runBtn.addEventListener('click', () => runCodeTests());
+stopBtn.addEventListener('click', stopCodeTests);
 document.addEventListener('keydown', e => {
-  if (!isLab(mode)) return;
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); runLab(); }
-  if (e.key === 'Escape' && job) stopLab();
+  if (!isCodeMode(mode)) return;
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); runCodeTests(); }
+  if (e.key === 'Escape' && job) stopCodeTests();
 });
 

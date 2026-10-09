@@ -1,6 +1,6 @@
 import { $id } from './dom.js';
-import { begin, send, settle } from './lab.js';
-import { P, S, active, codeEd, creating, files, job, progressEl, testsEd } from './labcore.js';
+import { begin, send, settle } from './code.js';
+import { P, S, active, codeEd, creating, files, job, onWorker, progressEl, request, testsEd } from './codecore.js';
 import { lineRow, listGroup, listNote } from './lists.js';
 import { setProgress } from './ui.js';
 import { band, escRe, plural } from './util.js';
@@ -18,7 +18,7 @@ import { band, escRe, plural } from './util.js';
    `brief`). What it said about a test lasts while that test's own lines and
    the code stay as they were. `checked` is { code, tests: name -> { written,
    passes, need, missed, text }, mutants: id -> mutant } or { refused | note }. */
-export const createEl = $id('labCreate'), createBtn = document.querySelector('.lab-seg [data-labview="create"]');
+export const createEl = $id('codeCreate'), createBtn = document.querySelector('.code-seg [data-codetab="create"]');
 export let briefSrc = null, checked = null, asked = null;
 const BRIEF_REFUSED = {
   original: 'The example’s own tests fail on this code, so there is nothing to compare yours with. Undo your changes to the code, or Reset.',
@@ -98,11 +98,9 @@ function runBrief(){
   asked = { code: codeEd.value, tests: testsEd.value };
   setProgress(0, null, progressEl);
   renderCreate();
-  send({ brief: true, files: { [files().code]: asked.code, [files().tests]: asked.tests }, cover: files().code,
-    target: files().tests, original: briefSrc, framework: S().framework, lang: S().lang,
-    names: [...new Set(testsOf(briefSrc).map(P().nameOf))] });
+  send(request({ brief: true, original: briefSrc, names: [...new Set(testsOf(briefSrc).map(P().nameOf))] }));
 }
-export function onBrief(data){
+function onBrief(data){
   if (job !== 'check') return;
   if (data.type === 'brief-progress') return setProgress(data.done / (data.of || 1), null, progressEl);
   if (data.refused) return endCheck({ refused: data.refused, code: asked.code });
@@ -122,4 +120,5 @@ export function endCheck(result){
   setProgress(ok ? 1 : null, ok ? 'ok' : null, progressEl);
   renderCreate();
 }
-
+onWorker(['brief', 'brief-progress'], onBrief);
+document.addEventListener('playlive:code-job', () => createEl.querySelectorAll('.brief-run').forEach(b => { b.disabled = !!job; }));

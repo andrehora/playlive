@@ -1,7 +1,7 @@
 import { $id } from './dom.js';
-import { begin, boot, send, settle } from './lab.js';
-import { P, S, active, codeEd, files, job, progressEl, testsEd, view } from './labcore.js';
-import { showCode } from './labcoverage.js';
+import { begin, boot, send, settle } from './code.js';
+import { P, S, active, codeEd, job, onWorker, progressEl, request, testsEd, view } from './codecore.js';
+import { showCode } from './codecoverage.js';
 import { listGroup, listNote } from './lists.js';
 import { setProgress } from './ui.js';
 import { band } from './util.js';
@@ -16,7 +16,7 @@ import { band } from './util.js';
    Before a run, the tab lists what a run would try, made for the code as it
    is (`list`). `mutation` is { mutants: [{ id, line, what, text, outcome }],
    code, ran, refused, note, stale }, and the job is 'mutate' while it runs. */
-export const mutationEl = $id('labMutation'), mutationBtn = document.querySelector('.lab-seg [data-labview="mutation"]');
+export const mutationEl = $id('codeMutation'), mutationBtn = document.querySelector('.code-seg [data-codetab="mutation"]');
 export let mutation = null, huntOne = null;   // huntOne: the id of a mutant run alone
 // A mutation put into the code, as the site modes inject one into the page, to
 // look at or run by hand: { id, line, before, code } while the code is that
@@ -138,7 +138,7 @@ export function listMutations(){
 }
 let listTimer;
 codeEd.ta.addEventListener('input', () => { clearTimeout(listTimer); listTimer = setTimeout(listMutations, 400); });
-export function onMutation(data){
+function onMutation(data){
   if (data.type === 'mutants' && job !== 'mutate'){
     if (listing === codeEd.value) mutation = { mutants: data.mutants.map(m => ({ ...m, outcome: 'unchecked' })), code: listing };
     listing = null;
@@ -173,7 +173,7 @@ function runMutations(only){
   else mutation = { mutants: [], code: codeEd.value, ran: true };
   setProgress(0, null, progressEl);
   renderMutation();
-  send({ mutate: true, only, files: { [files().code]: codeEd.value, [files().tests]: testsEd.value }, target: files().tests, framework: S().framework, cover: files().code });
+  send(request({ mutate: true, only }));
 }
 // The run ended, by itself or not: `note` says why, when it did not finish
 export function endHunt(note = ''){
@@ -184,4 +184,5 @@ export function endHunt(note = ''){
   renderMutation();
 }
 for (const ed of [codeEd, testsEd]) ed.ta.addEventListener('input', () => { if (mutation?.ran && job !== 'mutate' && !injecting && !mutation.stale){ mutation.stale = true; renderMutation(); } });
-
+onWorker(['mutants', 'mutant', 'mutation-refused', 'mutation-done'], onMutation);
+document.addEventListener('playlive:code-job', () => mutationEl.querySelectorAll('.mut-run, .mut-one, .mut-inject').forEach(b => { b.disabled = !!job; }));

@@ -2,8 +2,8 @@ import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
 import { createSkeleton } from './create.js';
 import { catIconSvg } from './icons.js';
-import { selectExample } from './lab.js';
-import { LABS, exampleOf, labOf } from './labcore.js';
+import { selectExample } from './code.js';
+import { CODE_MODES, exampleOf, codeModeOf } from './codecore.js';
 import { preview } from './run.js';
 import { syncUrl } from './share.js';
 import { loadApp, persist, stashEditor, testsFor } from './sites.js';
@@ -15,11 +15,11 @@ export const CATEGORIES = [...new Set(SITE_IDS.map(id => SITES[id].category))];
 export const siteBtn = $id('siteBtn'), sitePop = $id('sitePop'), siteSearch = $id('siteSearch');
 siteSearch.placeholder = 'Search examples';
 // A code mode lists its own examples, in the order they are written to be met
-const lab = () => LABS[labOf(mode)];
-const current = () => (lab() ? exampleOf(mode) : editorSite);
-const nameOf = id => (lab() ? lab().examples : SITES)[id]?.name || '';
-function renderLabTabs(){
-  const p = lab();
+const profile = () => CODE_MODES[codeModeOf(mode)];
+const current = () => (profile() ? exampleOf(mode) : editorSite);
+const nameOf = id => (profile() ? profile().examples : SITES)[id]?.name || '';
+function renderExampleTabs(){
+  const p = profile();
   tabsEl.innerHTML = '';
   const group = document.createElement('div'); group.className = 'pop-group';
   const head = document.createElement('div'); head.className = 'pop-cat';
@@ -38,8 +38,8 @@ function renderLabTabs(){
   }
   tabsEl.appendChild(group);
 }
-function setLabView(id){
-  const p = lab();
+function setExampleView(id){
+  const p = profile();
   tabsEl.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === id)));
   const swatch = $id('siteSwatch');
   swatch.innerHTML = catIconSvg(p.icon);
@@ -49,9 +49,9 @@ function setLabView(id){
   siteBtn.title = 'Choose an example';
   setCount(id);
 }
-document.addEventListener('playlive:lab-example', () => setLabView(current()));
+document.addEventListener('playlive:code-example', () => setExampleView(current()));
 export function renderTabs(){
-  if (lab()) return renderLabTabs();
+  if (profile()) return renderExampleTabs();
   tabsEl.innerHTML = '';
   for (const cat of CATEGORIES){
     const group = document.createElement('div'); group.className = 'pop-group';
@@ -101,7 +101,7 @@ function setCount(id){
 // changes length when the mode changes is a list you cannot keep your place in.
 // The All smells tab in the panel is where "which examples have one" is
 // answered now, and it names them.
-export const listed = () => (lab() ? lab().ids : SITE_IDS);
+export const listed = () => (profile() ? profile().ids : SITE_IDS);
 function filterSites(q){
   q = q.trim().toLowerCase();
   const inList = new Set(listed());
@@ -123,11 +123,11 @@ function filterSites(q){
 // own, so crossing into one or out of it draws the other list.
 let listedFor = null;                 // the code mode the list is of, or null for the sites
 const relist = () => {
-  const now = labOf(mode);
+  const now = codeModeOf(mode);
   if (now !== listedFor){
     listedFor = now;
     renderTabs();
-    if (now) setLabView(current()); else setView(editorSite);
+    if (now) setExampleView(current()); else setView(editorSite);
   }
   setCount(current());
   if (!sitePop.hidden) filterSites(siteSearch.value);
@@ -165,7 +165,7 @@ function stepSite(d){
   const list = listed();
   if (list.length < 2) return;
   const i = list.indexOf(current()), next = list[(i + d + list.length) % list.length];
-  if (lab()) selectExample(next); else selectSite(next);
+  if (profile()) selectExample(next); else selectSite(next);
 }
 $id('prevSite').addEventListener('click', () => stepSite(-1));
 $id('nextSite').addEventListener('click', () => stepSite(1));

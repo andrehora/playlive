@@ -9,7 +9,7 @@ function applyLayout(){
   if (layout.leftW) rootStyle.setProperty('--left-w', layout.leftW + 'px'); else rootStyle.removeProperty('--left-w');
   if (layout.editorH) rootStyle.setProperty('--editor-h', layout.editorH + 'px'); else rootStyle.removeProperty('--editor-h');
   if (layout.createH) rootStyle.setProperty('--create-h', layout.createH + 'px'); else rootStyle.removeProperty('--create-h');
-  if (layout.labH) rootStyle.setProperty('--lab-h', layout.labH + 'px'); else rootStyle.removeProperty('--lab-h');
+  if (layout.codeH) rootStyle.setProperty('--code-h', layout.codeH + 'px'); else rootStyle.removeProperty('--code-h');
 }
 export function saveLayout(){ try { localStorage.setItem(LAYOUT, JSON.stringify(layout)); } catch {} }
 const clampLeft = w => Math.round(Math.min(Math.max(w, 360), $id('workspace').clientWidth * 0.62));
@@ -48,10 +48,10 @@ const clampCreate = h => {
 };
 // The code modes' tests may not take what the rest of their panel and the
 // Results/Console floor below them need (its head alone when collapsed).
-const clampLab = h => {
-  const ed = $id('labTestsEd'), panel = ed.closest('.panel'), below = $id('labResults').closest('.panel');
+const clampCodeTests = h => {
+  const ed = $id('codeTestsEd'), panel = ed.closest('.panel'), below = $id('codeResults').closest('.panel');
   const chrome = panel.getBoundingClientRect().height - ed.getBoundingClientRect().height;
-  const floor = $id('left').dataset.lab === 'collapsed' ? below.getBoundingClientRect().height : 130;
+  const floor = $id('left').dataset.code === 'collapsed' ? below.getBoundingClientRect().height : 130;
   return Math.round(Math.min(Math.max(h, 110), $id('left').clientHeight - chrome - floor - 12));
 };
 // A mode change adds or drops a panel, so the heights the user dragged in the
@@ -59,7 +59,7 @@ const clampLab = h => {
 // is what keeps a column dragged tall in Explore from scrolling in Create.
 export function reclamp(){
   if (layout.createH) layout.createH = clampCreate(layout.createH);
-  if (layout.labH && $id('labTestsEd').getClientRects().length) layout.labH = clampLab(layout.labH);
+  if (layout.codeH && $id('codeTestsEd').getClientRects().length) layout.codeH = clampCodeTests(layout.codeH);
   if (layout.editorH) layout.editorH = clampEditor(layout.editorH);
   applyLayout();
   saveLayout();
@@ -114,13 +114,13 @@ makeResizer($id('rowResizer'),
   'editorH');
 // The code modes' handle sits under the Tests panel's toolbar: the code's bottom
 // keeps its distance from the handle, so the handle stays under the pointer.
-makeResizer($id('labResizer'),
+makeResizer($id('codeResizer'),
   e => {
-    const ed = $id('labTestsEd').getBoundingClientRect();
-    layout.labH = clampLab(e.clientY - 6 - ($id('labResizer').getBoundingClientRect().top - ed.bottom) - ed.top);
+    const ed = $id('codeTestsEd').getBoundingClientRect();
+    layout.codeH = clampCodeTests(e.clientY - 6 - ($id('codeResizer').getBoundingClientRect().top - ed.bottom) - ed.top);
   },
-  k => { const h = $id('labTestsEd').clientHeight; if (k === 'ArrowUp') return layout.labH = clampLab(h - 24); if (k === 'ArrowDown') return layout.labH = clampLab(h + 24); },
-  'labH');
+  k => { const h = $id('codeTestsEd').clientHeight; if (k === 'ArrowUp') return layout.codeH = clampCodeTests(h - 24); if (k === 'ArrowDown') return layout.codeH = clampCodeTests(h + 24); },
+  'codeH');
 function setViewport(vp){
   $id('device').dataset.vp = vp;
   document.querySelectorAll('.seg [data-vp]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vp === vp)));

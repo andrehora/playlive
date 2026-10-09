@@ -3,7 +3,7 @@
   --run:#2563EB; --on-run:#FFF; --running:#EAB308; --running-ink:#8A6100; --active:#94A0B4; --active-ink:#4A5569; --pass:#1F8A55; --fail:#C2412D; --warn:#9A6700; --rec:#D92D20;
   --syn-key:#6D28D9; --syn-act:#B45309; --syn-str:#15803D; --syn-var:#BE185D; --syn-com:#8A93A3; --syn-num:#0E7490;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
-  --left-w:480px; --editor-h:36vh; --lab-h:46vh;
+  --left-w:480px; --editor-h:36vh; --code-h:46vh;
   /* Control sizing, mobile first. These are the touch-sized values; the
      min-width:901px block near the bottom compacts them for a mouse. */
   --tap:44px; --btn-font:15px; --btn-pad:11px 14px; --btn-r:10px;
@@ -177,12 +177,12 @@ body.resizing iframe{pointer-events:none}
 .sdots{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px;margin-left:8px;vertical-align:1px;max-width:100%}
 /* The head's row says what it is. It is drawn here rather than in the markup
    because the row goes when the circles do, and :empty is what takes it. */
-#runDots::before,#labDots::before{content:"Tests:";margin-right:4px;font-size:11.5px;font-weight:400;color:var(--muted)}
-#runDots:empty,#labDots:empty{display:none}
+#runDots::before,#codeDots::before{content:"Tests:";margin-right:4px;font-size:11.5px;font-weight:400;color:var(--muted)}
+#runDots:empty,#codeDots:empty{display:none}
 /* The code modes' head also holds the Coverage tab, so its circles go without
    the label and keep their row */
-#labDots{flex:none;flex-wrap:nowrap}
-#labDots::before{content:none}
+#codeDots{flex:none;flex-wrap:nowrap}
+#codeDots::before{content:none}
 .sdots i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--line);animation:dot-in .18s ease-out}
 /* A step or test the run has not reached yet: there from the start, so the row
    shows how long the run is, and hollow, so it does not read as a result. */
@@ -419,36 +419,36 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
    The same three places as Explore: the tests and Run on the left, what they
    did below them, and what they test on the right. Every other panel goes, and
    so does the example picker, since the mode has one example of its own. */
-:root:not([data-mode^="python"], [data-mode^="javascript"]) .lab-panel{display:none}
-:root:is([data-mode^="python"], [data-mode^="javascript"]) :is(.left > .panel:not(.lab-panel), .left > .resizer:not(.lab-panel), .browser){display:none}
-.lab-file{font:500 12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
-.labtests-panel{flex:0 0 auto;min-height:0}
+:root:not([data-mode^="python"], [data-mode^="javascript"]) .code-panel{display:none}
+:root:is([data-mode^="python"], [data-mode^="javascript"]) :is(.left > .panel:not(.code-panel), .left > .resizer:not(.code-panel), .browser){display:none}
+.code-file{font:500 12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
+.code-tests-panel{flex:0 0 auto;min-height:0}
 /* Its handle sets the code's height, as the editor's does in the other modes;
    Results and Console take whatever is left */
-.labtests-panel .lab-ed{flex:none;height:var(--lab-h)}
+.code-tests-panel .code-ed{flex:none;height:var(--code-h)}
 .console-panel{flex:1 1 0;min-height:130px}
 /* Collapsed, Results and Console are their head and nothing else */
-.left[data-lab="collapsed"] .console-panel{flex:0 0 auto;min-height:0}
-.left[data-lab="collapsed"] :is(#labCreate, #labResults, #labConsole, #labMutation, #labSmells){display:none!important}
-.lab-code-panel{min-height:0}
-.lab-ed{flex:1;min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
-.lab-ed:focus-within{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
-.lab-ed .hl,.lab-ed textarea{position:absolute;inset:0;margin:0;padding:12px 14px;font:inherit;white-space:pre;tab-size:4;border:0;letter-spacing:0}
-.lab-ed textarea{resize:none;background:transparent;color:transparent;caret-color:var(--ink);overflow:auto;outline:none;scrollbar-width:thin}
-.lab-ed textarea::selection{background:color-mix(in srgb,var(--run) 28%,transparent);color:transparent}
-.lab-state{margin-left:auto;font-size:var(--small-font);color:var(--muted)}
-.lab-state.bad{color:var(--fail)}
-#labSummary{font-weight:400;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#labSummary:empty{display:none}
-#labSummary.ok{color:var(--pass)} #labSummary.bad{color:var(--fail)}
-.lab-console{flex:1;min-height:0;margin:0;padding:10px 14px;overflow:auto;overscroll-behavior:contain;background:var(--panel-2);font:12px/1.55 "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;white-space:pre;outline:none;scrollbar-width:thin}
-.lab-console:focus-visible{box-shadow:inset 0 0 0 2px var(--run)}
-.lab-console .l{display:block}
-.lab-console .ok{color:var(--pass)}
-.lab-console .bad{color:var(--fail)}
-.lab-console .at{font-weight:600}
-.lab-console .muted{color:var(--muted)}
-.lab-console .empty{display:block;white-space:normal;font-family:"IBM Plex Sans",system-ui,sans-serif}
+.left[data-code="collapsed"] .console-panel{flex:0 0 auto;min-height:0}
+.left[data-code="collapsed"] :is(#codeCreate, #codeResults, #codeConsole, #codeMutation, #codeSmells){display:none!important}
+.code-module-panel{min-height:0}
+.code-ed{flex:1;min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+.code-ed:focus-within{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
+.code-ed .hl,.code-ed textarea{position:absolute;inset:0;margin:0;padding:12px 14px;font:inherit;white-space:pre;tab-size:4;border:0;letter-spacing:0}
+.code-ed textarea{resize:none;background:transparent;color:transparent;caret-color:var(--ink);overflow:auto;outline:none;scrollbar-width:thin}
+.code-ed textarea::selection{background:color-mix(in srgb,var(--run) 28%,transparent);color:transparent}
+.code-state{margin-left:auto;font-size:var(--small-font);color:var(--muted)}
+.code-state.bad{color:var(--fail)}
+#codeSummary{font-weight:400;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#codeSummary:empty{display:none}
+#codeSummary.ok{color:var(--pass)} #codeSummary.bad{color:var(--fail)}
+.code-console{flex:1;min-height:0;margin:0;padding:10px 14px;overflow:auto;overscroll-behavior:contain;background:var(--panel-2);font:12px/1.55 "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;white-space:pre;outline:none;scrollbar-width:thin}
+.code-console:focus-visible{box-shadow:inset 0 0 0 2px var(--run)}
+.code-console .l{display:block}
+.code-console .ok{color:var(--pass)}
+.code-console .bad{color:var(--fail)}
+.code-console .at{font-weight:600}
+.code-console .muted{color:var(--muted)}
+.code-console .empty{display:block;white-space:normal;font-family:"IBM Plex Sans",system-ui,sans-serif}
 /* Coverage: a check in the Results head that shades the code and puts the
    scores on top of it */
 .cov-toggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer}
@@ -463,7 +463,7 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 .hl .l.cov-hit{background:color-mix(in srgb,var(--pass) 13%,transparent)}
 .hl .l.cov-miss{background:color-mix(in srgb,var(--fail) 13%,transparent)}
 /* The flow view: each method with a branch, its boxes coloured like the code */
-.lab-flow{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;background:var(--panel-2);padding:12px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:18px;scrollbar-width:thin}
+.code-flow{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;background:var(--panel-2);padding:12px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:18px;scrollbar-width:thin}
 .flow-defs{position:absolute;width:0;height:0;overflow:hidden}
 .flow-fn h3{margin:0 0 6px;font:600 12.5px "IBM Plex Mono",ui-monospace,monospace;color:var(--ink)}
 svg.flow{display:block;max-width:none;overflow:visible}
@@ -480,11 +480,11 @@ svg.flow{display:block;max-width:none;overflow:visible}
 .fedge{fill:none;stroke:var(--muted);stroke-width:1.2}
 #fhead path{fill:var(--muted)}
 .flabel{font:500 10.5px "IBM Plex Sans",system-ui,sans-serif;fill:var(--muted)}
-.cov-seg button,.lab-codeview button{font-size:12.5px;font-weight:600}
+.cov-seg button,.code-flowseg button{font-size:12.5px;font-weight:600}
 .hl .l.cov-part{background:color-mix(in srgb,var(--running) 22%,transparent)}
 /* Python's mutation tab: the site Mutation tab's groups and rows, with the change
    and the line it was made on */
-.lab-mutation{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.code-mutation{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 .mut-head{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line)}
 :is(.mut-score, .smell-score){font-size:12px;color:var(--muted)}
 .mut-score[data-band="ok"]{color:var(--pass)}
@@ -500,27 +500,27 @@ svg.flow{display:block;max-width:none;overflow:visible}
 .mut-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
 .bug-row:is([data-trying], [data-live]) .mut-what{color:var(--fail)}
 .mut-inject + .mut-one{margin-left:0}
-.lab-results{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
-.lab-note{margin:0;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:12.5px}
-.lab-name{border:0;background:transparent;padding:0;min-height:0;font:500 12.5px "IBM Plex Mono",ui-monospace,monospace;color:inherit;text-align:left;white-space:normal;justify-content:flex-start;cursor:pointer}
-.lab-name:hover{text-decoration:underline}
+.code-results{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.code-note{margin:0;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:12.5px}
+.code-name{border:0;background:transparent;padding:0;min-height:0;font:500 12.5px "IBM Plex Mono",ui-monospace,monospace;color:inherit;text-align:left;white-space:normal;justify-content:flex-start;cursor:pointer}
+.code-name:hover{text-decoration:underline}
 .test[data-state="error"] .tstate{border-color:var(--fail);background:var(--fail)}
 .test[data-state="skipped"] .tstate{border-style:dashed;border-color:var(--muted)}
-.test.collapsed .lab-detail{display:none}
-.lab-detail{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:0 12px 10px 50px}
-.lab-detail .err{margin:0;font:12px/1.5 "IBM Plex Mono",ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
-.lab-at{padding:2px 6px;min-height:0;margin-left:-6px;font-size:12px}
-.lab-seg button{font-size:12.5px;font-weight:600}
-.labtests-panel .head-actions{flex-wrap:nowrap}
-.labtests-panel .panel-head h2{flex:0 1 auto;overflow:hidden}
-.labtests-panel .lab-file{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lab-fw button,.lab-lang button{font-size:12.5px;font-weight:600;gap:5px}
+.test.collapsed .code-detail{display:none}
+.code-detail{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:0 12px 10px 50px}
+.code-detail .err{margin:0;font:12px/1.5 "IBM Plex Mono",ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.code-at{padding:2px 6px;min-height:0;margin-left:-6px;font-size:12px}
+.code-seg button{font-size:12.5px;font-weight:600}
+.code-tests-panel .head-actions{flex-wrap:nowrap}
+.code-tests-panel .panel-head h2{flex:0 1 auto;overflow:hidden}
+.code-tests-panel .code-file{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.code-fw button,.code-lang button{font-size:12.5px;font-weight:600;gap:5px}
 /* The frameworks' own logos, from devicon, inline because the CSP allows no remote images */
-.lab-fw button svg,.lab-lang button svg{width:15px;height:15px;flex:none;background:var(--logo-bg,transparent);border-radius:4px;padding:var(--logo-pad,0)}
+.code-fw button svg,.code-lang button svg{width:15px;height:15px;flex:none;background:var(--logo-bg,transparent);border-radius:4px;padding:var(--logo-pad,0)}
 .console-panel .panel-head{flex-wrap:nowrap}
 .console-panel .panel-head h2{gap:10px;flex:0 1 auto;min-width:0;overflow:hidden}
 .console-panel .head-actions{flex:none;flex-wrap:nowrap}
-.lab-console .empty.loading::before,.lab-note.loading::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--active);animation:pulse 1s ease-in-out infinite}
+.code-console .empty.loading::before,.code-note.loading::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--active);animation:pulse 1s ease-in-out infinite}
 
 /* ---------- Dialog and toast ---------- */
 dialog{border:1px solid var(--line);border-radius:14px;padding:0;width:min(780px,calc(100vw - 32px));background:var(--panel);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
@@ -612,9 +612,9 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      so the column simply ends rather than leaving a panel blank. */
   /* The code modes: with Results and Console down to their head, the code
      takes the room, and the handle has nothing left to split */
-  .left[data-lab="collapsed"] .labtests-panel{flex:1 1 auto}
-  .left[data-lab="collapsed"] .labtests-panel .lab-ed{flex:1 1 auto;height:auto}
-  .left[data-lab="collapsed"] #labResizer{visibility:hidden}
+  .left[data-code="collapsed"] .code-tests-panel{flex:1 1 auto}
+  .left[data-code="collapsed"] .code-tests-panel .code-ed{flex:1 1 auto;height:auto}
+  .left[data-code="collapsed"] #codeResizer{visibility:hidden}
   .site-btn{padding:7px 10px}
 }
 /* ---------- Narrow screens: one column, site right after the editor ---------- */
@@ -623,13 +623,13 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .left{display:contents}
   .tests-panel{order:1} .browser{order:2} .results-panel{order:3}
   .create-panel{order:7}
-  .labtests-panel{order:1} .lab-code-panel{order:2} .console-panel{order:3}
-  .labtests-panel .lab-ed{flex:none;height:clamp(220px,42dvh,380px)}
-  .lab-code-panel .lab-ed{flex:none;height:clamp(300px,60dvh,560px)}
-  .lab-console,.lab-results,.lab-mutation{max-height:60dvh;min-height:160px}
-  .lab-console{font-size:12.5px}
-  .lab-detail{padding-left:30px}
-  .lab-ed .hl,.lab-ed textarea{padding:10px 12px}
+  .code-tests-panel{order:1} .code-module-panel{order:2} .console-panel{order:3}
+  .code-tests-panel .code-ed{flex:none;height:clamp(220px,42dvh,380px)}
+  .code-module-panel .code-ed{flex:none;height:clamp(300px,60dvh,560px)}
+  .code-console,.code-results,.code-mutation{max-height:60dvh;min-height:160px}
+  .code-console{font-size:12.5px}
+  .code-detail{padding-left:30px}
+  .code-ed .hl,.code-ed textarea{padding:10px 12px}
   .resizer{display:none}
   .appbar{flex-wrap:wrap;row-gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
   .tagline{display:none}
@@ -660,9 +660,9 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .site-btn{width:100%;min-width:0}
   .stepper{gap:4px}
   /* The screen-size toggle goes, but Site/HTML stays, at a size worth tapping */
-  .seg{display:none} .view-seg,.area-seg,.mode-seg,.smell-seg,.res-seg,.lab-seg,.lab-fw,.lab-lang,.lab-codeview,.cov-seg{display:inline-flex}
-  .view-seg button,.area-seg button,.mode-seg button,.smell-seg button,.res-seg button,.lab-seg button,.lab-fw button,.lab-lang button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
-  .lab-lang button{padding:0 9px}
+  .seg{display:none} .view-seg,.area-seg,.mode-seg,.smell-seg,.res-seg,.code-seg,.code-fw,.code-lang,.code-flowseg,.cov-seg{display:inline-flex}
+  .view-seg button,.area-seg button,.mode-seg button,.smell-seg button,.res-seg button,.code-seg button,.code-fw button,.code-lang button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
+  .code-lang button{padding:0 9px}
 
   /* The example list opens as a sheet, so it is reachable wherever the page sits */
   .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(70dvh,560px);border-radius:14px}
@@ -712,8 +712,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      the Coverage check on the row below */
   .console-panel .panel-head{flex-wrap:wrap}
   .console-panel .panel-head h2{flex:1 1 100%;flex-wrap:wrap;row-gap:6px;overflow:visible}
-  .console-panel .lab-seg{flex:1 1 100%}
-  .console-panel .lab-seg button{flex:1 1 0;min-width:0;padding:0 4px}
+  .console-panel .code-seg{flex:1 1 100%}
+  .console-panel .code-seg button{flex:1 1 0;min-width:0;padding:0 4px}
   .console-panel .head-actions{margin-left:auto}
   .appbar .picker{order:3;flex:1 1 calc(60% - 4px);min-width:0;margin-left:0}
   .appbar .stepper{order:4;flex:1 1 calc(40% - 4px);min-width:0;justify-content:space-between}

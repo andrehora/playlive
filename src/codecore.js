@@ -2,7 +2,7 @@ import { $id } from './dom.js';
 import { commentKey, undoable } from './editor.js';
 import { JAVASCRIPT } from './javascript.js';
 import { PYTHON } from './python.js';
-import { labExample, mode } from './state.js';
+import { codeExample, mode } from './state.js';
 import { escH } from './util.js';
 
 /* ---------- The code modes: unit tests on plain code, in the browser ----------
@@ -30,27 +30,27 @@ import { escH } from './util.js';
    The files ship in examples/<mode>/<id>/. Edits are kept while you move
    between examples, frameworks and languages, but not stored: Reset or a
    reload brings them back as they ship.                                    */
-export const LABS = { python: PYTHON, javascript: JAVASCRIPT };
+export const CODE_MODES = { python: PYTHON, javascript: JAVASCRIPT };
 // Each code mode has a Create beside it ("python-create"): the same panels and
-// examples, with a file of your own in the tests editor. labOf is the code mode
+// examples, with a file of your own in the tests editor. codeModeOf is the code mode
 // either one is, or null for the site modes.
-export const labOf = m => { const l = m?.replace(/-create$/, ''); return LABS[l] ? l : null; };
-export const isLab = m => !!labOf(m);
-export const isLabCreate = m => !!labOf(m) && m.endsWith('-create');
+export const codeModeOf = m => { const l = m?.replace(/-create$/, ''); return CODE_MODES[l] ? l : null; };
+export const isCodeMode = m => !!codeModeOf(m);
+export const isCodeCreate = m => !!codeModeOf(m) && m.endsWith('-create');
 
 // Each mode keeps its own framework, edits and runtime, so going from Python
 // to JS/TS and back neither reloads Python nor loses what you typed. The
-// example goes with you: both modes have the same ones (enterLab).
+// example goes with you: both modes have the same ones (enterCodeMode).
 export const sessions = {};
-export const session = (m = labOf(mode)) => (sessions[m] ||= {
-  framework: LABS[m].frameworks[0].id,
-  lang: LABS[m].langs?.[0].id ?? null,
+export const session = (m = codeModeOf(mode)) => (sessions[m] ||= {
+  framework: CODE_MODES[m].frameworks[0].id,
+  lang: CODE_MODES[m].langs?.[0].id ?? null,
   edits: new Map(),                 // "<id>" -> code, "<id>/<framework>" -> tests (with the language, and Create's apart)
   shown: null,                      // { id, lang, framework } the editors hold, once loaded
   worker: null, ready: false, pending: null
 });
 /* ---------- What the panels share ----------
-   Each with its setter, as state.js has it: lab.js is what changes them. */
+   Each with its setter, as state.js has it: code.js is what changes them. */
 export let active = null;           // the code mode these panels are showing
 export let creating = false;        // and whether it is its Create
 // What runs now: a run of the tests ('run'), of the mutations ('mutate'), or
@@ -61,13 +61,26 @@ export const setActive = v => { active = v; };
 export const setCreating = v => { creating = v; };
 export const setJob = v => { job = v; };
 export const setCurrentView = v => { view = v; };
-export const P = () => LABS[active];
+export const P = () => CODE_MODES[active];
 export const S = () => session(active);
 // What runs the tests, with versions, once the runtime has said
 export const label = () => P().label(S().versions, S().framework, S().lang);
-export const rt = (m = active) => { const r = LABS[m].runtime; return typeof r === 'function' ? r(session(m).framework) : r; };
-export const exampleOf = (m = mode) => labExample[labOf(m)] ?? LABS[labOf(m)].ids[0];
+export const rt = (m = active) => { const r = CODE_MODES[m].runtime; return typeof r === 'function' ? r(session(m).framework) : r; };
+export const exampleOf = (m = mode) => codeExample[codeModeOf(m)] ?? CODE_MODES[codeModeOf(m)].ids[0];
 export const files = () => P().files(exampleOf(active), S().framework, S().lang);
+
+/* ---------- What the runtime says, and what a job asks it ----------
+   Each panel names the messages it handles when it loads, as it would add a
+   listener; code.js hands every message of the mode on screen to its handler.
+   `request` is what every job sends: both files as the editors hold them, and
+   what to run them with, plus the job's own fields. */
+const handlers = {};
+export const onWorker = (types, fn) => { for (const t of types) handlers[t] = fn; };
+export const handlerOf = type => handlers[type];
+export const request = extra => {
+  const f = files(), s = S();
+  return { files: { [f.code]: codeEd.value, [f.tests]: testsEd.value }, target: f.tests, cover: f.code, framework: s.framework, lang: s.lang, ...extra };
+};
 
 /* ---------- The two editors ---------- */
 function makeEditor(root){
@@ -119,9 +132,9 @@ function makeEditor(root){
     }
   };
 }
-export const testsEd = makeEditor($id('labTestsEd')), codeEd = makeEditor($id('labCodeEd'));
+export const testsEd = makeEditor($id('codeTestsEd')), codeEd = makeEditor($id('codeEd'));
 // The bar under the Results and Console head, which every job fills
-export const progressEl = $id('labProgress');
+export const progressEl = $id('codeProgress');
 
 /* ---------- Examples ---------- */
 // What an edit is kept under: the code per language, the tests per framework too
