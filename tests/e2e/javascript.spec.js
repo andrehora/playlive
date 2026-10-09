@@ -17,7 +17,7 @@ test.describe('JS/TS mode', () => {
     expect(await overflow(page)).toBeLessThanOrEqual(0);
 
     await expect(page.locator('#siteName')).toHaveText('Calculator');
-    await expect(page.locator('#siteCount')).toHaveText('1 of 11');
+    await expect(page.locator('#siteCount')).toHaveText('1 of 56');
     await expect(page.locator('#codeTitle')).toHaveText('JavaScript code');
     await expect(page.locator('#codeFile')).toHaveText('calculator.js');
     await expect(page.locator('#codeTestsFile')).toHaveText('calculator.spec.js');
@@ -102,7 +102,7 @@ test.describe('JS/TS mode', () => {
     test.setTimeout(4 * LOAD);
     const { errors } = await openApp(page, { mode: 'javascript' });
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    expect(ids).toHaveLength(11);
+    expect(ids).toHaveLength(56);
     const failures = [];
     for (const fw of ['jasmine', 'mocha']) for (const lang of ['js', 'ts']){
       await page.evaluate(([fw, lang]) => { window.playlive.code.framework(fw); window.playlive.code.lang(lang); }, [fw, lang]);
@@ -222,7 +222,7 @@ test.describe('JS/TS mode', () => {
     await page.evaluate(() => { window.playlive.code.framework('mocha'); window.playlive.code.lang('ts'); });
     await expect(page.locator('#codeTestsFile')).toHaveText('bank-account.test.ts');
     await panel.locator('[data-codesmells="all"]').click();
-    await expect(score).toHaveText('2 of 11 examples have one');
+    await expect(score).toHaveText('2 of 56 examples have one');
     await expect(group('duplication-of-setup').locator('.smell-what')).toHaveText(['Cart', 'Bank account']);
     await expect(panel.locator('.smell-group')).toHaveCount(4);
     expect(errors).toEqual([]);

@@ -9,7 +9,7 @@ const overflow = page => page.evaluate(() => document.documentElement.scrollHeig
 const ready = page => codeReady(page, /^Python 3\.\d+\.\d+ · (unittest|pytest)/);
 const choose = async (page, name) => {
   await page.click('#siteBtn');
-  await page.locator('#tabs .tab', { hasText: name }).click();
+  await page.locator('#tabs .tab').filter({ has: page.locator('.tname', { hasText: new RegExp(`^${name}$`) }) }).click();
   await expect(page.locator('#siteName')).toHaveText(name);
 };
 
@@ -25,7 +25,7 @@ test.describe('Python mode', () => {
 
     // The picker lists the Python examples, Calculator first
     await expect(page.locator('#siteName')).toHaveText('Calculator');
-    await expect(page.locator('#siteCount')).toHaveText('1 of 11');
+    await expect(page.locator('#siteCount')).toHaveText('1 of 56');
     await expect(page.locator('#codeFile')).toHaveText('calculator.py');
     await expect(page.locator('#codeTestsFile')).toHaveText('test_calculator.py');
     await expect(page.locator('.code-fw [data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
@@ -91,6 +91,33 @@ test.describe('Python mode', () => {
     await page.click('#foldCode');
     await expect(page.locator('#codeResults')).toBeVisible();
     expect(Math.abs(await h('#codeTestsEd') - was)).toBeLessThanOrEqual(2);
+    expect(errors).toEqual([]);
+  });
+
+  test('each panel\'s Reset puts its own file back as it ships, and undo takes it back', async ({ page }) => {
+    const { errors } = await openApp(page, { mode: 'python' });
+    const tests = page.locator('#codeTestsEd textarea'), code = page.locator('#codeEd textarea');
+    await expect(tests).toHaveValue(/^def test_add\(\)/m);
+    const shippedTests = await tests.inputValue(), shippedCode = await code.inputValue();
+    await tests.fill('# mine\n');
+    await code.fill('# mine too\n');
+
+    await page.click('#codeTestsReset');
+    await expect(tests).toHaveValue(shippedTests);
+    await expect(code).toHaveValue('# mine too\n');
+    await tests.focus();
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect(tests).toHaveValue('# mine\n');
+    await page.click('#codeReset');
+    await expect(code).toHaveValue(shippedCode);
+
+    // In Create, the tests go back to the names
+    await page.click('.mode-seg [data-mode="create"]');
+    await expect(tests).toHaveValue(/^# test_add$/m);
+    const skeleton = await tests.inputValue();
+    await tests.fill('# mine\n');
+    await page.click('#codeTestsReset');
+    await expect(tests).toHaveValue(skeleton);
     expect(errors).toEqual([]);
   });
 
@@ -370,7 +397,7 @@ test.describe('Python mode', () => {
     await panel.locator('[data-codesmells="all"]').click();
     await expect(panel.locator('[data-codesmells="all"]')).toHaveAttribute('aria-pressed', 'true');
     // Bank account and Cart repeat their setup, on purpose
-    await expect(score).toHaveText(/^\d+ of 11 examples have one$/);
+    await expect(score).toHaveText(/^\d+ of 56 examples have one$/);
     await expect(group('duplication-of-setup').locator('.smell-what')).toContainText(['Cart', 'Bank account']);
     // Every smell is named, whether or not an example has it
     await expect(panel.locator('.smell-group')).toHaveCount(4);
@@ -417,7 +444,7 @@ test.describe('Python mode', () => {
     const { errors } = await openApp(page, { mode: 'python' });
     await ready(page);
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    expect(ids).toHaveLength(11);
+    expect(ids).toHaveLength(56);
     const failures = [];
     for (const fw of ['unittest', 'pytest']){
       await page.evaluate(fw => window.playlive.code.framework(fw), fw);

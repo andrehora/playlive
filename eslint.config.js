@@ -30,11 +30,13 @@ export default [
   {
     // JS/TS mode's examples: CommonJS, as Jasmine and Mocha document it, with
     // the frameworks' globals. The manifest beside them is the app's own module.
+    // Printing is what the Average example is about, so console is allowed.
     files: ['examples/javascript/*/**/*.js'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: { ...globals.node, ...globals.jasmine, ...globals.mocha }
-    }
+    },
+    rules: { 'no-console': 'off' }
   },
   {
     // Python mode's worker runs in a worker's globals, not a page's

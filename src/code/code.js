@@ -471,6 +471,25 @@ export async function resetCodeModes(){
   if (active) await show();
 }
 
+// One file back as it ships (in Create, the tests back to the names), written
+// as an edit, so undo takes it back
+async function resetFile(which){
+  if (!active || job || !S().shown) return;
+  const m = active, shown = S().shown, ed = which === 'code' ? codeEd : testsEd;
+  let text;
+  try {
+    const ships = await shipped(shown.id, which === 'code' ? 'code' : 'tests');
+    text = which === 'tests' && shown.create ? P().skeleton(ships, files().tests) : ships;
+  } catch { toast('The example did not load. Reload the page to try again.'); return; }
+  if (active !== m || S().shown !== shown || job || ed.value === text) return;
+  ed.ta.setRangeText(text, 0, ed.value.length, 'start');
+  ed.ta.dispatchEvent(new Event('input'));
+  ed.ta.scrollTop = 0;
+}
+const resetBtns = { tests: $id('codeTestsReset'), code: $id('codeReset') };
+for (const [which, b] of Object.entries(resetBtns)) b.addEventListener('click', () => resetFile(which));
+document.addEventListener('playlive:code-job', () => { for (const b of Object.values(resetBtns)) b.disabled = !!job; });
+
 // Results and Console fold to their head, which still carries the summary and
 // the circles, and the code takes the room
 let codeFolded = false;
