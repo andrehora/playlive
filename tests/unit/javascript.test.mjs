@@ -7,10 +7,9 @@ import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, load } from './env.mjs';
 
-const { hlJs, consoleClass, testsInJs, filesFor, skeletonOf } = await load('src/code/js/javascript.js');
+const { hlJs, consoleClass, testsInJs, filesFor, skeletonOf, JAVASCRIPT } = await load('src/code/js/javascript.js');
 const { lineMap } = await load('src/code/js/sourcemap.js');
-const { JS_EXAMPLES, JS_IDS } = await load('examples/javascript/examples.js');
-const { PY_IDS } = await load('examples/python/examples.js');
+const { examples: JS_EXAMPLES, ids: JS_IDS } = JAVASCRIPT;
 
 /* ---------- Highlighting ---------- */
 
@@ -108,6 +107,8 @@ test('every version of an example tests the same things, under the same names', 
   }
 });
 
-test('the examples are Python mode\'s, in the same order', () => {
-  assert.deepEqual(JS_IDS, PY_IDS);
+test('Best practices is the last group, and each group stays together', () => {
+  const groups = JS_IDS.map(id => JS_EXAMPLES[id].group).filter((g, i, all) => g !== all[i - 1]);
+  assert.equal(groups.at(-1), 'Best practices');
+  assert.equal(new Set(groups).size, groups.length, 'a group is split in two');
 });

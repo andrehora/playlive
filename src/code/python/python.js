@@ -1,4 +1,4 @@
-import { PY_ACCENT, PY_EXAMPLES, PY_IDS, moduleOf } from '../../../examples/python/examples.js';
+import { CODE_EXAMPLES, CODE_IDS } from '../../../examples/code.js';
 import { highlighter } from '../highlight.js';
 
 /* ---------- Python mode's profile: what code/code.js needs to know about Python ----------
@@ -9,6 +9,7 @@ import { highlighter } from '../highlight.js';
    example's tests are written twice, with pytest (the default) and with
    unittest, and each runs on its own runner. Every run also measures which
    lines of the code ran (code/python/worker.js), for the Coverage check.               */
+export const moduleOf = id => id.replace(/-/g, '_');
 export const filesFor = id => ({ code: `${moduleOf(id)}.py`, tests: `test_${moduleOf(id)}.py` });
 
 /* ---------- Highlighting ---------- */
@@ -119,7 +120,7 @@ export const PYTHON = {
   runtime: 'Python', title: 'Python',
   // What runs the tests, language first: unittest is Python's own, with no version of its
   label: (v, fw) => `Python ${v.python} · ${fw === 'pytest' ? `pytest ${v.pytest}` : 'unittest'}`,
-  examples: PY_EXAMPLES, ids: PY_IDS, accent: PY_ACCENT, icon: 'Python',
+  examples: CODE_EXAMPLES, ids: CODE_IDS,
   frameworks: [
     { id: 'pytest', label: 'pytest', logo: 'pytest', title: 'Tests with pytest' },
     { id: 'unittest', label: 'unittest', logo: 'python', title: 'Tests with unittest' }

@@ -12,9 +12,11 @@ class GradesTest(unittest.TestCase):
         self.assertEqual(letter(70), "C")
         self.assertEqual(letter(69), "F")
 
-    def test_scores_outside_0_to_100_are_refused(self):
+    def test_101_is_refused(self):
         with self.assertRaises(ValueError):
             letter(101)
+
+    def test_minus_1_is_refused(self):
         with self.assertRaises(ValueError):
             letter(-1)
 

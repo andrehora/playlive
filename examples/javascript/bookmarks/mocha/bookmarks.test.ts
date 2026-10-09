@@ -1,0 +1,39 @@
+import { expect } from "chai";
+import { Bookmarks, Store } from "./bookmarks";
+
+// Fake: a simple store that really works, in a list
+class FakeStore implements Store {
+  urls: string[] = [];
+
+  has(url: string) {
+    return this.urls.includes(url);
+  }
+
+  save(url: string) {
+    this.urls.push(url);
+  }
+
+  all() {
+    return [...this.urls];
+  }
+}
+
+describe("Bookmarks", () => {
+  let bookmarks: Bookmarks;
+
+  beforeEach(() => {
+    bookmarks = new Bookmarks(new FakeStore());
+  });
+
+  it("saves each new bookmark", () => {
+    bookmarks.add("news.example");
+    bookmarks.add("recipes.example");
+    expect(bookmarks.all()).to.deep.equal(["news.example", "recipes.example"]);
+  });
+
+  it("saves a bookmark only once", () => {
+    bookmarks.add("maps.example");
+    bookmarks.add("maps.example");
+    expect(bookmarks.all()).to.deep.equal(["maps.example"]);
+  });
+});

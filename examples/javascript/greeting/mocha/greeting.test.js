@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const sinon = require("sinon");
 const { clock, greet } = require("./greeting");
 
-// The real clock changes, so the tests replace it with a fixed hour
+// Stub: returns a fixed hour
 describe("Greeting", () => {
   afterEach(() => {
     sinon.restore();

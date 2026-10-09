@@ -7,7 +7,7 @@ import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, load } from './env.mjs';
 
-const { hlPython, consoleClass, testsInFile, skeletonOf } = await load('src/code/python/python.js');
+const { hlPython, consoleClass, testsInFile, skeletonOf, moduleOf, PYTHON } = await load('src/code/python/python.js');
 const { commentLines } = await load('src/editkeys.js');
 
 /* ---------- Highlighting ---------- */
@@ -87,7 +87,8 @@ test('commenting the lines a selection touches, at the block\'s indent, and back
 
 /* ---------- The examples ---------- */
 
-const { PY_EXAMPLES, PY_IDS, FRAMEWORKS, moduleOf } = await load('examples/python/examples.js');
+const { examples: PY_EXAMPLES, ids: PY_IDS } = PYTHON;
+const FRAMEWORKS = PYTHON.frameworks.map(f => f.id);
 const { SITES } = await load('examples/html/examples.js');
 const exists = p => access(resolve(ROOT, p)).then(() => true, () => false);
 

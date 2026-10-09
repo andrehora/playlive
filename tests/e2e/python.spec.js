@@ -25,15 +25,22 @@ test.describe('Python mode', () => {
 
     // The picker lists the Python examples, Calculator first
     await expect(page.locator('#siteName')).toHaveText('Calculator');
-    await expect(page.locator('#siteCount')).toHaveText('1 of 56');
+    await expect(page.locator('#siteCount')).toHaveText('1 of 63');
     await expect(page.locator('#codeFile')).toHaveText('calculator.py');
     await expect(page.locator('#codeTestsFile')).toHaveText('test_calculator.py');
     await expect(page.locator('.code-fw [data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-fw button').first()).toHaveAttribute('data-fw', 'pytest');
-    await expect(page.locator('#codeTestsEd textarea')).toHaveValue(/^def test_add\(\)/m);
-    await expect(page.locator('#codeCount')).toHaveText('5 tests');
-    await expect(page.locator('#codeResults .code-name').first()).toHaveText('test_add');
+    await expect(page.locator('#codeTestsEd textarea')).toHaveValue(/^def test_adds_two_numbers\(\)/m);
+    await expect(page.locator('#codeCount')).toHaveText('12 tests');
+    await expect(page.locator('#codeResults .code-name').first()).toHaveText('test_calculator');
     expect(new URL(page.url()).hash).toBe('#python');
+    // What the example teaches sits under the tests' head, until Coverage is on
+    const teaches = page.locator('#codeTeaches');
+    await expect(teaches).toHaveText('A first example');
+    await page.locator('#codeCovShow').check();
+    await expect(teaches).toBeHidden();
+    await page.locator('#codeCovShow').uncheck();
+    await expect(teaches).toBeVisible();
 
     // Another example, and the link follows
     await choose(page, 'Stack');
@@ -97,7 +104,7 @@ test.describe('Python mode', () => {
   test('each panel\'s Reset puts its own file back as it ships, and undo takes it back', async ({ page }) => {
     const { errors } = await openApp(page, { mode: 'python' });
     const tests = page.locator('#codeTestsEd textarea'), code = page.locator('#codeEd textarea');
-    await expect(tests).toHaveValue(/^def test_add\(\)/m);
+    await expect(tests).toHaveValue(/^def test_adds_two_numbers\(\)/m);
     const shippedTests = await tests.inputValue(), shippedCode = await code.inputValue();
     await tests.fill('# mine\n');
     await code.fill('# mine too\n');
@@ -113,7 +120,7 @@ test.describe('Python mode', () => {
 
     // In Create, the tests go back to the names
     await page.click('.mode-seg [data-mode="create"]');
-    await expect(tests).toHaveValue(/^# test_add$/m);
+    await expect(tests).toHaveValue(/^# test_adds_two_numbers$/m);
     const skeleton = await tests.inputValue();
     await tests.fill('# mine\n');
     await page.click('#codeTestsReset');
@@ -397,7 +404,7 @@ test.describe('Python mode', () => {
     await panel.locator('[data-codesmells="all"]').click();
     await expect(panel.locator('[data-codesmells="all"]')).toHaveAttribute('aria-pressed', 'true');
     // Bank account and Cart repeat their setup, on purpose
-    await expect(score).toHaveText(/^\d+ of 56 examples have one$/);
+    await expect(score).toHaveText(/^\d+ of 63 examples have one$/);
     await expect(group('duplication-of-setup').locator('.smell-what')).toContainText(['Cart', 'Bank account']);
     // Every smell is named, whether or not an example has it
     await expect(panel.locator('.smell-group')).toHaveCount(4);
@@ -444,7 +451,7 @@ test.describe('Python mode', () => {
     const { errors } = await openApp(page, { mode: 'python' });
     await ready(page);
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    expect(ids).toHaveLength(56);
+    expect(ids).toHaveLength(63);
     const failures = [];
     for (const fw of ['unittest', 'pytest']){
       await page.evaluate(fw => window.playlive.code.framework(fw), fw);
@@ -453,8 +460,10 @@ test.describe('Python mode', () => {
         await expect(page.locator('#codeFile')).toHaveText(`${id.replace(/-/g, '_')}.py`);
         const n = Number((await page.locator('#codeCount').textContent()).split(' ')[0]);
         const said = await codeRun(page);
-        // a parametrized test runs once per case, so pytest may count more
-        if (!(allPassed(said) >= n)) failures.push(`${fw} ${id}: ${said}`);
+        // a parametrized test runs once per case, so pytest may count more;
+        // a skipped test did not run, so it is not counted
+        const skipped = await page.locator('#codeResults .test[data-state="skipped"]').count();
+        if (!(allPassed(said) >= n - skipped)) failures.push(`${fw} ${id}: ${said}`);
       }
     }
     expect(failures).toEqual([]);
@@ -469,10 +478,11 @@ test.describe('Python mode', () => {
     await expect(page.locator('.code-seg [data-codetab="create"]')).toHaveAttribute('aria-pressed', 'true');
     const tests = page.locator('#codeTestsEd textarea');
     await page.click('.code-fw [data-fw="unittest"]');
-    await expect(tests).toHaveValue(/^import unittest\nfrom calculator import add, subtract, multiply, divide\n\n\n# test_add\n/);
+    await expect(tests).toHaveValue(/^import unittest\nfrom calculator import add, subtract, multiply, divide\n\n\n# test_calculator\n/);
     const group = state => page.locator(`#codeCreate .create-group[data-state="${state}"] .create-what`);
-    await expect(group('todo')).toHaveText(['test_add', 'test_subtract', 'test_multiply', 'test_divide', 'test_divide_by_zero_is_refused']);
-    await expect(page.locator('.brief-score')).toHaveText('0 of 5 done');
+    await expect(group('todo')).toHaveText([
+      'test_calculator', 'test_add', 'test_subtract', 'test_multiply', 'test_divide', 'test_adds_two_numbers', 'test_adds_negative_numbers', 'test_subtracts_two_numbers', 'test_multiplies_two_numbers', 'test_divides_into_a_decimal', 'test_divides_into_an_integer', 'test_refuses_to_divide_by_zero']);
+    await expect(page.locator('.brief-score')).toHaveText('0 of 12 done');
 
     // Written is DOING until checked; a weak check is told what it misses
     await tests.fill(`import unittest
@@ -480,26 +490,26 @@ from calculator import add, divide
 
 
 class MyTest(unittest.TestCase):
-    def test_add(self):
+    def test_adds_two_numbers(self):
         self.assertEqual(add(2, 3), 5)
 
-    def test_divide(self):
+    def test_divides_into_a_decimal(self):
         self.assertTrue(divide(10, 2))
 `);
-    await expect(group('nocheck')).toHaveText(['test_add', 'test_divide']);
+    await expect(group('nocheck')).toHaveText(['test_adds_two_numbers', 'test_divides_into_a_decimal']);
     await expect(page.locator('#codeCreate .create-group[data-state="nocheck"] .create-m').first()).toHaveText('not checked yet');
     await ready(page);
     await page.click('.brief-run');
     await expect(page.locator('.brief-run')).toHaveText('Check', { timeout: PYTHON });
-    await expect(group('done')).toHaveText(['test_add']);
-    await expect(group('nocheck')).toHaveText(['test_divide']);
+    await expect(group('done')).toHaveText(['test_adds_two_numbers']);
+    await expect(group('nocheck')).toHaveText(['test_divides_into_a_decimal']);
     await expect(page.locator('#codeCreate .create-group[data-state="nocheck"] .create-m')).toHaveText(/^misses 1 of \d+: line 16, \/ → \*$/);
-    await expect(page.locator('.brief-score')).toHaveText('1 of 5 done');
+    await expect(page.locator('.brief-score')).toHaveText('1 of 12 done');
     expect(new URL(page.url()).hash).toBe('#python-create');
 
     // An edit to a test makes only that one unchecked
     await tests.fill((await tests.inputValue()).replace('add(2, 3), 5', 'add(2, 2), 4'));
-    await expect(group('nocheck')).toHaveText(['test_add', 'test_divide']);
+    await expect(group('nocheck')).toHaveText(['test_adds_two_numbers', 'test_divides_into_a_decimal']);
 
     // Explore keeps the example's tests, and Create gives yours back
     await page.click('.mode-seg [data-mode="explore"]');

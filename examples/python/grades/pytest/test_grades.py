@@ -13,7 +13,11 @@ def test_70_is_a_c_and_69_is_an_f():
     assert letter(69) == "F"
 
 
-@pytest.mark.parametrize("score", [101, -1])
-def test_scores_outside_0_to_100_are_refused(score):
+def test_101_is_refused():
     with pytest.raises(ValueError):
-        letter(score)
+        letter(101)
+
+
+def test_minus_1_is_refused():
+    with pytest.raises(ValueError):
+        letter(-1)

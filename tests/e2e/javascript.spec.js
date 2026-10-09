@@ -17,14 +17,14 @@ test.describe('JS/TS mode', () => {
     expect(await overflow(page)).toBeLessThanOrEqual(0);
 
     await expect(page.locator('#siteName')).toHaveText('Calculator');
-    await expect(page.locator('#siteCount')).toHaveText('1 of 56');
+    await expect(page.locator('#siteCount')).toHaveText('1 of 63');
     await expect(page.locator('#codeTitle')).toHaveText('JavaScript code');
     await expect(page.locator('#codeFile')).toHaveText('calculator.js');
     await expect(page.locator('#codeTestsFile')).toHaveText('calculator.spec.js');
     await expect(page.locator('.code-fw [data-fw="jasmine"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-lang [data-lang="js"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#codeCount')).toHaveText('5 tests');
-    await expect(page.locator('#codeResults .code-name').first()).toHaveText('adds');
+    await expect(page.locator('#codeCount')).toHaveText('12 tests');
+    await expect(page.locator('#codeResults .code-name').first()).toHaveText('works');
     expect(new URL(page.url()).hash).toBe('#javascript');
 
     // The other framework and language, and the files they name
@@ -102,7 +102,7 @@ test.describe('JS/TS mode', () => {
     test.setTimeout(4 * LOAD);
     const { errors } = await openApp(page, { mode: 'javascript' });
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    expect(ids).toHaveLength(56);
+    expect(ids).toHaveLength(63);
     const failures = [];
     for (const fw of ['jasmine', 'mocha']) for (const lang of ['js', 'ts']){
       await page.evaluate(([fw, lang]) => { window.playlive.code.framework(fw); window.playlive.code.lang(lang); }, [fw, lang]);
@@ -111,9 +111,11 @@ test.describe('JS/TS mode', () => {
         await page.evaluate(id => window.playlive.code.select(id), id);
         await expect(page.locator('#codeFile')).toHaveText(`${id}.${lang}`);
         const said = await run(page);
-        // FizzBuzz writes one test that runs once per case, so a run may count more
+        // Palindrome writes one test that runs once per case, so a run may count more
         const n = Number((await page.locator('#codeCount').textContent()).split(' ')[0]);
-        if (!(allPassed(said) >= n))
+        // A skipped test did not run, so it is not counted
+        const skipped = await page.locator('#codeResults .test[data-state="skipped"]').count();
+        if (!(allPassed(said) >= n - skipped))
           failures.push(`${fw} ${lang} ${id}: ${said} ${await page.locator('#codeResults .code-detail').first().textContent().catch(() => '')}`);
       }
     }
@@ -218,11 +220,12 @@ test.describe('JS/TS mode', () => {
     await edit('  it("does nothing", () => {', '  it("does nothing", () => {{');
     await expect(panel).toContainText('Fix the tests first');
 
-    // All smells: Bank account and Cart repeat their setup, on purpose, in Mocha and TypeScript too
+    // All smells: Bank account and Cart repeat their setup, and Calculator's very bad test
+    // checks everything, on purpose, in Mocha and TypeScript too
     await page.evaluate(() => { window.playlive.code.framework('mocha'); window.playlive.code.lang('ts'); });
     await expect(page.locator('#codeTestsFile')).toHaveText('bank-account.test.ts');
     await panel.locator('[data-codesmells="all"]').click();
-    await expect(score).toHaveText('2 of 56 examples have one');
+    await expect(score).toHaveText('3 of 63 examples have one');
     await expect(group('duplication-of-setup').locator('.smell-what')).toHaveText(['Cart', 'Bank account']);
     await expect(panel.locator('.smell-group')).toHaveCount(4);
     expect(errors).toEqual([]);
@@ -232,30 +235,31 @@ test.describe('JS/TS mode', () => {
     const { errors } = await openApp(page, { hash: '#javascript-create' });
     await expect(page.locator('.code-seg [data-codetab="create"]')).toHaveAttribute('aria-pressed', 'true');
     const tests = page.locator('#codeTestsEd textarea');
-    await expect(tests).toHaveValue('const { add, subtract, multiply, divide } = require("./calculator");\n\n// adds\n\n// subtracts\n\n// multiplies\n\n// divides\n\n// refuses to divide by zero\n');
+    await expect(tests).toHaveValue('const { add, subtract, multiply, divide } = require("./calculator");\n\n'
+      + ['// works', '// add', '// subtract', '// multiply', '// divide', '// adds two numbers', '// adds negative numbers', '// subtracts two numbers', '// multiplies two numbers', '// divides into a decimal', '// divides into an integer', '// refuses to divide by zero'].join('\n\n') + '\n');
     const group = state => page.locator(`#codeCreate .create-group[data-state="${state}"] .create-what`);
-    await expect(group('todo')).toHaveCount(5);
+    await expect(group('todo')).toHaveCount(12);
 
     // The describe is yours to name; a weak check is told what it misses
     await tests.fill(`const { add, divide } = require("./calculator");
 
 describe("Mine", () => {
-  it("adds", () => {
+  it("adds two numbers", () => {
     expect(add(2, 3)).toBe(5);
   });
 
-  it("divides", () => {
+  it("divides into a decimal", () => {
     expect(divide(10, 2)).toBeTruthy();
   });
 });
 `);
-    await expect(group('nocheck')).toHaveText(['adds', 'divides']);
+    await expect(group('nocheck')).toHaveText(['adds two numbers', 'divides into a decimal']);
     await ready(page);
     await page.click('.brief-run');
     await expect(page.locator('.brief-run')).toHaveText('Check', { timeout: LOAD });
-    await expect(group('done')).toHaveText(['adds']);
+    await expect(group('done')).toHaveText(['adds two numbers']);
     await expect(page.locator('#codeCreate .create-group[data-state="nocheck"] .create-m')).toHaveText(/^misses 1 of \d+: line 17, \/ → \*$/);
-    await expect(page.locator('.brief-score')).toHaveText('1 of 5 done');
+    await expect(page.locator('.brief-score')).toHaveText('1 of 12 done');
 
     expect(errors).toEqual([]);
   });
@@ -309,7 +313,7 @@ describe("Mine", () => {
     await page.keyboard.press('Tab');
     await page.keyboard.type('-5');
     await ready(page);
-    expect(allPassed(await run(page))).toBe(6);
+    expect(allPassed(await run(page))).toBe(13);
     // Mocha offers Chai's chains instead
     await page.click('.code-fw [data-fw="mocha"]');
     await expect(tests).toHaveValue(/require\("chai"\)/);

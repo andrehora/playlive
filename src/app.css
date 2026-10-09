@@ -422,6 +422,8 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 :root:not([data-mode^="python"], [data-mode^="javascript"]) .code-panel{display:none}
 :root:is([data-mode^="python"], [data-mode^="javascript"]) :is(.left > .panel:not(.code-panel), .left > .resizer:not(.code-panel), .browser){display:none}
 .code-file{font:500 12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
+.code-teaches{margin:0;padding:5px 14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.code-teaches:empty{display:none}
 .code-tests-panel{flex:0 0 auto;min-height:0}
 /* Its handle sets the code's height, as the editor's does in the other modes;
    Results and Console take whatever is left */
@@ -663,6 +665,10 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .seg{display:none} .view-seg,.area-seg,.mode-seg,.smell-seg,.res-seg,.code-seg,.code-fw,.code-lang,.code-flowseg,.cov-seg{display:inline-flex}
   .view-seg button,.area-seg button,.mode-seg button,.smell-seg button,.res-seg button,.code-seg button,.code-fw button,.code-lang button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
   .code-lang button{padding:0 9px}
+  /* The tests' switches share their row, Reset at its end */
+  .code-tests-panel .head-actions{width:100%}
+  .code-tests-panel .head-actions>.seg{flex:1}
+  .code-tests-panel .head-actions>.seg button{flex:1;justify-content:center}
 
   /* The example list opens as a sheet, so it is reachable wherever the page sits */
   .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(70dvh,560px);border-radius:14px}

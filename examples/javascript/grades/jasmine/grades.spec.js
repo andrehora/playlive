@@ -12,8 +12,11 @@ describe("Grades", () => {
     expect(letter(69)).toBe("F");
   });
 
-  it("refuses scores outside 0 to 100", () => {
+  it("refuses 101", () => {
     expect(() => letter(101)).toThrowError(RangeError);
+  });
+
+  it("refuses -1", () => {
     expect(() => letter(-1)).toThrowError(RangeError);
   });
 });

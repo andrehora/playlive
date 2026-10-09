@@ -1,4 +1,4 @@
-import { JS_ACCENT, JS_EXAMPLES, JS_IDS } from '../../../examples/javascript/examples.js';
+import { CODE_EXAMPLES, CODE_IDS } from '../../../examples/code.js';
 import { highlighter } from '../highlight.js';
 import { smellsOf } from './smells.js';
 
@@ -141,7 +141,7 @@ export const JAVASCRIPT = {
   // What runs the tests, language first: JavaScript's version is the browser's
   label: (v, fw, lang) => `${lang === 'ts' ? `TypeScript ${v.typescript}` : `JavaScript (${v.browser})`} · `
     + (fw === 'mocha' ? `Mocha ${v.mocha} + Chai ${v.chai} + Sinon ${v.sinon}` : `Jasmine ${v.jasmine}`),
-  examples: JS_EXAMPLES, ids: JS_IDS, accent: JS_ACCENT, icon: 'JavaScript',
+  examples: CODE_EXAMPLES, ids: CODE_IDS,
   frameworks: [
     { id: 'jasmine', label: 'Jasmine', logo: 'jasmine', title: 'Tests with Jasmine' },
     { id: 'mocha', label: 'Mocha', logo: 'mocha', title: 'Tests with Mocha and Chai' }

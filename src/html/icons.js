@@ -27,10 +27,8 @@ const PATHS = {
   // No category falls back to this one: it is what a theme added to the manifest
   // alone is drawn with until it is given an icon of its own.
   fallback: '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/>',
-  // Python mode's examples: code, between brackets
-  Python: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14"/>',
-  // JS/TS mode's examples: a block, between braces
-  JavaScript: '<path d="M9 4c-2 0-3 1-3 3v2.5c0 1.2-.8 2.5-2.5 2.5 1.7 0 2.5 1.3 2.5 2.5V17c0 2 1 3 3 3M15 4c2 0 3 1 3 3v2.5c0 1.2.8 2.5 2.5 2.5-1.7 0-2.5 1.3-2.5 2.5V17c0 2-1 3-3 3"/>',
+  // The code modes' examples, Python's and JS/TS's alike: code, between brackets
+  Code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14"/>',
   // A run that will not hold still: a trace that spikes where the others are flat.
   Flaky: '<path d="M3 12h3.5l2.5-6.5L13 18l2.5-6 1.5 3H21"/>',
 };

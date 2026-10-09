@@ -1,7 +1,7 @@
 import greeting
 
 
-# The real clock changes, so the tests replace it with a fixed hour
+# Stub: returns a fixed hour
 def test_morning(monkeypatch):
     monkeypatch.setattr(greeting, "current_hour", lambda: 9)
     assert greeting.greet("Ana") == "Good morning, Ana"

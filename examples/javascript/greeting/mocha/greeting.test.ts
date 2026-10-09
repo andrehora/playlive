@@ -2,7 +2,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { clock, greet } from "./greeting";
 
-// The real clock changes, so the tests replace it with a fixed hour
+// Stub: returns a fixed hour
 describe("Greeting", () => {
   afterEach(() => {
     sinon.restore();

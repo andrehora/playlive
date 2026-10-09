@@ -27,6 +27,11 @@ const resultsEl = $id('codeResults');
 resultsEl.innerHTML = '<p class="code-note" hidden></p><div class="code-list"></div>';
 const noteEl = resultsEl.firstChild, listEl = resultsEl.lastChild;
 const countEl = $id('codeCount');
+// What the example teaches, on a line under the tests' head, while the
+// Coverage check is off
+const teachesEl = $id('codeTeaches'), covCheck = $id('codeCovShow');
+const showTeaches = () => { teachesEl.hidden = covCheck.checked; };
+covCheck.addEventListener('change', showTeaches);
 let tests = [], collectError = null, runTarget = null;
 // The tests the last run covered, in order, for the circles in the panel head;
 // null until a run, and again once the file is edited
@@ -404,6 +409,8 @@ function show(){
     $id('codeTitle').textContent = P().codeTitle(s.lang);
     $id('codeFile').textContent = f.code;
     $id('codeTestsFile').textContent = f.tests;
+    teachesEl.textContent = P().examples[id].teaches;
+    showTeaches();
     tests = []; collectError = null; folded.clear(); runIds = null;
     clearConsole(); readTests(); setCoverage(null);
     resetMutation();

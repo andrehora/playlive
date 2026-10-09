@@ -7,8 +7,7 @@ import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
 const { siteFromHash, modeFromHash, linkedMode, codeExampleFromHash, shareUrl } = await load('src/share.js');
-const { PY_IDS } = await load('examples/python/examples.js');
-const { JS_IDS } = await load('examples/javascript/examples.js');
+const { CODE_IDS: PY_IDS, CODE_IDS: JS_IDS } = await load('examples/code.js');
 const { MODES } = await load('src/modes.js');
 const { SITE_IDS } = await load('examples/html/examples.js');
 

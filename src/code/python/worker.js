@@ -38,7 +38,7 @@ const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/';
 // imported, or the tests would run against the code as it was. No bytecode is
 // written, so an edit inside the same second cannot be served from a stale .pyc.
 const RUNNER = `
-import ast, contextlib, inspect, io, json, os, re, sys, time, traceback, types, unittest, pytest
+import ast, contextlib, dis, inspect, io, json, os, re, sys, time, traceback, types, unittest, pytest
 sys.dont_write_bytecode = True
 os.makedirs('/work', exist_ok=True)
 os.chdir('/work')
@@ -228,12 +228,26 @@ def code_map(src, name):
                 for off in range(start, end, 2):
                     at[off] = line
         if BRANCHING:
+            jumps, ends = returns_of(c)
             for src_off, left, right in c.co_branches():
                 if src_off in at:
                     key = (c.co_qualname, c.co_firstlineno, src_off)
-                    branches.append((at[src_off], [(key + (left,), at.get(left)), (key + (right,), at.get(right))]))
+                    line = lambda dest: None if dest in ends and ends[dest] == jumps.get(src_off) else at.get(dest)
+                    branches.append((at[src_off], [(key + (left,), line(left)), (key + (right,), line(right))]))
         todo.extend(k for k in c.co_consts if isinstance(k, types.CodeType))
     return lines, branches
+
+# An if that ends its function with no else jumps, when false, to a copy of
+# the function's "return None" that the compiler gives the jump's own place,
+# so its line says the jump stayed in the condition. Such a landing is named
+# None (a way out) when it sits exactly where the jump does. Offset -> place,
+# of the jumps and of every "return None".
+def returns_of(c):
+    ins = list(dis.get_instructions(c))
+    jumps = {i.offset: i.positions for i in ins if i.opname.startswith('POP_JUMP')}
+    ends = {a.offset: a.positions for a, b in zip(ins, ins[1:])
+            if a.opname == 'LOAD_CONST' and a.argval is None and b.opname == 'RETURN_VALUE'}
+    return jumps, ends
 
 # A branch is a statement's, as in JS/TS: each if, elif, while and for has two
 # ways, into its body or not, however many jumps its condition makes. Where a

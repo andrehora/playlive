@@ -29,7 +29,7 @@ export default [
   },
   {
     // JS/TS mode's examples: CommonJS, as Jasmine and Mocha document it, with
-    // the frameworks' globals. The manifest beside them is the app's own module.
+    // the frameworks' globals.
     // Printing is what the Average example is about, so console is allowed.
     files: ['examples/javascript/*/**/*.js'],
     languageOptions: {

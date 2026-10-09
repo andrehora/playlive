@@ -16,18 +16,26 @@ export const siteBtn = $id('siteBtn'), sitePop = $id('sitePop'), siteSearch = $i
 siteSearch.placeholder = 'Search examples';
 // A code mode lists its own examples, in the order they are written to be met
 const profile = () => CODE_MODES[codeModeOf(mode)];
+// Python and JS/TS have the same examples, so they show them alike: code, in one colour
+const CODE_ACCENT = '#306998';
 const current = () => (profile() ? exampleOf(mode) : editorSite);
 const nameOf = id => (profile() ? profile().examples : SITES)[id]?.name || '';
 function renderExampleTabs(){
   const p = profile();
   tabsEl.innerHTML = '';
-  const group = document.createElement('div'); group.className = 'pop-group';
-  const head = document.createElement('div'); head.className = 'pop-cat';
-  head.innerHTML = catIconSvg(p.icon) + '<span></span>';
-  head.lastChild.textContent = p.title;
-  head.style.setProperty('--cat', p.accent);
-  group.appendChild(head);
+  // A heading wherever the group changes (Basics, Fixtures, …)
+  let group, title;
+  const startGroup = title => {
+    group = document.createElement('div'); group.className = 'pop-group';
+    const head = document.createElement('div'); head.className = 'pop-cat';
+    head.innerHTML = catIconSvg('Code') + '<span></span>';
+    head.lastChild.textContent = title;
+    head.style.setProperty('--cat', CODE_ACCENT);
+    group.appendChild(head);
+    tabsEl.appendChild(group);
+  };
   for (const id of p.ids){
+    if (!group || p.examples[id].group !== title) startGroup(title = p.examples[id].group);
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'tab'; b.dataset.site = id;
     b.innerHTML = '<span class="tname"></span><span class="tsub"></span>';
@@ -36,14 +44,13 @@ function renderExampleTabs(){
     b.addEventListener('click', () => { closePicker(true); selectExample(id); });
     group.appendChild(b);
   }
-  tabsEl.appendChild(group);
 }
 function setExampleView(id){
   const p = profile();
   tabsEl.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === id)));
   const swatch = $id('siteSwatch');
-  swatch.innerHTML = catIconSvg(p.icon);
-  swatch.style.setProperty('--cat', p.accent);
+  swatch.innerHTML = catIconSvg('Code');
+  swatch.style.setProperty('--cat', CODE_ACCENT);
   $id('siteName').textContent = p.examples[id].name;
   delete siteBtn.dataset.status;
   siteBtn.title = 'Choose an example';
