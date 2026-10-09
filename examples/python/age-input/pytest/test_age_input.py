@@ -2,8 +2,7 @@ import pytest
 from age_input import parse_age
 
 
-# Bad: only the happy path. Empty, words, negative and too high are never
-# tried, nor the boundary at 150
+# Bad: only the happy path
 def test_reads_an_age():
     assert parse_age("42") == 42
 

@@ -8,19 +8,18 @@ export interface PutReply {
   ResponseMetadata: { HTTPStatusCode: number };
 }
 
-// Theirs: a cloud storage library you installed. Its API is not yours to change
+// Theirs: a cloud storage library. Its API is not yours to change
 export class CloudSDK {
   putObject(request: PutRequest): PutReply {
     throw new Error(`The cloud is not reachable from tests (${request.Key})`);
   }
 }
 
-// Ours: the one place that knows CloudSDK's API. Tests mock this, not CloudSDK
+// Ours: the only code that knows CloudSDK. Tests mock this
 export class FileStore {
   constructor(private sdk: CloudSDK, private bucket: string) {}
 
-  // A change to try: CloudSDK renames putObject to upload. Only this method
-  // and the bad test have to change
+  // A change to try: CloudSDK renames putObject. Only this and the bad test change
   save(name: string, text: string): boolean {
     const reply = this.sdk.putObject({ Bucket: this.bucket, Key: "notes/" + name, Body: text });
     return reply.ResponseMetadata.HTTPStatusCode === 200;

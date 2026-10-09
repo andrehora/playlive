@@ -25,8 +25,7 @@ class Shop:
         self.inventory = inventory
         self.prices = prices
 
-    # A change to try: work out the cost first, then take the items. The
-    # results are the same
+    # A change to try: work out the cost first. The results are the same
     def order(self, item, count):
         self.inventory.take(item, count)
         return self.prices.cost(item, count)

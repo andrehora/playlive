@@ -1,8 +1,7 @@
 import { TipJar } from "./tip-jar";
 
 describe("Tip jar", () => {
-  // Bad: it reads the private list, so keeping the tips another way breaks it,
-  // though total() still works
+  // Bad: it reads the private list, so storing tips another way breaks it
   it("keeps the tips in a list", () => {
     const jar = new TipJar();
     jar.add(2);

@@ -3,12 +3,11 @@ from loyalty_points import loyalty_points
 
 
 class LoyaltyPointsTest(unittest.TestCase):
-    # Bad: it runs every line but the raise, so line coverage looks fine, yet each
-    # if goes only one way (Branch: 4 of 8 branches), and "> 0" checks almost nothing
+    # Bad: each if goes only one way, and "> 0" checks almost nothing
     def test_points_for_a_member_on_their_birthday(self):
         self.assertGreater(loyalty_points(300, True, True), 0)
 
-    # Good: each way through each if, with the points it should give
+    # Good: each way through each if, with its points
     def test_a_euro_earns_a_point(self):
         points = loyalty_points(40, False, False)
         self.assertEqual(points, 40)

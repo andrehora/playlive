@@ -3,8 +3,7 @@ import * as sinon from "sinon";
 import { pricing, placeOrder } from "./order-confirmation";
 
 describe("Order confirmation", () => {
-  // Bad: it mocks total, our own pricing rule, so the rule is never tested. One
-  // 20 item with the coupon costs 10, yet the order says 50
+  // Bad: it mocks total, our own rule, so the rule is never tested
   it("charges an order", () => {
     const rule = sinon.stub(pricing, "total").returns(50);
     const gateway = { charge: sinon.stub() }, mailer = { send: sinon.stub() };
@@ -13,8 +12,7 @@ describe("Order confirmation", () => {
     expect(amount).to.equal(50);
   });
 
-  // Good: only the gateway and the mailer, the boundaries, are mocked; the
-  // pricing runs for real
+  // Good: only the gateway and the mailer, the boundaries, are mocked
   it("charges the card the total", () => {
     const gateway = { charge: sinon.stub() }, mailer = { send: sinon.stub() };
     placeOrder("ana@example.test", [[20, 2], [5, 1]], "", gateway, mailer);

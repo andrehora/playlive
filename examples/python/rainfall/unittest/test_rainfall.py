@@ -3,12 +3,11 @@ from rainfall import total, average
 
 
 class RainfallTest(unittest.TestCase):
-    # 0.1 + 0.2 is 0.30000000000000004 in floating point, so assertEqual would
-    # fail. assertAlmostEqual compares to 7 decimal places instead
+    # 0.1 + 0.2 is 0.30000000000000004, so an exact check would fail
     def test_totals_the_rainfall(self):
         self.assertAlmostEqual(total([0.1, 0.2]), 0.3)
 
-    # 0.7 / 3 never ends, so the test says how close is close enough
+    # 0.7 / 3 never ends, so the test says how close is enough
     def test_averages_the_rainfall(self):
         self.assertAlmostEqual(average([0.1, 0.2, 0.4]), 0.233, delta=0.001)
 

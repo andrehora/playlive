@@ -3,8 +3,7 @@ from bowling import score
 
 
 class BowlingTest(unittest.TestCase):
-    # Bad: one test for the function, holding five behaviors. When it fails, its
-    # name doesn't say which rule broke
+    # Bad: one test holds every rule. Its name doesn't say which broke
     def test_score(self):
         self.assertEqual(score([0] * 20), 0)
         self.assertEqual(score([1] * 20), 20)
@@ -12,7 +11,7 @@ class BowlingTest(unittest.TestCase):
         self.assertEqual(score([10, 3, 4] + [0] * 16), 24)
         self.assertEqual(score([10] * 12), 300)
 
-    # Good: one test per behavior, named for the rule it checks
+    # Good: one test per rule, named for it
     def test_a_gutter_game_scores_0(self):
         total = score([0] * 20)
         self.assertEqual(total, 0)

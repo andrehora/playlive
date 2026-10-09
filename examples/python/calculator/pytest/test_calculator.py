@@ -2,8 +2,7 @@ import pytest
 from calculator import add, subtract, multiply, divide
 
 
-# Very bad: one test checks every method. It stops at the first wrong answer,
-# and its name does not say what broke
+# Very bad: one test for everything. Its name does not say what broke
 def test_calculator():
     assert add(2, 3) == 5
     assert subtract(10, 4) == 6
@@ -14,8 +13,7 @@ def test_calculator():
         divide(1, 0)
 
 
-# Bad: one test per method. Better, but a name only says which method it
-# calls, not what the method should do
+# Bad: one test per function. Its name says what it calls, not what it should do
 def test_add():
     assert add(2, 3) == 5
 
@@ -32,7 +30,7 @@ def test_divide():
     assert divide(10, 4) == 2.5
 
 
-# Good: one test per behavior, and its name says what the code should do
+# Good: one test per behavior, named for what the code should do
 def test_adds_two_numbers():
     assert add(2, 3) == 5
 

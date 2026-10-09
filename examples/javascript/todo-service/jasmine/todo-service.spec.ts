@@ -1,7 +1,6 @@
 import { TodoService } from "./todo-service";
 
-// Good: a fake repository, the to-dos kept in an object. A few lines, and it
-// behaves like the real one
+// Fake: the to-dos kept in an object
 class InMemoryTodos {
   todos: Record<number, { id: number; title: string; done: boolean }> = {};
 
@@ -19,8 +18,7 @@ class InMemoryTodos {
 }
 
 describe("To-do service", () => {
-  // Bad: a mock told what to answer at every step, even what the list looks like
-  // after completing. The test checks the mock's script more than the service
+  // Bad: a mock scripted at every step. It tests the script, not the service
   it("takes a completed to-do off the list", () => {
     const repo = jasmine.createSpyObj("repo", ["all", "get", "save"]);
     repo.all.and.returnValue([]);

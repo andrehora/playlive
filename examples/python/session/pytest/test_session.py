@@ -2,8 +2,7 @@ import pytest
 from session import current_user, greeting, login, logout
 
 
-# Bad: the second test counts on the login the first one left behind, so it
-# passes only right after it. Run it alone and it fails
+# Bad: the second test needs the first one's login. Run it alone and it fails
 def test_ana_can_log_in():
     login("ana", "secret1")
     assert current_user() == "ana"
@@ -13,7 +12,7 @@ def test_the_greeting_names_the_user():
     assert greeting() == "Hello, ana"
 
 
-# Good: each test starts logged out, and logs in whoever it needs
+# Good: each test starts logged out
 @pytest.fixture
 def logged_out():
     logout()

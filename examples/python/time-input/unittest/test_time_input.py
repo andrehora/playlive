@@ -3,8 +3,7 @@ from time_input import parse_time
 
 
 class TimeInputTest(unittest.TestCase):
-    # Bad: only the happy path. Empty, a missing colon, letters, hours and minutes
-    # out of range, and the first and last minute of the day are never tried
+    # Bad: only the happy path
     def test_reads_a_time(self):
         self.assertEqual(parse_time("09:30"), 570)
 

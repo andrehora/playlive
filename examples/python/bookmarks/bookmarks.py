@@ -9,3 +9,6 @@ class Bookmarks:
 
     def all(self):
         return self.store.all()
+
+    def total(self):
+        return len(self.store.all())

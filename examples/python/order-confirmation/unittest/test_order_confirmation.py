@@ -4,15 +4,13 @@ import order_confirmation as shop
 
 
 class OrderConfirmationTest(unittest.TestCase):
-    # Bad: it mocks total, our own pricing rule, so the rule is never tested. One
-    # 20 item with the coupon costs 10, yet the order says 50
+    # Bad: it mocks total, our own rule, so the rule is never tested
     def test_an_order_is_charged(self):
         with patch("order_confirmation.total", return_value=50):
             gateway, mailer = Mock(), Mock()
             self.assertEqual(shop.place_order("ana@example.test", [(20, 1)], "SAVE10", gateway, mailer), 50)
 
-    # Good: only the gateway and the mailer, the boundaries, are mocked; the
-    # pricing runs for real
+    # Good: only the gateway and the mailer, the boundaries, are mocked
     def test_the_card_is_charged_the_total(self):
         gateway, mailer = Mock(), Mock()
         shop.place_order("ana@example.test", [(20, 2), (5, 1)], "", gateway, mailer)

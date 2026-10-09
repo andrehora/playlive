@@ -1,8 +1,7 @@
 import { expect } from "chai";
 import { reset, takeTicket } from "./ticket-counter";
 
-// Bad: these two count on the counter as the tests before them left it, so
-// the second passes only right after the first. Run it alone and it fails
+// Bad: these two share the counter. Run the second alone and it fails
 describe("Shared ticket counter", () => {
   it("gives ticket 1 first", () => {
     expect(takeTicket()).to.equal(1);
@@ -13,7 +12,7 @@ describe("Shared ticket counter", () => {
   });
 });
 
-// Good: each test puts the counter back first, so what ran before it does not matter
+// Good: each test resets the counter first
 describe("Ticket counter", () => {
   beforeEach(() => {
     reset();

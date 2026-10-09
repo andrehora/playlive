@@ -3,7 +3,7 @@ function makeProfile(name, email) {
   if (!name) {
     throw new Error("Name is required");
   }
-  // avatar came later: avatar: "default.png"
+  // A change to try: add avatar: "default.png"
   return { name, email: email.toLowerCase() };
 }
 

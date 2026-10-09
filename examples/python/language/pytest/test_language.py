@@ -2,8 +2,7 @@ import pytest
 from language import settings, greet
 
 
-# Teardown: the code after yield runs after every test, even one that fails,
-# and puts the setting back. Without it, the next test greets in Portuguese
+# Teardown: the code after yield puts the setting back after every test
 @pytest.fixture(autouse=True)
 def restore_language():
     yield

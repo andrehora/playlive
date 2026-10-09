@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { Order } from "./order";
 
 describe("Order", () => {
-  // Bad: it calls a private method, so renaming subtotal breaks it
+  // Bad: it calls a private method, so renaming it breaks the test
   it("adds up the prices in the subtotal", () => {
     const order = new Order([20, 15]);
     expect(order["subtotal"]()).to.equal(35);

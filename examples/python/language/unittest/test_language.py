@@ -3,8 +3,7 @@ from language import settings, greet
 
 
 class LanguageTest(unittest.TestCase):
-    # Teardown: tearDown runs after every test, even one that fails, and puts
-    # the setting back. Without it, the next test greets in Portuguese
+    # Teardown: tearDown puts the setting back after every test, even a failing one
     def tearDown(self):
         settings["language"] = "en"
 

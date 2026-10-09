@@ -5,7 +5,7 @@ export class Sensor {
   }
 }
 
-// Easy to test: the sensor is handed in, so a test can hand in its own
+// Easy to test: the sensor is handed in
 export class Thermostat {
   constructor(private sensor: Sensor) {}
 
@@ -15,7 +15,7 @@ export class Thermostat {
   }
 }
 
-// Hard to test: it makes its own Sensor, so a test has to patch Sensor itself
+// Hard to test: it makes its own Sensor
 export function heatingOnNow(target: number): boolean {
   return new Thermostat(new Sensor()).heatingOn(target);
 }

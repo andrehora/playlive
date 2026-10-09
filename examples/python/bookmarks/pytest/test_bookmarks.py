@@ -32,3 +32,10 @@ def test_saves_a_bookmark_only_once(bookmarks):
     bookmarks.add("maps.example")
     bookmarks.add("maps.example")
     assert bookmarks.all() == ["maps.example"]
+
+
+def test_counts_each_bookmark_once(bookmarks):
+    bookmarks.add("news.example")
+    bookmarks.add("news.example")
+    bookmarks.add("maps.example")
+    assert bookmarks.total() == 2

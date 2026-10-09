@@ -1,8 +1,7 @@
 const { isLeap } = require("./leap-year");
 
 describe("Leap year", () => {
-  // Bad: a loop, and a formula of its own to work out the answer. The formula is
-  // wrong (1900 was not a leap year), but none of the years it tries shows it
+  // Bad: a loop with a formula of its own. It is wrong for 1900, which it never tries
   it("knows the leap years", () => {
     for (let year = 2000; year < 2030; year++) {
       expect(isLeap(year)).toBe(year % 4 === 0);

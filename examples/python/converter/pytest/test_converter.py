@@ -1,20 +1,25 @@
 from converter import Converter
 
 
-# Stub: returns a fixed rate
-class StubRates:
-    def __init__(self, eur):
-        self.eur = eur
-
+# Stub, by hand: returns a fixed rate
+class StubBankService:
     def rate(self, currency):
-        return self.eur
+        return 0.5
 
 
 def test_converts_dollars_to_euros():
-    converter = Converter(StubRates(0.5))
-    assert converter.to_euros(10) == 5
+    dollars = 10
+    converter = Converter(StubBankService())
+
+    euros = converter.to_euros(dollars)
+
+    assert euros == 5
 
 
-def test_follows_the_rate():
-    converter = Converter(StubRates(2))
-    assert converter.to_euros(10) == 20
+def test_converts_any_amount():
+    dollars = 3
+    converter = Converter(StubBankService())
+
+    euros = converter.to_euros(dollars)
+
+    assert euros == 1.5

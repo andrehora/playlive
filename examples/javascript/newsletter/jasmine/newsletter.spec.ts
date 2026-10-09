@@ -1,8 +1,7 @@
 import { Newsletter, Subscribers } from "./newsletter";
 
 describe("Newsletter", () => {
-  // Bad: it checks that add was called, not that Ana is subscribed, so a new way
-  // of storing her breaks it though nothing anyone sees has changed
+  // Bad: it checks that add was called, not that Ana is subscribed
   it("calls add when subscribing", () => {
     const store = jasmine.createSpyObj("store", ["add", "size"]);
     new Newsletter(store, jasmine.createSpyObj("mailer", ["send"])).subscribe("ana@example.test");
@@ -16,7 +15,7 @@ describe("Newsletter", () => {
     expect(newsletter.count()).toBe(1);
   });
 
-  // Good too: sending the welcome email is the behavior, so checking the call is right
+  // Good too: the email is the behavior, so checking the call is right
   it("sends a subscriber a welcome", () => {
     const mailer = jasmine.createSpyObj("mailer", ["send"]);
     new Newsletter(new Subscribers(), mailer).subscribe("ana@example.test");

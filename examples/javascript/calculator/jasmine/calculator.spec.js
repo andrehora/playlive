@@ -1,8 +1,7 @@
 const { add, subtract, multiply, divide } = require("./calculator");
 
 describe("Calculator", () => {
-  // Very bad: one test checks every method. It stops at the first wrong
-  // answer, and its name does not say what broke
+  // Very bad: one test for everything. Its name does not say what broke
   it("works", () => {
     expect(add(2, 3)).toBe(5);
     expect(subtract(10, 4)).toBe(6);
@@ -12,8 +11,7 @@ describe("Calculator", () => {
     expect(() => divide(1, 0)).toThrowError();
   });
 
-  // Bad: one test per method. Better, but a name only says which method it
-  // calls, not what the method should do
+  // Bad: one test per function. Its name says what it calls, not what it should do
   it("add", () => {
     expect(add(2, 3)).toBe(5);
   });
@@ -30,7 +28,7 @@ describe("Calculator", () => {
     expect(divide(10, 4)).toBe(2.5);
   });
 
-  // Good: one test per behavior, and its name says what the code should do
+  // Good: one test per behavior, named for what the code should do
   it("adds two numbers", () => {
     expect(add(2, 3)).toBe(5);
   });

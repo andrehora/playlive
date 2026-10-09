@@ -8,8 +8,7 @@ def average(scores):
     return total / len(scores)
 
 
-# Hard to test: it prints the result, so a test has to catch what is printed.
-# Keeping it this thin leaves almost nothing in it to test
+# Hard to test: it prints. Kept thin, so there is little to test
 def print_average(scores):
     # A change to try: print("Mean:", average(scores))
     print("Average:", average(scores))

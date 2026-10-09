@@ -2,7 +2,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { clock, greet } from "./greeting";
 
-// Stub: returns a fixed hour
+// Stub, from the framework: returns a fixed hour
 describe("Greeting", () => {
   afterEach(() => {
     sinon.restore();

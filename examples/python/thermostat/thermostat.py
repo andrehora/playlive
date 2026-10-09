@@ -4,7 +4,7 @@ class Sensor:
         raise ConnectionError("No sensor attached")
 
 
-# Easy to test: the sensor is handed in, so a test can hand in its own
+# Easy to test: the sensor is handed in
 class Thermostat:
     def __init__(self, sensor):
         self.sensor = sensor
@@ -14,6 +14,6 @@ class Thermostat:
         return self.sensor.read() < target
 
 
-# Hard to test: it makes its own Sensor, so a test has to patch Sensor itself
+# Hard to test: it makes its own Sensor
 def heating_on_now(target):
     return Thermostat(Sensor()).heating_on(target)

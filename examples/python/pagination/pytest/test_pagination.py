@@ -2,9 +2,7 @@ import pytest
 from pagination import page, page_count
 
 
-# Bad: a loop, and the code's own sums to work out what each page should hold.
-# It even asks page_count how many pages to try, so if page_count is wrong,
-# the last page is never tried and the test still passes
+# Bad: a loop that asks the code for its own answers, so its bugs slip through
 def test_pages():
     items = ["a", "b", "c", "d", "e"]
     for number in range(1, page_count(len(items), 2) + 1):

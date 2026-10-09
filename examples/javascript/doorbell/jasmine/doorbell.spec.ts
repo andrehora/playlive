@@ -4,7 +4,7 @@ describe("Doorbell", () => {
   let phone: jasmine.SpyObj<Phone>;
   let doorbell: Doorbell;
 
-  // Mock: replaces the phone and checks how it was called
+  // Mock, from the framework: replaces the phone and checks its calls
   beforeEach(() => {
     phone = jasmine.createSpyObj("phone", ["notify"]);
     doorbell = new Doorbell(phone);

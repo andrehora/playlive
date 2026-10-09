@@ -5,7 +5,7 @@ class Sensor {
   }
 }
 
-// Easy to test: the sensor is handed in, so a test can hand in its own
+// Easy to test: the sensor is handed in
 class Thermostat {
   constructor(sensor) {
     this.sensor = sensor;
@@ -17,7 +17,7 @@ class Thermostat {
   }
 }
 
-// Hard to test: it makes its own Sensor, so a test has to patch Sensor itself
+// Hard to test: it makes its own Sensor
 function heatingOnNow(target) {
   return new Thermostat(new Sensor()).heatingOn(target);
 }

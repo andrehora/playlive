@@ -1,8 +1,7 @@
 from guest_list import GuestList
 
 
-# Bad: the first two tests share one list, so the second passes only after
-# the first. Run it alone (its Run button) and it fails
+# Bad: the first two tests share one list. Run the second alone and it fails
 shared = GuestList()
 
 
@@ -16,7 +15,7 @@ def test_another_guest_makes_two():
     assert shared.count() == 2
 
 
-# Good: each test makes its own list, so it passes alone or in any order
+# Good: each test makes its own list
 def test_a_new_list_is_empty():
     guests = GuestList()
     assert guests.count() == 0

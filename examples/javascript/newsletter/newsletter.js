@@ -1,4 +1,4 @@
-// A real store, cheap enough to use in tests: a list that remembers
+// A real store, cheap enough for tests: a list
 class Subscribers {
   constructor() {
     this.emails = [];
@@ -20,8 +20,7 @@ class Newsletter {
   }
 
   subscribe(email) {
-    // A change to try: give Subscribers an addAll(emails), and call
-    // this.store.addAll([email]) here instead
+    // A change to try: call a new this.store.addAll([email]) here instead
     this.store.add(email);
     this.mailer.send(email, "Welcome to the newsletter");
   }

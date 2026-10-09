@@ -2,8 +2,7 @@ import pytest
 from library import Library
 
 
-# Bad: the helpers hide who borrows, how many books, and the limit, so you
-# have to read them to know what test_lending checks
+# Bad: the helpers hide who borrows, how many books, and the limit
 def library_with_loans(n):
     library = Library()
     for i in range(n):
@@ -20,7 +19,7 @@ def test_lending():
     assert lend_one_more(library_with_loans(2)) == 3
 
 
-# Good: each test shows all it needs, even if the steps repeat
+# Good: each test shows all it needs, even if steps repeat
 def test_a_member_can_borrow_a_book():
     library = Library(limit=3)
     library.lend("Ana", "Dune")

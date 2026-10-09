@@ -1,7 +1,6 @@
 const { Library } = require("./library");
 
-// Bad: the helpers hide who borrows, how many books, and the limit, so you
-// have to read them to know what "lends" checks
+// Bad: the helpers hide who borrows, how many books, and the limit
 function libraryWithLoans(n) {
   const library = new Library();
   for (let i = 0; i < n; i++) library.lend("ana", "Book " + i);
@@ -18,7 +17,7 @@ describe("Library", () => {
     expect(lendOneMore(libraryWithLoans(2))).toBe(3);
   });
 
-  // Good: each test shows all it needs, even if the steps repeat
+  // Good: each test shows all it needs, even if steps repeat
   it("lends a member a book", () => {
     const library = new Library(3);
     library.lend("Ana", "Dune");

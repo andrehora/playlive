@@ -1,8 +1,7 @@
 import { PasswordPolicy } from "./password-policy";
 
 describe("Password policy", () => {
-  // Bad: it calls a private method, so inlining hasDigit breaks it, though
-  // problems() and isValid() still work
+  // Bad: it calls a private method, so inlining it breaks the test
   it("finds a digit", () => {
     const policy = new PasswordPolicy();
     expect(policy["hasDigit"]("abc1")).toBe(true);

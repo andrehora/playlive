@@ -4,8 +4,7 @@ from tax import Tax, total_with_tax
 
 
 class TaxTest(unittest.TestCase):
-    # Bad: a mock Tax, told what to answer, and a check of how it was called. Tax
-    # itself never runs, and taxing each price instead breaks it, with the same totals
+    # Bad: a mock Tax, so Tax never runs, and the test pins how it is called
     def test_tax_is_asked_once_for_the_total(self):
         tax = Mock()
         tax.on.return_value = 6

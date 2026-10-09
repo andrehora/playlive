@@ -31,6 +31,12 @@ class BookmarksTest(unittest.TestCase):
         self.bookmarks.add("maps.example")
         self.assertEqual(self.bookmarks.all(), ["maps.example"])
 
+    def test_counts_each_bookmark_once(self):
+        self.bookmarks.add("news.example")
+        self.bookmarks.add("news.example")
+        self.bookmarks.add("maps.example")
+        self.assertEqual(self.bookmarks.total(), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,15 +4,14 @@ import shop_hours
 
 
 class ShopHoursTest(unittest.TestCase):
-    # Bad: it mocks is_open, our own rule, so the rule is never tested. At 22:00
-    # the shop is closed, yet the sign says come in
+    # Bad: it mocks is_open, our own rule, so the rule is never tested
     def test_the_sign_says_come_in(self):
         with patch("shop_hours.is_open", return_value=True):
             clock = Mock()
             clock.hour.return_value = 22
             self.assertEqual(shop_hours.sign(clock), "Come in")
 
-    # Good: only the clock, the boundary, is replaced; the rule runs for real
+    # Good: only the clock, the boundary, is replaced
     def test_open_from_9(self):
         clock = Mock()
         clock.hour.return_value = 9

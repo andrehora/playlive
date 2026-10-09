@@ -3,8 +3,7 @@ import * as sinon from "sinon";
 import { rules, sign } from "./shop-hours";
 
 describe("Shop hours", () => {
-  // Bad: it mocks isOpen, our own rule, so the rule is never tested. At 22:00
-  // the shop is closed, yet the sign says come in
+  // Bad: it mocks isOpen, our own rule, so the rule is never tested
   it("says come in", () => {
     const rule = sinon.stub(rules, "isOpen").returns(true);
     const clock = { hour: sinon.stub().returns(22) };
@@ -13,7 +12,7 @@ describe("Shop hours", () => {
     expect(said).to.equal("Come in");
   });
 
-  // Good: only the clock, the boundary, is replaced; the rule runs for real
+  // Good: only the clock, the boundary, is replaced
   it("is open from 9", () => {
     const clock = { hour: sinon.stub().returns(9) };
     const text = sign(clock);

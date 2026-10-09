@@ -3,8 +3,7 @@ from password_rules import strength
 
 
 class PasswordRulesTest(unittest.TestCase):
-    # Bad: it runs every line and every branch, so coverage is 100%, but it checks
-    # only one of the three answers. The Mutation tab shows what slips through
+    # Bad: 100% coverage, but it checks only one of the three answers
     def test_strength(self):
         strength("abc")
         strength("abcdefgh")

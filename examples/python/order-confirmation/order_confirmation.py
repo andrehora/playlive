@@ -8,7 +8,7 @@ def total(items, coupon):
     return subtotal
 
 
-# System boundaries: the real ones charge cards and send email, so tests mock them
+# System boundaries: they charge cards and send email, so tests mock them
 class Gateway:
     def charge(self, amount):
         raise ConnectionError("No payment gateway in tests")

@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from doorbell import Doorbell
 
 
-# Mock: replaces the phone and checks how it was called
+# Mock, from the framework: replaces the phone and checks its calls
 @pytest.fixture
 def phone():
     return Mock()

@@ -1,6 +1,6 @@
 import { clock, greet } from "./greeting";
 
-// Stub: returns a fixed hour
+// Stub, from the framework: returns a fixed hour
 describe("Greeting", () => {
   it("says good morning", () => {
     spyOn(clock, "hour").and.returnValue(9);

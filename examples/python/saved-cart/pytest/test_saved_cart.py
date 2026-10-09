@@ -3,8 +3,7 @@ from unittest.mock import Mock
 from saved_cart import Cart, MemoryStore
 
 
-# Bad: it checks how the cart talks to its store, not what the cart holds, so
-# keeping the items another way breaks it though the cart works the same
+# Bad: it checks how the cart talks to its store, not what it holds
 def test_adding_saves_the_items():
     store = Mock()
     store.load.return_value = {}

@@ -2,8 +2,7 @@ const { expect } = require("chai");
 const { CoffeeCard } = require("./coffee-card");
 
 describe("Coffee card", () => {
-  // Bad: one test for the method, holding four behaviors. When it
-  // fails, its name doesn't say which one broke
+  // Bad: one test holds every behavior. Its name doesn't say which broke
   it("buy", () => {
     const card = new CoffeeCard();
     expect(card.buy(3)).to.equal(3);

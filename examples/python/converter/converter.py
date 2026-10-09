@@ -1,7 +1,7 @@
 class Converter:
-    # In the app, rates asks a bank for today's rate
-    def __init__(self, rates):
-        self.rates = rates
+    # In the app, bank_service asks a bank for today's rate
+    def __init__(self, bank_service):
+        self.bank_service = bank_service
 
     def to_euros(self, dollars):
-        return dollars * self.rates.rate("EUR")
+        return dollars * self.bank_service.rate("EUR")

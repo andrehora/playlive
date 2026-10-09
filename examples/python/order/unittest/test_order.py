@@ -3,7 +3,7 @@ from order import Order
 
 
 class OrderTest(unittest.TestCase):
-    # Bad: it calls a private method, so renaming _subtotal breaks it
+    # Bad: it calls a private method, so renaming it breaks the test
     def test_subtotal_adds_the_prices(self):
         order = Order([20, 15])
         self.assertEqual(order._subtotal(), 35)

@@ -3,8 +3,7 @@ from leap_year import is_leap
 
 
 class LeapYearTest(unittest.TestCase):
-    # Bad: a loop, and a formula of its own to work out the answer. The formula is
-    # wrong (1900 was not a leap year), but none of the years it tries shows it
+    # Bad: a loop with a formula of its own. It is wrong for 1900, which it never tries
     def test_leap_years(self):
         for year in range(2000, 2030):
             self.assertEqual(is_leap(year), year % 4 == 0)

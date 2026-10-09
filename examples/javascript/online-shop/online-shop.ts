@@ -25,8 +25,7 @@ export class Prices {
 export class Shop {
   constructor(private inventory: Inventory, private prices: Prices) {}
 
-  // A change to try: work out the cost first, then take the items. The
-  // results are the same
+  // A change to try: work out the cost first. The results are the same
   order(item: string, count: number): number {
     this.inventory.take(item, count);
     return this.prices.cost(item, count);

@@ -1,14 +1,13 @@
 import { Gradebook } from "./gradebook";
 
 describe("Gradebook", () => {
-  // Bad: it compares the whole report, so adding a field to it breaks the test,
-  // though the average and the pass it is about did not change
+  // Bad: it compares the whole report, so a new field breaks it
   it("reports on a student", () => {
     const book = new Gradebook({ Ana: [60, 80] });
     expect(book.report("Ana")).toEqual({ student: "Ana", average: 70, passed: true });
   });
 
-  // Good: each test checks only what it is about, so new fields leave it alone
+  // Good: each test checks only what it is about
   it("gives the average in the report", () => {
     const book = new Gradebook({ Ana: [60, 80] });
     const average = book.report("Ana").average;

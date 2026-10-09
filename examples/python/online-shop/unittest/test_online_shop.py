@@ -4,9 +4,7 @@ from online_shop import Inventory, Prices, Shop
 
 
 class OnlineShopTest(unittest.TestCase):
-    # Bad: every collaborator is a mock, so the real Inventory and Prices never
-    # run: break them and this still passes. It also pins down each call, in
-    # order, so a refactor that changes nothing a customer sees breaks it
+    # Bad: all mocks, so the real classes never run, and each call is pinned
     def test_an_order_takes_the_items_and_asks_the_price(self):
         inventory, prices = Mock(), Mock()
         prices.cost.return_value = 12

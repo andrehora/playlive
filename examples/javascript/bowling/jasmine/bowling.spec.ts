@@ -1,8 +1,7 @@
 import { score } from "./bowling";
 
 describe("Bowling", () => {
-  // Bad: one test for the function, holding five behaviors. When it fails, its
-  // name doesn't say which rule broke
+  // Bad: one test holds every rule. Its name doesn't say which broke
   it("scores", () => {
     expect(score(Array(20).fill(0))).toBe(0);
     expect(score(Array(20).fill(1))).toBe(20);
@@ -11,7 +10,7 @@ describe("Bowling", () => {
     expect(score(Array(12).fill(10))).toBe(300);
   });
 
-  // Good: one test per behavior, named for the rule it checks
+  // Good: one test per rule, named for it
   it("scores a gutter game 0", () => {
     const total = score(Array(20).fill(0));
     expect(total).toBe(0);

@@ -1,12 +1,12 @@
-export interface Rates {
+export interface BankService {
   rate(currency: string): number;
 }
 
 export class Converter {
-  // In the app, rates asks a bank for today's rate
-  constructor(private rates: Rates) {}
+  // In the app, bankService asks a bank for today's rate
+  constructor(private bankService: BankService) {}
 
   toEuros(dollars: number): number {
-    return dollars * this.rates.rate("EUR");
+    return dollars * this.bankService.rate("EUR");
   }
 }

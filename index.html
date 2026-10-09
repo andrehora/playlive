@@ -40,7 +40,7 @@
     <div class="picker">
       <button id="siteBtn" type="button" class="site-btn" aria-haspopup="true" aria-expanded="false"
         aria-controls="sitePop" title="Choose an example"><span class="swatch" id="siteSwatch"
-          aria-hidden="true"></span><span id="siteName" class="site-name"></span><span class="tres"
+          aria-hidden="true"></span><span id="siteName" class="site-name"></span><span id="siteGoal" class="site-goal"></span><span class="tres"
           aria-hidden="true"></span><svg class="i caret" viewBox="0 0 24 24">
           <path d="M6 9l6 6 6-6" />
         </svg></button>
@@ -130,7 +130,6 @@
             <label class="field">Repeat
               <select id="repeat">
                 <option value="1">1×</option>
-                <option value="3">3×</option>
                 <option value="5">5×</option>
                 <option value="10">10×</option>
               </select>
@@ -207,7 +206,6 @@
             </svg></button>
           </div>
         </div>
-        <p class="code-teaches" id="codeTeaches"></p>
         <div class="code-ed" id="codeTestsEd">
           <div class="gutter" aria-hidden="true"></div>
           <div class="code">
@@ -223,6 +221,13 @@
           <button id="codeStop" type="button" disabled title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24">
               <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" />
             </svg>Stop</button>
+          <label class="field">Repeat
+            <select id="codeRepeat">
+              <option value="1">1×</option>
+              <option value="5">5×</option>
+              <option value="10">10×</option>
+            </select>
+          </label>
           <span id="codeState" class="code-state" aria-live="polite"></span>
         </div>
       </section>

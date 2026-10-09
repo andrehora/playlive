@@ -3,8 +3,7 @@ from unittest.mock import Mock
 from backup import FileStore, backup
 
 
-# Bad: it mocks CloudSDK, which is not ours, so it copies CloudSDK's request and
-# its deeply nested reply, and breaks whenever CloudSDK changes them
+# Bad: it mocks CloudSDK, which is not ours, so CloudSDK's changes break it
 def test_backup_puts_each_note_in_the_cloud():
     sdk = Mock()
     sdk.put_object.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
@@ -12,7 +11,7 @@ def test_backup_puts_each_note_in_the_cloud():
     sdk.put_object.assert_called_once_with({"Bucket": "my-bucket", "Key": "notes/a.txt", "Body": "hi"})
 
 
-# Good: it mocks FileStore, our own small interface in front of CloudSDK
+# Good: it mocks FileStore, our own wrapper around CloudSDK
 def test_each_note_is_saved():
     store = Mock()
     store.save.return_value = True

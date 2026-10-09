@@ -1,8 +1,7 @@
 import { book } from "./seat-booking";
 
 describe("Seat booking", () => {
-  // Bad: only the happy path. Zero, negative, too many, the last seats and a
-  // full show are never tried
+  // Bad: only the happy path
   it("books seats", () => {
     expect(book(10, 2)).toBe(8);
   });

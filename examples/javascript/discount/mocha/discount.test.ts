@@ -2,8 +2,7 @@ import { expect } from "chai";
 import { discounted } from "./discount";
 
 describe("Discount", () => {
-  // Bad: a loop with an if, so only the prices the if lets through are checked.
-  // 50 and 100 never are, and the boundary at 100 goes untested
+  // Bad: the if skips 50 and 100, so the boundary is never checked
   it("discounts", () => {
     for (const price of [50, 100, 150]) {
       if (price > 100) {

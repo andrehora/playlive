@@ -1,8 +1,7 @@
 const { expect } = require("chai");
 const { currentUser, greeting, login, logout } = require("./session");
 
-// Bad: the second test counts on the login the first one left behind, so it
-// passes only right after it. Run it alone and it fails
+// Bad: the second test needs the first one's login. Run it alone and it fails
 describe("Shared login", () => {
   it("lets Ana log in", () => {
     login("ana", "secret1");
@@ -14,7 +13,7 @@ describe("Shared login", () => {
   });
 });
 
-// Good: each test starts logged out, and logs in whoever it needs
+// Good: each test starts logged out
 describe("Session", () => {
   beforeEach(() => {
     logout();

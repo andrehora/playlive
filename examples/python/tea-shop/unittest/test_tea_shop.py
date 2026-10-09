@@ -4,8 +4,7 @@ from tea_shop import Menu, bill
 
 
 class TeaShopTest(unittest.TestCase):
-    # Bad: the menu is a mock, so the real Menu never runs: break it and this
-    # still passes. It also pins down how bill asks the menu, so a refactor breaks it
+    # Bad: a mock menu, so the real Menu never runs
     def test_bill_asks_the_menu_for_each_price(self):
         menu = Mock()
         menu.price_of.return_value = 3

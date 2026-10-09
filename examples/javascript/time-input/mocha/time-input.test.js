@@ -2,8 +2,7 @@ const { expect } = require("chai");
 const { parseTime } = require("./time-input");
 
 describe("Time input", () => {
-  // Bad: only the happy path. Empty, a missing colon, letters, hours and minutes
-  // out of range, and the first and last minute of the day are never tried
+  // Bad: only the happy path
   it("reads a time", () => {
     expect(parseTime("09:30")).to.equal(570);
   });

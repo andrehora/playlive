@@ -1,15 +1,14 @@
 const { Payments, checkout } = require("./payment");
 
 describe("Payment", () => {
-  // Bad: it mocks PayCo, which is not ours, so it copies PayCo's request and
-  // reply, and breaks whenever PayCo changes them
+  // Bad: it mocks PayCo, which is not ours, so PayCo's changes break it
   it("charges PayCo at checkout", () => {
     const payco = jasmine.createSpyObj("payco", { createCharge: { status: "succeeded" } });
     expect(checkout(20, new Payments(payco))).toBe("Paid");
     expect(payco.createCharge).toHaveBeenCalledOnceWith({ amountCents: 2000, currency: "EUR" });
   });
 
-  // Good: it mocks Payments, our own small interface in front of PayCo
+  // Good: it mocks Payments, our own wrapper around PayCo
   it("says paid when the charge goes through", () => {
     const payments = jasmine.createSpyObj("payments", { charge: true });
     const status = checkout(20, payments);

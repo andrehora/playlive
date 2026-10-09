@@ -1,4 +1,4 @@
-# A real store, cheap enough to use in tests: a list that remembers
+# A real store, cheap enough for tests: a list
 class Subscribers:
     def __init__(self):
         self.emails = []
@@ -16,8 +16,7 @@ class Newsletter:
         self.mailer = mailer
 
     def subscribe(self, email):
-        # A change to try: give Subscribers an add_all(emails), and call
-        # self.store.add_all([email]) here instead
+        # A change to try: call a new self.store.add_all([email]) here instead
         self.store.add(email)
         self.mailer.send(email, "Welcome to the newsletter")
 

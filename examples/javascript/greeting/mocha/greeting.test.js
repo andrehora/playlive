@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const sinon = require("sinon");
 const { clock, greet } = require("./greeting");
 
-// Stub: returns a fixed hour
+// Stub, from the framework: returns a fixed hour
 describe("Greeting", () => {
   afterEach(() => {
     sinon.restore();

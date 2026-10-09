@@ -2,8 +2,7 @@ import pytest
 from seat_booking import book
 
 
-# Bad: only the happy path. Zero, negative, too many, the last seats and a
-# full show are never tried
+# Bad: only the happy path
 def test_books_seats():
     assert book(10, 2) == 8
 

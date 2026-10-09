@@ -1,15 +1,14 @@
 const { Account } = require("./transfer");
 
 describe("Transfer", () => {
-  // Bad: it checks that deposit was called, not that the money arrived, so moving
-  // it another way breaks the test though both balances come out the same
+  // Bad: it checks that deposit was called, not that the money arrived
   it("calls deposit", () => {
     const to = jasmine.createSpyObj("to", ["deposit"]);
     new Account(100).transfer(to, 30);
     expect(to.deposit).toHaveBeenCalledOnceWith(30);
   });
 
-  // Good: it checks the balances, the result anyone would look at
+  // Good: it checks the balances
   it("moves the money in", () => {
     const ana = new Account(100), ben = new Account(0);
     ana.transfer(ben, 30);

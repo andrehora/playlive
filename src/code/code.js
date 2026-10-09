@@ -27,11 +27,6 @@ const resultsEl = $id('codeResults');
 resultsEl.innerHTML = '<p class="code-note" hidden></p><div class="code-list"></div>';
 const noteEl = resultsEl.firstChild, listEl = resultsEl.lastChild;
 const countEl = $id('codeCount');
-// What the example teaches, on a line under the tests' head, while the
-// Coverage check is off
-const teachesEl = $id('codeTeaches'), covCheck = $id('codeCovShow');
-const showTeaches = () => { teachesEl.hidden = covCheck.checked; };
-covCheck.addEventListener('change', showTeaches);
 let tests = [], collectError = null, runTarget = null;
 // The tests the last run covered, in order, for the circles in the panel head;
 // null until a run, and again once the file is edited
@@ -49,6 +44,18 @@ function paintDots(){
     dot.className = DOT[t?.state] || 'todo';
     dot.title = t?.name || id;
   });
+}
+// How each test ended in every repetition of the last run, for its row's bars
+// and the flaky badge; only drawn when that run was repeated
+const tally = new Map();
+function paintTally(sec, id){
+  const h = reps > 1 ? tally.get(id) || [] : [];
+  const box = sec.querySelector('.hist');
+  for (const o of h) box.appendChild(document.createElement('i')).className = o === 'passed' ? 'h-pass' : 'h-fail';
+  const passes = h.filter(o => o === 'passed').length;
+  box.title = h.length ? `Passed ${passes} of ${h.length} runs` : '';
+  // As in the site modes: the badge is for a test that went both ways, not one failing now
+  sec.querySelector('.flaky').hidden = !(passes > 0 && passes < h.length) || sec.dataset.state === 'failed';
 }
 const folded = new Set();           // failures you closed; a failure starts open
 const CHEV = '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
@@ -76,12 +83,13 @@ function row(t){
   const sec = document.createElement('section');
   sec.className = 'test';
   sec.dataset.state = t.state;
-  sec.innerHTML = `<div class="test-head"><button type="button" class="chev">${CHEV}</button><span class="tstate" aria-hidden="true"></span><h3><button type="button" class="code-name"></button></h3><span></span><span class="ms"></span><button type="button" class="run-one">Run</button></div>`;
+  sec.innerHTML = `<div class="test-head"><button type="button" class="chev">${CHEV}</button><span class="tstate" aria-hidden="true"></span><h3><button type="button" class="code-name"></button><span class="flaky" hidden title="Passed and failed without changes">flaky</span></h3><span class="hist"></span><span class="ms"></span><button type="button" class="run-one">Run</button></div>`;
   const name = sec.querySelector('.code-name');
   name.textContent = t.name;
   name.title = 'Go to the test';
   name.addEventListener('click', () => testsEd.jump(t.line));
   if (t.ms != null && t.state !== 'running') sec.querySelector('.ms').textContent = `${t.ms} ms`;
+  paintTally(sec, t.id);
   const one = sec.querySelector('.run-one');
   one.setAttribute('aria-label', `Run only ${t.name}`);
   one.disabled = !!job;
@@ -149,16 +157,18 @@ function onTest(data){
     if (!t) return;
     if (data.type === 'start'){
       t.state = 'running';
-      // The head counts the run the way the site modes' does
-      const n = runIds?.length || 1;
-      summaryEl.textContent = `Running ${Math.min(++started, n)} of ${n}`;
-      setProgress((started - 1) / n, null, progressEl);
+      // The head counts the run the way the site modes' does, every repetition in it
+      const n = runIds?.length || 1, before = (rep - 1) * n;
+      summaryEl.textContent = `Running ${before + Math.min(++started, n)} of ${n * reps}` + (reps > 1 ? ` · repetition ${rep} of ${reps}` : '');
+      setProgress((before + started - 1) / (n * reps), null, progressEl);
     }
     else {
       t.state = data.outcome; t.ms = data.ms;
       t.fail = data.outcome === 'passed' ? null : { message: data.message, frames: data.frames };
       ran.push(data.outcome);
-      setProgress(ran.length / (runIds?.length || 1), null, progressEl);
+      if (data.outcome !== 'skipped'){ if (!tally.has(t.id)) tally.set(t.id, []); tally.get(t.id).push(data.outcome); }
+      const n = runIds?.length || 1;
+      setProgress(((rep - 1) * n + ran.length) / (n * reps), null, progressEl);
     }
   }
   renderResults();
@@ -251,7 +261,8 @@ onWorker(['ready'], () => {
 });
 onWorker(['out'], data => print(data.line));
 onWorker(['collected', 'collect-error', 'start', 'result'], onTest);
-onWorker(['done'], data => finish(data.code));
+// Repeated, a run that ended with every test run goes again: 0 all passed, 1 some failed
+onWorker(['done'], data => ((data.code === 0 || data.code === 1) && !collectError && rep < reps ? again() : finish(data.code)));
 onWorker(['error'], data => fail(data.message));
 // Throw the worker away; a profile whose worker is cheap starts each run on a
 // fresh one, so no test can leave anything behind for the next.
@@ -270,7 +281,7 @@ export function send(msg){
   const s = S();
   boot();
   if (s.ready) s.worker.postMessage(msg);
-  else { s.pending = msg; if (job === 'run') print(`Waiting for ${rt()} to load…`, 'muted'); }
+  else { s.pending = msg; if (job === 'run' && rep === 1) print(`Waiting for ${rt()} to load…`, 'muted'); }
 }
 export function settle(finished){
   setJob(null); syncButtons();
@@ -303,13 +314,14 @@ const marksIn = (fails, file) => new Set(fails.flatMap(f => f.frames || []).filt
 function finish(code, note = 'Stopped'){
   settle(code != null);
   // What the head says is what the site modes' says: a skipped test did not run
-  const secs = ((performance.now() - t0) / 1000).toFixed(1);
+  const secs = ((spent + performance.now() - t0) / 1000).toFixed(1);
   const counted = ran.filter(o => o !== 'skipped'), passed = counted.filter(o => o === 'passed').length;
   // Stopped, the test it stopped in counts as one that ran, as in the site modes
   const said = code == null && note === 'Stopped' ? runSummary({ ran: Math.max(counted.length, started), passed, secs, stopped: true })
     : code === 5 ? { text: 'No tests found', ok: false }
     : collectError ? { text: 'The tests did not load', ok: false }
     : code == null ? { text: note, ok: false }
+    : reps > 1 ? repeated(secs)
     : runSummary({ ran: counted.length, passed, secs });
   summaryEl.textContent = said.text;
   summaryEl.className = said.ok ? 'ok' : 'bad';
@@ -323,15 +335,37 @@ function finish(code, note = 'Stopped'){
   if (!coverage) setCoverage(null, code == null ? 'The run did not finish, so nothing was measured. Run the tests again.' : '');
 }
 
-// The whole file, or one test by its id (what the Run on its row does)
-let ran = [];                       // how each test this run reported ended
-let started = 0, t0 = 0;            // tests begun this run, and when it began
+// The summary counts the runs and names no test, as the site modes' does: which
+// test went both ways is the row's own badge to carry
+function repeated(secs){
+  const all = [...tally.values()].flat(), passed = all.filter(o => o === 'passed').length;
+  return { text: `${passed} of ${all.length} runs passed over ${reps} repetitions (${secs}s)`, ok: passed === all.length };
+}
+
+// The whole file, or one test by its id (what the Run on its row does), as
+// many times as Repeat says
+const repeatEl = $id('codeRepeat');
+let ran = [];                       // how each test this repetition reported ended
+let started = 0, t0 = 0;            // tests begun this repetition, and when it began
+let reps = 1, rep = 1, spent = 0;   // repetitions asked for, the one running, and the time the others took
 export function runCodeTests(target = files().tests){
   if (job || !active) return;
   begin('run');
-  runTarget = target; ran = []; started = 0; t0 = performance.now();
+  runTarget = target; reps = Number(repeatEl.value) || 1; rep = 1; spent = 0; tally.clear();
   clearConsole(); consoleEl.innerHTML = '';
   summaryEl.textContent = 'Running…'; summaryEl.className = ''; setProgress(0, null, progressEl);
+  repetition();
+}
+// The next repetition, on a fresh worker when the profile starts each run on one
+function again(){
+  spent += performance.now() - t0; rep++;
+  if (P().fresh){ drop(); boot(); }
+  print(`Repetition ${rep} of ${reps}`, 'muted');
+  repetition();
+}
+function repetition(){
+  const target = runTarget;
+  ran = []; started = 0; t0 = performance.now();
   testsEd.mark(new Set()); codeEd.mark(new Set());
   readTests();
   if (target === files().tests){ collectError = null; for (const t of tests) Object.assign(t, { state: 'idle', ms: null, fail: null }); }
@@ -409,9 +443,7 @@ function show(){
     $id('codeTitle').textContent = P().codeTitle(s.lang);
     $id('codeFile').textContent = f.code;
     $id('codeTestsFile').textContent = f.tests;
-    teachesEl.textContent = P().examples[id].teaches;
-    showTeaches();
-    tests = []; collectError = null; folded.clear(); runIds = null;
+    tests = []; collectError = null; folded.clear(); runIds = null; tally.clear();
     clearConsole(); readTests(); setCoverage(null);
     resetMutation();
     resetSmells();

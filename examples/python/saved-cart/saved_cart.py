@@ -1,4 +1,4 @@
-# A real store, cheap enough to use in tests: it keeps a copy, as a database would
+# A real store, cheap enough for tests: it keeps a copy, like a database
 class MemoryStore:
     def __init__(self):
         self.saved = {}
@@ -16,8 +16,7 @@ class Cart:
         self.store = store
         self.items = store.load()
 
-    # A change to try: save only the items' names, and a count of each, as a
-    # list of [name, count] pairs. Load them back the same way
+    # A change to try: save the items as a list of [name, count] pairs
     def add(self, item, count):
         if count < 1:
             raise ValueError("Add at least 1")

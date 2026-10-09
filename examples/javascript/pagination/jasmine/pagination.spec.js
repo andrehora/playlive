@@ -1,9 +1,7 @@
 const { page, pageCount } = require("./pagination");
 
 describe("Pagination", () => {
-  // Bad: a loop, and the code's own sums to work out what each page should hold.
-  // It even asks pageCount how many pages to try, so if pageCount is wrong,
-  // the last page is never tried and the test still passes
+  // Bad: a loop that asks the code for its own answers, so its bugs slip through
   it("pages", () => {
     const items = ["a", "b", "c", "d", "e"];
     for (let number = 1; number <= pageCount(items.length, 2); number++) {

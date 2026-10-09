@@ -329,8 +329,15 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .cat-badge:empty{display:none}
 .site-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .picker{position:relative}
-.site-btn{font-weight:600;gap:8px;justify-content:flex-start;min-width:230px}
+/* One size whatever is chosen: a long name or goal is cut short instead */
+.site-btn{font-weight:600;gap:8px;justify-content:flex-start;min-width:230px;overflow:hidden;container:site/inline-size}
+.site-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .site-btn .caret{margin-left:auto;color:var(--muted)}
+/* What the example teaches; it gives way before the name when space is short */
+.site-goal{flex-shrink:100;font-weight:400;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.site-goal:empty{display:none}
+/* Too narrow to say much of it, it is not said at all (the list still says it) */
+@container site (max-width:300px){.site-goal{display:none}}
 /* The app bar and the picker's category heads both show the category's icon,
    tinted with its accent, so the colour still groups and the icon names. */
 .swatch{display:inline-flex;flex:none;color:var(--cat,var(--muted))}
@@ -422,8 +429,6 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 :root:not([data-mode^="python"], [data-mode^="javascript"]) .code-panel{display:none}
 :root:is([data-mode^="python"], [data-mode^="javascript"]) :is(.left > .panel:not(.code-panel), .left > .resizer:not(.code-panel), .browser){display:none}
 .code-file{font:500 12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
-.code-teaches{margin:0;padding:5px 14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.code-teaches:empty{display:none}
 .code-tests-panel{flex:0 0 auto;min-height:0}
 /* Its handle sets the code's height, as the editor's does in the other modes;
    Results and Console take whatever is left */
@@ -617,7 +622,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .left[data-code="collapsed"] .code-tests-panel{flex:1 1 auto}
   .left[data-code="collapsed"] .code-tests-panel .code-ed{flex:1 1 auto;height:auto}
   .left[data-code="collapsed"] #codeResizer{visibility:hidden}
-  .site-btn{padding:7px 10px}
+  .site-btn{padding:7px 10px;width:clamp(230px, calc(100vw - 770px), 380px)}
+  .site-name{flex-shrink:0}
 }
 /* ---------- Narrow screens: one column, site right after the editor ---------- */
 @media (max-width:900px){
@@ -727,8 +733,6 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      arrows and count give up what they can spare. */
   .appbar .stepper .icon-btn{width:36px}
   .site-count{min-width:0;font-size:12.5px}
-  .appbar .site-btn{overflow:hidden}
-  .site-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* The site panel's head fills its rows the same way. Its controls stop being a
      row of their own (`display:contents`) so the reload can end the first row
      beside the page and its category, leaving the whole second to Site/HTML. */

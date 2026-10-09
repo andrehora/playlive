@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from sign_up import SignUp
 
 
-# Good: a fake, users kept in a list. As cheap as a mock, and it behaves
+# Fake: users kept in a list
 class FakeUsers:
     def __init__(self):
         self.emails = []
@@ -16,8 +16,7 @@ class FakeUsers:
 
 
 class SignUpTest(unittest.TestCase):
-    # Bad: a mock told what exists returns. It only knows what it was told, so it
-    # cannot notice save and exists disagreeing, and each test must tell it again
+    # Bad: a mock only knows what it was told
     def test_registers_a_new_email(self):
         users = Mock()
         users.exists.return_value = False

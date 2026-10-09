@@ -422,9 +422,9 @@ test.describe('Running', () => {
   test('Repeat runs the tests several times and reports every run', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'fast');
-    await page.selectOption('#repeat', '3');
+    await page.selectOption('#repeat', '5');
     const res = await runAll(page);
-    expect(res.summary).toMatch(/runs passed over 3 repetitions/);
+    expect(res.summary).toMatch(/runs passed over 5 repetitions/);
     expect(res.state, describeFailures(res)).toBe('ok');
   });
 });

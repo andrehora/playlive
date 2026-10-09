@@ -1,8 +1,7 @@
 from password_policy import PasswordPolicy
 
 
-# Bad: it calls a private method, so inlining _has_digit breaks it, though
-# problems() and is_valid() still work
+# Bad: it calls a private method, so inlining it breaks the test
 def test_has_digit_finds_a_digit():
     policy = PasswordPolicy()
     assert policy._has_digit("abc1") is True

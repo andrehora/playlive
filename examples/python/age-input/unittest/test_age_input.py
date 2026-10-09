@@ -3,8 +3,7 @@ from age_input import parse_age
 
 
 class AgeInputTest(unittest.TestCase):
-    # Bad: only the happy path. Empty, words, negative and too high are never
-    # tried, nor the boundary at 150
+    # Bad: only the happy path
     def test_reads_an_age(self):
         self.assertEqual(parse_age("42"), 42)
 

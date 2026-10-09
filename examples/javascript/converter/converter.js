@@ -1,11 +1,11 @@
 class Converter {
-  // In the app, rates asks a bank for today's rate
-  constructor(rates) {
-    this.rates = rates;
+  // In the app, bankService asks a bank for today's rate
+  constructor(bankService) {
+    this.bankService = bankService;
   }
 
   toEuros(dollars) {
-    return dollars * this.rates.rate("EUR");
+    return dollars * this.bankService.rate("EUR");
   }
 }
 

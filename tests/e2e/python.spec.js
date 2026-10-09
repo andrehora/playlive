@@ -2,7 +2,7 @@
 // Pyodide. These download Python from jsDelivr, so like js-yaml they need
 // network access.
 import { test, expect } from '@playwright/test';
-import { CODE_LOAD as PYTHON, allPassed, codeReady, codeRun, openApp, setMode } from './app.mjs';
+import { CODE_LOAD as PYTHON, allPassed, codeReady, codeRun, openApp, setMode, steadyCodeIds } from './app.mjs';
 
 const overflow = page => page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight);
 // Language first, then framework: "Python 3.14.2 · unittest"
@@ -34,13 +34,8 @@ test.describe('Python mode', () => {
     await expect(page.locator('#codeCount')).toHaveText('12 tests');
     await expect(page.locator('#codeResults .code-name').first()).toHaveText('test_calculator');
     expect(new URL(page.url()).hash).toBe('#python');
-    // What the example teaches sits under the tests' head, until Coverage is on
-    const teaches = page.locator('#codeTeaches');
-    await expect(teaches).toHaveText('A first example');
-    await page.locator('#codeCovShow').check();
-    await expect(teaches).toBeHidden();
-    await page.locator('#codeCovShow').uncheck();
-    await expect(teaches).toBeVisible();
+    // What the example teaches sits beside its name in the picker's button
+    await expect(page.locator('#siteGoal')).toHaveText('A first example');
 
     // Another example, and the link follows
     await choose(page, 'Stack');
@@ -190,6 +185,35 @@ test.describe('Python mode', () => {
     await tests.fill('def test_quick():\n    assert True\n');
     await page.click('#codeRun');
     await expect(summary).toHaveText(/^The test passed in [\d.]+s$/, { timeout: PYTHON });
+    expect(errors).toEqual([]);
+  });
+
+  test('Repeat runs the tests several times, and a test that went both ways says so', async ({ page }) => {
+    test.setTimeout(2 * PYTHON);
+    const { errors } = await openApp(page, { mode: 'python' });
+    await ready(page);
+    // Python's files outlive a run, so this test passes and fails by turns
+    await page.locator('#codeTestsEd textarea').fill([
+      'import os', '', 'def test_steady():', '    assert True', '',
+      'def test_flips():', "    there = os.path.exists('/tmp/flip')",
+      "    if there: os.remove('/tmp/flip')", "    else: open('/tmp/flip', 'w').close()", '    assert not there', ''
+    ].join('\n'));
+    await page.selectOption('#codeRepeat', '5');
+    expect(await codeRun(page)).toMatch(/^8 of 10 runs passed over 5 repetitions \([\d.]+s\)$/);
+    await expect(page.locator('#codeSummary')).toHaveClass('bad');
+    const rows = page.locator('#codeResults .test');
+    await expect(rows.nth(0).locator('.hist i.h-pass')).toHaveCount(5);
+    await expect(rows.nth(0).locator('.flaky')).toBeHidden();
+    await expect(rows.nth(1).locator('.hist i')).toHaveCount(5);
+    await expect(rows.nth(1).locator('.hist i.h-fail')).toHaveCount(2);
+    await expect(rows.nth(1).locator('.flaky')).toBeVisible();
+    await page.click('.code-seg [data-codetab="console"]');
+    await expect(page.locator('#codeConsole')).toContainText('Repetition 5 of 5');
+
+    // Once, the head says it the usual way and the bars go
+    await page.selectOption('#codeRepeat', '1');
+    expect(await codeRun(page)).toMatch(/^1 of 2 tests failed/);
+    await expect(page.locator('#codeResults .hist i')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 
@@ -433,7 +457,7 @@ test.describe('Python mode', () => {
     const runBtn = page.locator('.mut-run'), problems = [];
     for (const fw of ['unittest', 'pytest']){
       await page.evaluate(fw => window.playlive.code.framework(fw), fw);
-      for (const id of ids){
+      for (const id of await steadyCodeIds(ids)){
         await page.evaluate(id => window.playlive.code.select(id), id);
         await expect(page.locator('#codeFile')).toHaveText(`${id.replace(/-/g, '_')}.py`);
         await runBtn.click();
@@ -455,7 +479,7 @@ test.describe('Python mode', () => {
     const failures = [];
     for (const fw of ['unittest', 'pytest']){
       await page.evaluate(fw => window.playlive.code.framework(fw), fw);
-      for (const id of ids){
+      for (const id of await steadyCodeIds(ids)){
         await page.evaluate(id => window.playlive.code.select(id), id);
         await expect(page.locator('#codeFile')).toHaveText(`${id.replace(/-/g, '_')}.py`);
         const n = Number((await page.locator('#codeCount').textContent()).split(' ')[0]);
@@ -529,7 +553,7 @@ class MyTest(unittest.TestCase):
     const tests = page.locator('#codeTestsEd textarea'), problems = [];
     for (const fw of ['unittest', 'pytest']){
       await page.evaluate(fw => window.playlive.code.framework(fw), fw);
-      for (const id of ids){
+      for (const id of await steadyCodeIds(ids)){
         await page.evaluate(id => window.playlive.code.select(id), id);
         const file = `test_${id.replace(/-/g, '_')}.py`;
         await expect(page.locator('#codeTestsFile')).toHaveText(file);

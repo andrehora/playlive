@@ -3,8 +3,7 @@ from unittest.mock import Mock
 from todo_service import TodoService
 
 
-# Good: a fake repository, the to-dos kept in a dict. A few lines, and it
-# behaves like the real one
+# Fake: the to-dos kept in a dict
 class InMemoryTodos:
     def __init__(self):
         self.todos = {}
@@ -20,8 +19,7 @@ class InMemoryTodos:
 
 
 class TodoServiceTest(unittest.TestCase):
-    # Bad: a mock told what to answer at every step, even what the list looks like
-    # after completing. The test checks the mock's script more than the service
+    # Bad: a mock scripted at every step. It tests the script, not the service
     def test_completing_a_todo_takes_it_off_the_list(self):
         repo = Mock()
         repo.all.return_value = []

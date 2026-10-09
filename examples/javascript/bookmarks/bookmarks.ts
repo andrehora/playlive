@@ -17,4 +17,8 @@ export class Bookmarks {
   all(): string[] {
     return this.store.all();
   }
+
+  total(): number {
+    return this.store.all().length;
+  }
 }

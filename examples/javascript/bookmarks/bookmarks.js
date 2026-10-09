@@ -13,6 +13,10 @@ class Bookmarks {
   all() {
     return this.store.all();
   }
+
+  total() {
+    return this.store.all().length;
+  }
 }
 
 module.exports = { Bookmarks };

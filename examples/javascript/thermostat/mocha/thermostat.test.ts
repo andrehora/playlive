@@ -3,8 +3,7 @@ import * as sinon from "sinon";
 import { Sensor, Thermostat, heatingOnNow } from "./thermostat";
 
 describe("Thermostat", () => {
-  // Bad: heatingOnNow makes its own Sensor, so the test has to patch the class
-  // for everyone, and knows how heatingOnNow is built inside
+  // Bad: heatingOnNow makes its own Sensor, so the test must patch Sensor
   it("comes on when cold", () => {
     const read = sinon.stub(Sensor.prototype, "read").returns(18);
     const on = heatingOnNow(20);
@@ -12,7 +11,7 @@ describe("Thermostat", () => {
     expect(on).to.equal(true);
   });
 
-  // Good: the Thermostat is handed a sensor of the test's own
+  // Good: the test hands the Thermostat its own sensor
   it("comes on below the target", () => {
     const sensor = { read: () => 18 };
     const thermostat = new Thermostat(sensor);

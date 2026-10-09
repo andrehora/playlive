@@ -2,8 +2,7 @@ import pytest
 from parking_meter import ParkingMeter
 
 
-# Bad: one test for the method, holding four behaviors. When it fails, its
-# name doesn't say which one broke
+# Bad: one test holds every behavior. Its name doesn't say which broke
 def test_pay():
     meter = ParkingMeter()
     meter.pay(1)

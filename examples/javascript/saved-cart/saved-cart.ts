@@ -5,7 +5,7 @@ export interface Store {
   save(items: Items): void;
 }
 
-// A real store, cheap enough to use in tests: it keeps a copy, as a database would
+// A real store, cheap enough for tests: it keeps a copy, like a database
 export class MemoryStore implements Store {
   private saved: Items = {};
 
@@ -26,8 +26,7 @@ export class Cart {
     this.items = store.load();
   }
 
-  // A change to try: save only the items' names, and a count of each, as a
-  // list of [name, count] pairs. Load them back the same way
+  // A change to try: save the items as a list of [name, count] pairs
   add(item: string, count: number): void {
     if (count < 1) {
       throw new Error("Add at least 1");

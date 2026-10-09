@@ -2,8 +2,7 @@ import unittest
 from ticket_counter import reset, take_ticket
 
 
-# Bad: these two count on the counter as the tests before them left it, so
-# the second passes only right after the first. Run it alone and it fails
+# Bad: these two share the counter. Run the second alone and it fails
 class SharedCounterTest(unittest.TestCase):
     def test_the_first_ticket_is_1(self):
         self.assertEqual(take_ticket(), 1)
@@ -12,7 +11,7 @@ class SharedCounterTest(unittest.TestCase):
         self.assertEqual(take_ticket(), 2)
 
 
-# Good: each test puts the counter back first, so what ran before it does not matter
+# Good: each test resets the counter first
 class TicketCounterTest(unittest.TestCase):
     def setUp(self):
         reset()

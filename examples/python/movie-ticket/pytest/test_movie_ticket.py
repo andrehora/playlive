@@ -1,8 +1,7 @@
 from movie_ticket import ticket_price
 
 
-# Bad: a table and a helper, so test_prices says nothing by itself. To know what
-# failed you look up CASES, then check, then count to the right row
+# Bad: a table and a helper, so the test says nothing by itself
 CASES = [(8, "Friday", 5), (30, "Tuesday", 6), (30, "Friday", 10)]
 
 

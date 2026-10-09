@@ -3,13 +3,12 @@ from gradebook import Gradebook
 
 
 class GradebookTest(unittest.TestCase):
-    # Bad: it compares the whole report, so adding a field to it breaks the test,
-    # though the average and the pass it is about did not change
+    # Bad: it compares the whole report, so a new field breaks it
     def test_reports_on_a_student(self):
         book = Gradebook({"Ana": [60, 80]})
         self.assertEqual(book.report("Ana"), {"student": "Ana", "average": 70, "passed": True})
 
-    # Good: each test checks only what it is about, so new fields leave it alone
+    # Good: each test checks only what it is about
     def test_the_report_gives_the_average(self):
         book = Gradebook({"Ana": [60, 80]})
         average = book.report("Ana")["average"]

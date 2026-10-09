@@ -3,12 +3,11 @@ from shipping_fee import shipping_fee
 
 
 class ShippingFeeTest(unittest.TestCase):
-    # Bad: it runs every line, so line coverage says 100%, yet it barely checks
-    # anything and takes only one way through each if (Branch: 2 of 4 branches)
+    # Bad: every line runs, but each if goes one way and the fee is not checked
     def test_shipping_fee(self):
         self.assertIsNotNone(shipping_fee(60, True))
 
-    # Good: each way through each if, with the fee it should give
+    # Good: each way through each if, with its fee
     def test_small_orders_pay_5(self):
         fee = shipping_fee(40, False)
         self.assertEqual(fee, 5)

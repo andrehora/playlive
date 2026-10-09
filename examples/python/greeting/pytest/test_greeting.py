@@ -1,7 +1,7 @@
 import greeting
 
 
-# Stub: returns a fixed hour
+# Stub, from the framework: returns a fixed hour
 def test_morning(monkeypatch):
     monkeypatch.setattr(greeting, "current_hour", lambda: 9)
     assert greeting.greet("Ana") == "Good morning, Ana"

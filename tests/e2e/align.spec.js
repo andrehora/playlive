@@ -1,10 +1,11 @@
 // Python and JS/TS teach the same examples, so each example's tests should
 // say the same things in both: the same branches taken, the same mutations
 // caught, escaped and never run, and the same smells. Lines are not compared,
-// since the two languages spend them differently. These download Python and
-// the frameworks, so like the other code-mode specs they need network access.
+// since the two languages spend them differently, and a flaky example is left
+// out. These download Python and the frameworks, so like the other code-mode
+// specs they need network access.
 import { test, expect } from '@playwright/test';
-import { CODE_LOAD, codeReady, codeRun, openApp } from './app.mjs';
+import { CODE_LOAD, codeReady, codeRun, openApp, steadyCodeIds } from './app.mjs';
 
 // What one example's tests say in the code mode on screen
 async function measure(page, id){
@@ -33,13 +34,13 @@ test('every example says the same in Python and in JS/TS', async ({ page }) => {
   await page.locator('#codeCovShow').check();
   const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
   const python = {};
-  for (const id of ids) python[id] = await measure(page, id);
+  for (const id of await steadyCodeIds(ids)) python[id] = await measure(page, id);
 
   await page.click('.area-seg [data-area="javascript"]');
   await expect(page.locator('#codeFile')).toHaveText(/\.js$/);
   await page.locator('#codeCovShow').check();
   const differ = [];
-  for (const id of ids){
+  for (const id of await steadyCodeIds(ids)){
     const js = await measure(page, id);
     if (JSON.stringify(js) !== JSON.stringify(python[id])) differ.push(`${id}: Python ${JSON.stringify(python[id])}, JS ${JSON.stringify(js)}`);
   }

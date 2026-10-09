@@ -2,8 +2,7 @@ from unittest.mock import Mock
 from newsletter import Newsletter, Subscribers
 
 
-# Bad: it checks that add was called, not that Ana is subscribed, so a new way
-# of storing her breaks it though nothing anyone sees has changed
+# Bad: it checks that add was called, not that Ana is subscribed
 def test_subscribing_calls_add():
     store = Mock()
     Newsletter(store, Mock()).subscribe("ana@example.test")
@@ -17,7 +16,7 @@ def test_a_subscriber_is_counted():
     assert newsletter.count() == 1
 
 
-# Good too: sending the welcome email is the behavior, so checking the call is right
+# Good too: the email is the behavior, so checking the call is right
 def test_a_subscriber_is_sent_a_welcome():
     mailer = Mock()
     Newsletter(Subscribers(), mailer).subscribe("ana@example.test")

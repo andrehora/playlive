@@ -1,7 +1,7 @@
 from order import Order
 
 
-# Bad: it calls a private method, so renaming _subtotal breaks it
+# Bad: it calls a private method, so renaming it breaks the test
 def test_subtotal_adds_the_prices():
     order = Order([20, 15])
     assert order._subtotal() == 35

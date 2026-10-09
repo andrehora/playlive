@@ -1,6 +1,6 @@
 import { state } from "./water";
 
-// No test checks "steam": check Coverage to see the line that never runs
+// No test checks "steam": Coverage shows the line that never runs
 describe("Water", () => {
   it("freezes at 0", () => {
     expect(state(0)).toBe("ice");

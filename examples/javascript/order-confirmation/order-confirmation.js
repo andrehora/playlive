@@ -10,7 +10,7 @@ const pricing = {
   },
 };
 
-// System boundaries: the real ones charge cards and send email, so tests mock them
+// System boundaries: they charge cards and send email, so tests mock them
 class Gateway {
   charge(amount) {
     throw new Error(`No payment gateway in tests (${amount})`);

@@ -1,8 +1,7 @@
 const { Tax, totalWithTax } = require("./tax");
 
 describe("Tax", () => {
-  // Bad: a mock Tax, told what to answer, and a check of how it was called. Tax
-  // itself never runs, and taxing each price instead breaks it, with the same totals
+  // Bad: a mock Tax, so Tax never runs, and the test pins how it is called
   it("asks the tax once for the total", () => {
     const tax = jasmine.createSpyObj("tax", { on: 6 });
     expect(totalWithTax([10, 20], tax)).toBe(36);

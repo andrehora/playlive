@@ -8,8 +8,7 @@ export function average(scores: number[]): number {
   return total / scores.length;
 }
 
-// Hard to test: it prints the result, so a test has to catch what is printed.
-// Keeping it this thin leaves almost nothing in it to test
+// Hard to test: it prints. Kept thin, so there is little to test
 export function printAverage(scores: number[]): void {
   // A change to try: console.log("Mean:", average(scores));
   console.log("Average:", average(scores));

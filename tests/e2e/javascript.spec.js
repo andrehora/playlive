@@ -2,7 +2,7 @@
 // modules, run in the browser. The frameworks and the TypeScript compiler come
 // from cdnjs, so like js-yaml these need network access.
 import { test, expect } from '@playwright/test';
-import { CODE_LOAD as LOAD, allPassed, codeReady, codeRun as run, openApp, setMode } from './app.mjs';
+import { CODE_LOAD as LOAD, allPassed, codeReady, codeRun as run, openApp, setMode, steadyCodeIds } from './app.mjs';
 
 const overflow = page => page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight);
 // Language first, then framework: "JavaScript (Chrome 141) · Jasmine 7.0.2"
@@ -98,6 +98,18 @@ test.describe('JS/TS mode', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Repeat runs the tests several times, each on a fresh runner', async ({ page }) => {
+    test.setTimeout(2 * LOAD);
+    const { errors } = await openApp(page, { mode: 'javascript' });
+    await ready(page);
+    await page.selectOption('#codeRepeat', '5');
+    expect(await run(page)).toMatch(/^60 of 60 runs passed over 5 repetitions \([\d.]+s\)$/);
+    await expect(page.locator('#codeSummary')).toHaveClass('ok');
+    await expect(page.locator('#codeResults .hist i.h-pass')).toHaveCount(60);
+    await expect(page.locator('#codeResults .flaky:visible')).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
   test('every example passes as it ships, in both frameworks and both languages', async ({ page }) => {
     test.setTimeout(4 * LOAD);
     const { errors } = await openApp(page, { mode: 'javascript' });
@@ -107,7 +119,7 @@ test.describe('JS/TS mode', () => {
     for (const fw of ['jasmine', 'mocha']) for (const lang of ['js', 'ts']){
       await page.evaluate(([fw, lang]) => { window.playlive.code.framework(fw); window.playlive.code.lang(lang); }, [fw, lang]);
       await ready(page, lang === 'ts' ? /^TypeScript \d/ : /^JavaScript /);
-      for (const id of ids){
+      for (const id of await steadyCodeIds(ids)){
         await page.evaluate(id => window.playlive.code.select(id), id);
         await expect(page.locator('#codeFile')).toHaveText(`${id}.${lang}`);
         const said = await run(page);
@@ -175,7 +187,7 @@ test.describe('JS/TS mode', () => {
     const runBtn = page.locator('.mut-run'), problems = [];
     for (const lang of ['js', 'ts']) for (const fw of ['jasmine', 'mocha']){
       await page.evaluate(([fw, lang]) => { window.playlive.code.framework(fw); window.playlive.code.lang(lang); }, [fw, lang]);
-      for (const id of ids){
+      for (const id of await steadyCodeIds(ids)){
         await page.evaluate(id => window.playlive.code.select(id), id);
         await expect(page.locator('#codeFile')).toHaveText(`${id}.${lang}`);
         await expect(page.locator('.mut-score')).toHaveText(/ mutations$/, { timeout: LOAD });
@@ -271,7 +283,7 @@ describe("Mine", () => {
     const tests = page.locator('#codeTestsEd textarea'), problems = [];
     for (const lang of ['js', 'ts']) for (const fw of ['jasmine', 'mocha']){
       await page.evaluate(([fw, lang]) => { window.playlive.code.framework(fw); window.playlive.code.lang(lang); }, [fw, lang]);
-      for (const id of ids){
+      for (const id of await steadyCodeIds(ids)){
         await page.evaluate(id => window.playlive.code.select(id), id);
         const file = `${id}.${fw === 'mocha' ? 'test' : 'spec'}.${lang}`;
         await expect(page.locator('#codeTestsFile')).toHaveText(file);

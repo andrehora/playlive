@@ -3,8 +3,7 @@ const sinon = require("sinon");
 const { Menu, bill } = require("./tea-shop");
 
 describe("Tea shop", () => {
-  // Bad: the menu is a mock, so the real Menu never runs: break it and this
-  // still passes. It also pins down how bill asks the menu, so a refactor breaks it
+  // Bad: a mock menu, so the real Menu never runs
   it("asks the menu for each price", () => {
     const menu = { priceOf: sinon.stub().returns(3) };
     expect(bill(["tea", "cake"], menu)).to.equal(6);

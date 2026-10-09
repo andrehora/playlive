@@ -3,15 +3,14 @@ import * as sinon from "sinon";
 import { Account } from "./transfer";
 
 describe("Transfer", () => {
-  // Bad: it checks that deposit was called, not that the money arrived, so moving
-  // it another way breaks the test though both balances come out the same
+  // Bad: it checks that deposit was called, not that the money arrived
   it("calls deposit", () => {
     const to = { deposit: sinon.stub() };
     new Account(100).transfer(to, 30);
     expect(to.deposit.calledOnceWith(30)).to.equal(true);
   });
 
-  // Good: it checks the balances, the result anyone would look at
+  // Good: it checks the balances
   it("moves the money in", () => {
     const ana = new Account(100), ben = new Account(0);
     ana.transfer(ben, 30);

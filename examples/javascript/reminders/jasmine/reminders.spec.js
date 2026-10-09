@@ -1,15 +1,14 @@
 const { rules, remind } = require("./reminders");
 
 describe("Reminders", () => {
-  // Bad: it mocks isOverdue, our own rule, so the rule is never tested. This
-  // invoice is due on day 10 and today is day 5, yet a reminder goes out
+  // Bad: it mocks isOverdue, our own rule, so the rule is never tested
   it("sends a reminder", () => {
     spyOn(rules, "isOverdue").and.returnValue(true);
     const mailer = jasmine.createSpyObj("mailer", ["send"]);
     expect(remind("ana@example.test", 10, 5, mailer)).toBe(true);
   });
 
-  // Good: only the mailer, the boundary, is mocked; the rule runs for real
+  // Good: only the mailer, the boundary, is mocked
   it("reminds about an overdue invoice", () => {
     const mailer = jasmine.createSpyObj("mailer", ["send"]);
     const sent = remind("ana@example.test", 10, 11, mailer);

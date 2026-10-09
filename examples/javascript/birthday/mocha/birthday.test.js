@@ -3,13 +3,12 @@ const sinon = require("sinon");
 const { birthdayMessages, sendGreetings } = require("./birthday");
 
 describe("Birthday", () => {
-  // The real clock comes back after each test, even one that fails
+  // Put the real clock back after each test
   afterEach(() => {
     sinon.restore();
   });
 
-  // Bad: sendGreetings reads the real date, so the test has to fake the clock,
-  // and knows how sendGreetings reads it
+  // Bad: sendGreetings reads the real date, so the test must fake the clock
   it("greets on the day", () => {
     sinon.useFakeTimers(new Date("2026-10-09T08:00:00Z"));
     const mailer = { send: sinon.stub() };
@@ -17,7 +16,7 @@ describe("Birthday", () => {
     expect(mailer.send.calledOnceWith("Happy birthday, Ana!")).to.equal(true);
   });
 
-  // Good: birthdayMessages is handed the day, so the tests just compare
+  // Good: birthdayMessages is handed the day
   it("greets someone born today", () => {
     const employees = [["Ana", "1990-10-09"], ["Ben", "1985-03-02"]];
     const messages = birthdayMessages(employees, "2026-10-09");

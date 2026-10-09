@@ -1,25 +1,29 @@
 const { expect } = require("chai");
 const { Converter } = require("./converter");
 
-// Stub: returns a fixed rate
-class StubRates {
-  constructor(eur) {
-    this.eur = eur;
-  }
-
+// Stub, by hand: returns a fixed rate
+class StubBankService {
   rate() {
-    return this.eur;
+    return 0.5;
   }
 }
 
 describe("Converter", () => {
   it("converts dollars to euros", () => {
-    const converter = new Converter(new StubRates(0.5));
-    expect(converter.toEuros(10)).to.equal(5);
+    const dollars = 10;
+    const converter = new Converter(new StubBankService());
+
+    const euros = converter.toEuros(dollars);
+
+    expect(euros).to.equal(5);
   });
 
-  it("follows the rate", () => {
-    const converter = new Converter(new StubRates(2));
-    expect(converter.toEuros(10)).to.equal(20);
+  it("converts any amount", () => {
+    const dollars = 3;
+    const converter = new Converter(new StubBankService());
+
+    const euros = converter.toEuros(dollars);
+
+    expect(euros).to.equal(1.5);
   });
 });

@@ -1,9 +1,7 @@
 import { Inventory, Prices, Shop } from "./online-shop";
 
 describe("Online shop", () => {
-  // Bad: every collaborator is a mock, so the real Inventory and Prices never
-  // run: break them and this still passes. It also pins down each call, in
-  // order, so a refactor that changes nothing a customer sees breaks it
+  // Bad: all mocks, so the real classes never run, and each call is pinned
   it("takes the items and asks the price", () => {
     const inventory = jasmine.createSpyObj("inventory", ["take"]);
     const prices = jasmine.createSpyObj("prices", { cost: 12 });

@@ -1,15 +1,14 @@
 import { rules, sign } from "./shop-hours";
 
 describe("Shop hours", () => {
-  // Bad: it mocks isOpen, our own rule, so the rule is never tested. At 22:00
-  // the shop is closed, yet the sign says come in
+  // Bad: it mocks isOpen, our own rule, so the rule is never tested
   it("says come in", () => {
     spyOn(rules, "isOpen").and.returnValue(true);
     const clock = jasmine.createSpyObj("clock", { hour: 22 });
     expect(sign(clock)).toBe("Come in");
   });
 
-  // Good: only the clock, the boundary, is replaced; the rule runs for real
+  // Good: only the clock, the boundary, is replaced
   it("is open from 9", () => {
     const clock = jasmine.createSpyObj("clock", { hour: 9 });
     const text = sign(clock);

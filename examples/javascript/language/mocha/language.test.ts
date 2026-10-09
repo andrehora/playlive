@@ -2,8 +2,7 @@ import { expect } from "chai";
 import { settings, greet } from "./language";
 
 describe("Language", () => {
-  // Teardown: afterEach runs after every test, even one that fails, and puts
-  // the setting back. Without it, the next test greets in Portuguese
+  // Teardown: afterEach puts the setting back after every test, even a failing one
   afterEach(() => {
     settings.language = "en";
   });

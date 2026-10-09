@@ -4,7 +4,7 @@ import greeting
 
 
 class GreetingTest(unittest.TestCase):
-    # Stub: returns a fixed hour
+    # Stub, from the framework: returns a fixed hour
     def test_morning(self):
         with patch.object(greeting, "current_hour", return_value=9):
             self.assertEqual(greeting.greet("Ana"), "Good morning, Ana")

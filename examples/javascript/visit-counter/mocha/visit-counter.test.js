@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const sinon = require("sinon");
 const { VisitCounter } = require("./visit-counter");
 
-// Good: a fake, counts kept in an object. As cheap as a mock, and it behaves
+// Fake: counts kept in an object
 class FakeStore {
   counts = {};
 
@@ -16,8 +16,7 @@ class FakeStore {
 }
 
 describe("Visit counter", () => {
-  // Bad: a mock told what get returns. To show two visits adding up it would
-  // have to be told each answer in turn
+  // Bad: a mock told what get returns. It cannot show visits adding up
   it("adds one for a visit", () => {
     const store = { get: sinon.stub().returns(4), set: sinon.stub() };
     expect(new VisitCounter(store).visit("home")).to.equal(5);

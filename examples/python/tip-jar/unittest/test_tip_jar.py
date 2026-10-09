@@ -3,8 +3,7 @@ from tip_jar import TipJar
 
 
 class TipJarTest(unittest.TestCase):
-    # Bad: it reads the private list, so keeping the tips another way breaks it,
-    # though total() still works
+    # Bad: it reads the private list, so storing tips another way breaks it
     def test_tips_are_kept_in_a_list(self):
         jar = TipJar()
         jar.add(2)

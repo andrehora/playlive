@@ -1,7 +1,6 @@
 import { Concert } from "./concert";
 
-// Bad: a helper makes the concert and another checks two things at once, so
-// "buys" reads as numbers: what are 2, 40 and 8, and why is the second 90?
+// Bad: helpers hide the concert, so the test reads as bare numbers
 function smallConcert() {
   return new Concert(10, 20);
 }
@@ -18,7 +17,7 @@ describe("Concert", () => {
     buyAndCheck(concert, 5, 90, 3);
   });
 
-  // Good: each test shows the concert, what is bought, and what should happen
+  // Good: each test shows the concert, what is bought, and the result
   it("charges the price for each ticket", () => {
     const concert = new Concert(10, 20);
     const cost = concert.buy(2);

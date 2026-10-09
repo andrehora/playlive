@@ -3,15 +3,14 @@ from unittest.mock import Mock
 from transfer import Account
 
 
-# Bad: it checks that deposit was called, not that the money arrived, so moving
-# it another way breaks the test though both balances come out the same
+# Bad: it checks that deposit was called, not that the money arrived
 def test_transfer_calls_deposit():
     to = Mock()
     Account(100).transfer(to, 30)
     to.deposit.assert_called_once_with(30)
 
 
-# Good: it checks the balances, the result anyone would look at
+# Good: it checks the balances
 def test_the_money_arrives():
     ana, ben = Account(100), Account(0)
     ana.transfer(ben, 30)

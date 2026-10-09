@@ -1,8 +1,7 @@
 const { ParkingMeter } = require("./parking-meter");
 
 describe("Parking meter", () => {
-  // Bad: one test for the method, holding four behaviors. When it fails, its
-  // name doesn't say which one broke
+  // Bad: one test holds every behavior. Its name doesn't say which broke
   it("pay", () => {
     const meter = new ParkingMeter();
     meter.pay(1);

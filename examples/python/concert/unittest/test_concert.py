@@ -2,8 +2,7 @@ import unittest
 from concert import Concert
 
 
-# Bad: a helper makes the concert and another checks two things at once, so
-# test_buying reads as numbers: what are 2, 40 and 8, and why is the second 90?
+# Bad: helpers hide the concert, so the test reads as bare numbers
 def small_concert():
     return Concert(10, 20)
 
@@ -19,7 +18,7 @@ class ConcertTest(unittest.TestCase):
         buy_and_check(self, concert, 2, 40, 8)
         buy_and_check(self, concert, 5, 90, 3)
 
-    # Good: each test shows the concert, what is bought, and what should happen
+    # Good: each test shows the concert, what is bought, and the result
     def test_tickets_cost_the_price_each(self):
         concert = Concert(capacity=10, price=20)
         cost = concert.buy(2)

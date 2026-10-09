@@ -4,15 +4,14 @@ from backup import FileStore, backup
 
 
 class BackupTest(unittest.TestCase):
-    # Bad: it mocks CloudSDK, which is not ours, so it copies CloudSDK's request and
-    # its deeply nested reply, and breaks whenever CloudSDK changes them
+    # Bad: it mocks CloudSDK, which is not ours, so CloudSDK's changes break it
     def test_backup_puts_each_note_in_the_cloud(self):
         sdk = Mock()
         sdk.put_object.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
         self.assertEqual(backup([("a.txt", "hi")], FileStore(sdk, "my-bucket")), 1)
         sdk.put_object.assert_called_once_with({"Bucket": "my-bucket", "Key": "notes/a.txt", "Body": "hi"})
 
-    # Good: it mocks FileStore, our own small interface in front of CloudSDK
+    # Good: it mocks FileStore, our own wrapper around CloudSDK
     def test_each_note_is_saved(self):
         store = Mock()
         store.save.return_value = True

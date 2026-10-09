@@ -2,8 +2,7 @@ import unittest
 from session import current_user, greeting, login, logout
 
 
-# Bad: the second test counts on the login the first one left behind, so it
-# passes only right after it. Run it alone and it fails
+# Bad: the second test needs the first one's login. Run it alone and it fails
 class SharedLoginTest(unittest.TestCase):
     def test_ana_can_log_in(self):
         login("ana", "secret1")
@@ -13,7 +12,7 @@ class SharedLoginTest(unittest.TestCase):
         self.assertEqual(greeting(), "Hello, ana")
 
 
-# Good: each test starts logged out, and logs in whoever it needs
+# Good: each test starts logged out
 class SessionTest(unittest.TestCase):
     def setUp(self):
         logout()

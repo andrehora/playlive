@@ -10,7 +10,7 @@ export class Account {
       throw new Error("Not enough money");
     }
     this.balance -= amount;
-    // A change to try: to.balance += amount, which does the same without deposit
+    // A change to try: to.balance += amount, skipping deposit
     to.deposit(amount);
   }
 }

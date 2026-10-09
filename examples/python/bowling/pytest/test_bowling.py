@@ -1,8 +1,7 @@
 from bowling import score
 
 
-# Bad: one test for the function, holding five behaviors. When it fails, its
-# name doesn't say which rule broke
+# Bad: one test holds every rule. Its name doesn't say which broke
 def test_score():
     assert score([0] * 20) == 0
     assert score([1] * 20) == 20
@@ -11,7 +10,7 @@ def test_score():
     assert score([10] * 12) == 300
 
 
-# Good: one test per behavior, named for the rule it checks
+# Good: one test per rule, named for it
 def test_a_gutter_game_scores_0():
     total = score([0] * 20)
     assert total == 0

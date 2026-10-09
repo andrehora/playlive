@@ -3,8 +3,7 @@ from discount import discounted
 
 
 class DiscountTest(unittest.TestCase):
-    # Bad: a loop with an if, so only the prices the if lets through are checked.
-    # 50 and 100 never are, and the boundary at 100 goes untested
+    # Bad: the if skips 50 and 100, so the boundary is never checked
     def test_discounts(self):
         for price in [50, 100, 150]:
             if price > 100:

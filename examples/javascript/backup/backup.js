@@ -1,19 +1,18 @@
-// Theirs: a cloud storage library you installed. Its API is not yours to change
+// Theirs: a cloud storage library. Its API is not yours to change
 class CloudSDK {
   putObject(request) {
     throw new Error(`The cloud is not reachable from tests (${request.Key})`);
   }
 }
 
-// Ours: the one place that knows CloudSDK's API. Tests mock this, not CloudSDK
+// Ours: the only code that knows CloudSDK. Tests mock this
 class FileStore {
   constructor(sdk, bucket) {
     this.sdk = sdk;
     this.bucket = bucket;
   }
 
-  // A change to try: CloudSDK renames putObject to upload. Only this method
-  // and the bad test have to change
+  // A change to try: CloudSDK renames putObject. Only this and the bad test change
   save(name, text) {
     const reply = this.sdk.putObject({ Bucket: this.bucket, Key: "notes/" + name, Body: text });
     return reply.ResponseMetadata.HTTPStatusCode === 200;

@@ -1,8 +1,7 @@
 import { Menu, bill } from "./tea-shop";
 
 describe("Tea shop", () => {
-  // Bad: the menu is a mock, so the real Menu never runs: break it and this
-  // still passes. It also pins down how bill asks the menu, so a refactor breaks it
+  // Bad: a mock menu, so the real Menu never runs
   it("asks the menu for each price", () => {
     const menu = jasmine.createSpyObj("menu", { priceOf: 3 });
     expect(bill(["tea", "cake"], menu)).toBe(6);

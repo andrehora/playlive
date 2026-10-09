@@ -2,14 +2,13 @@ from types import SimpleNamespace
 from thermostat import Sensor, Thermostat, heating_on_now
 
 
-# Bad: heating_on_now makes its own Sensor, so the test has to patch the class
-# for everyone, and knows how heating_on_now is built inside
+# Bad: heating_on_now makes its own Sensor, so the test must patch Sensor
 def test_heating_comes_on_when_cold(monkeypatch):
     monkeypatch.setattr(Sensor, "read", lambda self: 18)
     assert heating_on_now(20) is True
 
 
-# Good: the Thermostat is handed a sensor of the test's own
+# Good: the test hands the Thermostat its own sensor
 def test_heating_comes_on_below_the_target():
     sensor = SimpleNamespace(read=lambda: 18)
     thermostat = Thermostat(sensor)

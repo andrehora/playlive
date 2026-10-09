@@ -3,8 +3,7 @@ import * as sinon from "sinon";
 import { Cart, MemoryStore } from "./saved-cart";
 
 describe("Saved cart", () => {
-  // Bad: it checks how the cart talks to its store, not what the cart holds, so
-  // keeping the items another way breaks it though the cart works the same
+  // Bad: it checks how the cart talks to its store, not what it holds
   it("saves the items when adding", () => {
     const store = { load: sinon.stub().returns({}), save: sinon.stub() };
     new Cart(store).add("tea", 2);

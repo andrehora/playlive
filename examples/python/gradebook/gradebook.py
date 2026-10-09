@@ -20,5 +20,5 @@ class Gradebook:
 
     def report(self, student):
         average = self.average(student)
-        # A change to try: add "best": the student's best score, to the report
+        # A change to try: add the student's best score to the report
         return {"student": student, "average": average, "passed": average >= 50}

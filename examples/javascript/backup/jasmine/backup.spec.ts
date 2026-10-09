@@ -1,15 +1,14 @@
 import { FileStore, backup } from "./backup";
 
 describe("Backup", () => {
-  // Bad: it mocks CloudSDK, which is not ours, so it copies CloudSDK's request and
-  // its deeply nested reply, and breaks whenever CloudSDK changes them
+  // Bad: it mocks CloudSDK, which is not ours, so CloudSDK's changes break it
   it("puts each note in the cloud", () => {
     const sdk = jasmine.createSpyObj("sdk", { putObject: { ResponseMetadata: { HTTPStatusCode: 200 } } });
     expect(backup([["a.txt", "hi"]], new FileStore(sdk, "my-bucket"))).toBe(1);
     expect(sdk.putObject).toHaveBeenCalledOnceWith({ Bucket: "my-bucket", Key: "notes/a.txt", Body: "hi" });
   });
 
-  // Good: it mocks FileStore, our own small interface in front of CloudSDK
+  // Good: it mocks FileStore, our own wrapper around CloudSDK
   it("saves each note", () => {
     const store = jasmine.createSpyObj("store", { save: true });
     const saved = backup([["a.txt", "hi"], ["b.txt", "yo"]], store);

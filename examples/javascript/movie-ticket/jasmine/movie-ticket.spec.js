@@ -1,7 +1,6 @@
 const { ticketPrice } = require("./movie-ticket");
 
-// Bad: a table and a helper, so "prices" says nothing by itself. To know what
-// failed you look up CASES, then check, then count to the right row
+// Bad: a table and a helper, so the test says nothing by itself
 const CASES = [[8, "Friday", 5], [30, "Tuesday", 6], [30, "Friday", 10]];
 
 function check(i) {

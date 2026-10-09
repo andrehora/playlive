@@ -228,11 +228,14 @@ def code_map(src, name):
                 for off in range(start, end, 2):
                     at[off] = line
         if BRANCHING:
-            jumps, ends = returns_of(c)
+            jumps, ends, loops, backs = returns_of(c)
             for src_off, left, right in c.co_branches():
                 if src_off in at:
                     key = (c.co_qualname, c.co_firstlineno, src_off)
-                    line = lambda dest: None if dest in ends and ends[dest] == jumps.get(src_off) else at.get(dest)
+                    def line(dest):
+                        if dest in ends and (src_off in loops or ends[dest] == jumps.get(src_off)):
+                            return None
+                        return at.get(backs.get(dest, dest))
                     branches.append((at[src_off], [(key + (left,), line(left)), (key + (right,), line(right))]))
         todo.extend(k for k in c.co_consts if isinstance(k, types.CodeType))
     return lines, branches
@@ -241,13 +244,19 @@ def code_map(src, name):
 # the function's "return None" that the compiler gives the jump's own place,
 # so its line says the jump stayed in the condition. Such a landing is named
 # None (a way out) when it sits exactly where the jump does. Offset -> place,
-# of the jumps and of every "return None".
+# of the jumps and of every "return None". A for that ends its function runs
+# out onto that "return None" too, on the for line, so for a loop (its offsets)
+# any such landing is a way out. An if that ends a loop's body jumps, when
+# false, to a jump back to the loop's head that has the if's line: such a
+# landing is named by where that jump goes (backs: offset -> offset).
 def returns_of(c):
     ins = list(dis.get_instructions(c))
     jumps = {i.offset: i.positions for i in ins if i.opname.startswith('POP_JUMP')}
     ends = {a.offset: a.positions for a, b in zip(ins, ins[1:])
             if a.opname == 'LOAD_CONST' and a.argval is None and b.opname == 'RETURN_VALUE'}
-    return jumps, ends
+    loops = {i.offset for i in ins if i.opname == 'FOR_ITER'}
+    backs = {i.offset: i.argval for i in ins if i.opname.startswith('JUMP_BACKWARD')}
+    return jumps, ends, loops, backs
 
 # A branch is a statement's, as in JS/TS: each if, elif, while and for has two
 # ways, into its body or not, however many jumps its condition makes. Where a

@@ -5,13 +5,12 @@ from thermostat import Sensor, Thermostat, heating_on_now
 
 
 class ThermostatTest(unittest.TestCase):
-    # Bad: heating_on_now makes its own Sensor, so the test has to patch the class
-    # for everyone, and knows how heating_on_now is built inside
+    # Bad: heating_on_now makes its own Sensor, so the test must patch Sensor
     def test_heating_comes_on_when_cold(self):
         with patch.object(Sensor, "read", return_value=18):
             self.assertTrue(heating_on_now(20))
 
-    # Good: the Thermostat is handed a sensor of the test's own
+    # Good: the test hands the Thermostat its own sensor
     def test_heating_comes_on_below_the_target(self):
         sensor = SimpleNamespace(read=lambda: 18)
         thermostat = Thermostat(sensor)

@@ -1,16 +1,14 @@
 const { pricing, placeOrder } = require("./order-confirmation");
 
 describe("Order confirmation", () => {
-  // Bad: it mocks total, our own pricing rule, so the rule is never tested. One
-  // 20 item with the coupon costs 10, yet the order says 50
+  // Bad: it mocks total, our own rule, so the rule is never tested
   it("charges an order", () => {
     spyOn(pricing, "total").and.returnValue(50);
     const gateway = jasmine.createSpyObj("gateway", ["charge"]), mailer = jasmine.createSpyObj("mailer", ["send"]);
     expect(placeOrder("ana@example.test", [[20, 1]], "SAVE10", gateway, mailer)).toBe(50);
   });
 
-  // Good: only the gateway and the mailer, the boundaries, are mocked; the
-  // pricing runs for real
+  // Good: only the gateway and the mailer, the boundaries, are mocked
   it("charges the card the total", () => {
     const gateway = jasmine.createSpyObj("gateway", ["charge"]), mailer = jasmine.createSpyObj("mailer", ["send"]);
     placeOrder("ana@example.test", [[20, 2], [5, 1]], "", gateway, mailer);

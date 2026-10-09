@@ -28,7 +28,7 @@ export class Gradebook {
 
   report(student: string): Report {
     const average = this.average(student);
-    // A change to try: add best: the student's best score, to the report
+    // A change to try: add the student's best score to the report
     return { student, average, passed: average >= 50 };
   }
 }

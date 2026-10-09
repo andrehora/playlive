@@ -1,13 +1,12 @@
 import { shippingFee } from "./shipping-fee";
 
 describe("Shipping fee", () => {
-  // Bad: it runs every line, so line coverage says 100%, yet it barely checks
-  // anything and takes only one way through each if (Branch: 2 of 4 branches)
+  // Bad: every line runs, but each if goes one way and the fee is not checked
   it("works out a fee", () => {
     expect(shippingFee(60, true)).not.toBeNull();
   });
 
-  // Good: each way through each if, with the fee it should give
+  // Good: each way through each if, with its fee
   it("charges 5 on small orders", () => {
     const fee = shippingFee(40, false);
     expect(fee).toBe(5);

@@ -4,16 +4,18 @@
 // and the same tests in unittest/test_<module>.py and pytest/test_<module>.py.
 // JS/TS's holds <id>.js and <id>.ts, and the tests in jasmine/<id>.spec.js|ts
 // and mocha/<id>.test.js|ts. Each example teaches one testing idea, and its
-// tests ship passing.
+// tests ship passing, but for a flaky one, whose bad test fails now and then
+// on purpose.
 //
 // The picker shows the groups in this order, each under its heading, and the
 // examples in a group from the simplest up. Basics, Fixtures and Test doubles
 // show one tool each; Best practices, last, shows each practice three times.
 // The first example is where both modes open.
 //
-// Each row is [id, what it teaches]. The id names the folders and the link;
-// the app shows it as a name, "-" as spaces and the first letter capital
-// ("saved-cart" is Saved cart).
+// Each row is [id, what it teaches], and { flaky: true } for a flaky one (the
+// suites that need every example green leave it out). The id names the
+// folders and the link; the app shows it as a name, "-" as spaces and the
+// first letter capital ("saved-cart" is Saved cart).
 const GROUPS = [
   {
     group: "Basics", examples: [
@@ -38,10 +40,10 @@ const GROUPS = [
   {
     group: "Test doubles", examples: [
       ["invoice", "Dummy"],
-      ["converter", "Stub 1"],
-      ["greeting", "Stub 2"],
-      ["door-lock", "Mock/spy 1"],
-      ["doorbell", "Mock/spy 2"],
+      ["converter", "Stub (manual)"],
+      ["greeting", "Stub (framework)"],
+      ["invitations", "Mock/spy (manual)"],
+      ["doorbell", "Mock/spy (framework)"],
       ["bookmarks", "Fake"],
     ]
   },
@@ -65,9 +67,9 @@ const GROUPS = [
       ["guest-list", "Independent tests 1"],
       ["ticket-counter", "Independent tests 2"],
       ["session", "Independent tests 3"],
-      ["raffle", "Deterministic tests 1"],
-      ["voucher", "Deterministic tests 2"],
-      ["rate-limiter", "Deterministic tests 3"],
+      ["upload", "Make tests deterministic 1", { flaky: true }],
+      ["happy-hour", "Make tests deterministic 2", { flaky: true }],
+      ["delivery", "Make tests deterministic 3", { flaky: true }],
       ["average", "Testable code 1"],
       ["thermostat", "Testable code 2"],
       ["birthday", "Testable code 3"],
@@ -98,8 +100,8 @@ const GROUPS = [
 
 const nameOf = id => id[0].toUpperCase() + id.slice(1).replace(/-/g, ' ');
 
-// Every example by id, with its group: { name, teaches, group }
+// Every example by id, with its group: { name, teaches, group, flaky }
 export const CODE_EXAMPLES = Object.fromEntries(GROUPS.flatMap(({ group, examples }) =>
-  examples.map(([id, teaches]) => [id, { name: nameOf(id), teaches, group }])));
+  examples.map(([id, teaches, { flaky = false } = {}]) => [id, { name: nameOf(id), teaches, group, flaky }])));
 
 export const CODE_IDS = Object.keys(CODE_EXAMPLES);

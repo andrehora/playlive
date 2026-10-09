@@ -52,6 +52,8 @@ function setExampleView(id){
   swatch.innerHTML = catIconSvg('Code');
   swatch.style.setProperty('--cat', CODE_ACCENT);
   $id('siteName').textContent = p.examples[id].name;
+  // What the example teaches, beside its name
+  $id('siteGoal').textContent = p.examples[id].teaches;
   delete siteBtn.dataset.status;
   siteBtn.title = 'Choose an example';
   setCount(id);
@@ -87,6 +89,7 @@ export function setView(id){
   swatch.innerHTML = catIconSvg(SITES[id].category);
   swatch.style.setProperty('--cat', SITES[id].accent);
   $id('siteName').textContent = SITES[id].name;
+  $id('siteGoal').textContent = '';
   $id('sitePanelName').textContent = SITES[id].name;
   const cat = $id('siteCat');
   cat.innerHTML = catIconSvg(SITES[id].category) + '<span></span>';

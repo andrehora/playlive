@@ -32,8 +32,7 @@ class Shop {
     this.prices = prices;
   }
 
-  // A change to try: work out the cost first, then take the items. The
-  // results are the same
+  // A change to try: work out the cost first. The results are the same
   order(item, count) {
     this.inventory.take(item, count);
     return this.prices.cost(item, count);

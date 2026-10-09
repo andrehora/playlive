@@ -3,9 +3,7 @@ const sinon = require("sinon");
 const { Inventory, Prices, Shop } = require("./online-shop");
 
 describe("Online shop", () => {
-  // Bad: every collaborator is a mock, so the real Inventory and Prices never
-  // run: break them and this still passes. It also pins down each call, in
-  // order, so a refactor that changes nothing a customer sees breaks it
+  // Bad: all mocks, so the real classes never run, and each call is pinned
   it("takes the items and asks the price", () => {
     const inventory = { take: sinon.stub() };
     const prices = { cost: sinon.stub().returns(12) };

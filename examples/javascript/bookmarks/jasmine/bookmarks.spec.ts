@@ -35,4 +35,11 @@ describe("Bookmarks", () => {
     bookmarks.add("maps.example");
     expect(bookmarks.all()).toEqual(["maps.example"]);
   });
+
+  it("counts each bookmark once", () => {
+    bookmarks.add("news.example");
+    bookmarks.add("news.example");
+    bookmarks.add("maps.example");
+    expect(bookmarks.total()).toBe(2);
+  });
 });

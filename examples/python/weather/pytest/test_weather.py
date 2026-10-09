@@ -2,8 +2,7 @@ from unittest.mock import Mock
 from weather import Forecast, what_to_wear
 
 
-# Bad: it mocks SkyApi, which is not ours, so it copies SkyApi's path and its
-# nested reply, and breaks whenever SkyApi changes them
+# Bad: it mocks SkyApi, which is not ours, so SkyApi's changes break it
 def test_wears_a_coat_in_the_cold():
     api = Mock()
     api.fetch.return_value = {"data": {"current": {"temp_c": 8}}}
@@ -11,7 +10,7 @@ def test_wears_a_coat_in_the_cold():
     api.fetch.assert_called_once_with("/current?city=Oslo")
 
 
-# Good: it mocks Forecast, our own small interface in front of SkyApi
+# Good: it mocks Forecast, our own wrapper around SkyApi
 def test_below_15_is_coat_weather():
     forecast = Mock()
     forecast.temperature.return_value = 14

@@ -1,8 +1,7 @@
 const { parseAge } = require("./age-input");
 
 describe("Age input", () => {
-  // Bad: only the happy path. Empty, words, negative and too high are never
-  // tried, nor the boundary at 150
+  // Bad: only the happy path
   it("reads an age", () => {
     expect(parseAge("42")).toBe(42);
   });
