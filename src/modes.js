@@ -1,8 +1,8 @@
-import { repair } from './bugs.js';
-import { enterCreate, leaveCreate } from './create.js';
+import { repair } from './html/bugs.js';
+import { enterCreate, leaveCreate } from './html/create.js';
 import { reclamp } from './layout.js';
-import { enterCodeMode, leaveCodeMode } from './code.js';
-import { CODE_MODES, isCodeMode, isCodeCreate, codeModeOf } from './codecore.js';
+import { enterCodeMode, leaveCodeMode } from './code/code.js';
+import { CODE_MODES, isCodeMode, isCodeCreate, codeModeOf } from './code/core.js';
 import { syncUrl } from './share.js';
 import { mode, setAppMode } from './state.js';
 
@@ -25,12 +25,12 @@ import { mode, setAppMode } from './state.js';
 
    **Python** and **JS/TS** are experiments that leave the sites altogether:
    unit tests on a module, run in the browser, each with examples of its own
-   (code.js).
+   (code/code.js).
 
    The bar asks it as two questions: which language (Python, JS/TS, or HTML for
    the sites), then Explore or Create. They are still one value here, so links
    and the stylesheet read it as one: "python" and "python-create" are Python's
-   two (code.js), "explore" and "create" the sites'. Changing the language keeps
+   two (code/code.js), "explore" and "create" the sites'. Changing the language keeps
    the side you were on.                                                  */
 
 // In the bar's order, and the first is home: "/" opens Python on its first example.

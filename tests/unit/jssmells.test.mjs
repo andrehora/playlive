@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { smellsOf, ROULETTE } = await load('src/jssmells.js');
+const { smellsOf, ROULETTE } = await load('src/code/js/smells.js');
 const found = src => smellsOf(src).items.map(i => [i.smell, i.what, i.line, i.detail]);
 
 test('a test with no check of its own is an Unknown Test, and a helper that checks counts', () => {

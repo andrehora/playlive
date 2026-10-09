@@ -6,9 +6,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { corpus, load } from './env.mjs';
 
-const { titlesOf, checksOf, report, createSkeleton } = await load('src/create.js');
-const { exampleCache } = await load('src/sites.js');
-const { validate } = await load('src/parse.js');
+const { titlesOf, checksOf, report, createSkeleton } = await load('src/html/create.js');
+const { exampleCache } = await load('src/html/sites.js');
+const { validate } = await load('src/html/parse.js');
 
 // report() reads the shipped file out of the cache the first render fills, so a
 // test says which file it is marking against.

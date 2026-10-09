@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { validate, normalizeStep, ASSERTIONS, STEP_OPTS, stripFences } = await load('src/parse.js');
+const { validate, normalizeStep, ASSERTIONS, STEP_OPTS, stripFences } = await load('src/html/parse.js');
 
 // One test's steps, or the error the file was rejected with.
 const one = steps => validate(`test: T\nsteps:\n${steps.map(s => '  ' + s).join('\n')}\n`);

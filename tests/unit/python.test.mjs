@@ -7,8 +7,8 @@ import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, load } from './env.mjs';
 
-const { hlPython, consoleClass, testsInFile, skeletonOf } = await load('src/python.js');
-const { commentLines } = await load('src/editor.js');
+const { hlPython, consoleClass, testsInFile, skeletonOf } = await load('src/code/python/python.js');
+const { commentLines } = await load('src/editkeys.js');
 
 /* ---------- Highlighting ---------- */
 

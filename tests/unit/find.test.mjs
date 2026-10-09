@@ -7,9 +7,9 @@ import assert from 'node:assert/strict';
 import { load, site } from './env.mjs';
 
 const { roleOf, rawName, labelText, query, describeTarget, describeStep, describeStepBase, similarity, hintFor }
-  = await load('src/find.js');
-const { targetFor, targetParts, renderTarget, yq } = await load('src/recorder.js');
-const { validate } = await load('src/parse.js');
+  = await load('src/html/find.js');
+const { targetFor, targetParts, renderTarget, yq } = await load('src/html/recorder.js');
+const { validate } = await load('src/html/parse.js');
 
 /* ---------- Roles ---------- */
 

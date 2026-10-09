@@ -1,6 +1,6 @@
 /* ---------- A list of suggestions under an editor's caret ----------
-   The YAML editor (complete.js) and the code modes' tests editor
-   (codecomplete.js) both offer one, and both look and move alike: it lives on
+   The YAML editor (html/complete.js) and the code modes' tests editor
+   (code/complete.js) both offer one, and both look and move alike: it lives on
    <body>, in viewport coordinates, because a panel clips what overflows it and
    an editor can be only a few lines tall. On a phone the caret is usually
    under the keyboard, so the list spans the editor's box (`box`) instead.

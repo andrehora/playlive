@@ -5,8 +5,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { testKey, recordHistory, runHistory } = await load('src/history.js');
-const { validate } = await load('src/parse.js');
+const { testKey, recordHistory, runHistory } = await load('src/html/history.js');
+const { validate } = await load('src/html/parse.js');
 
 const testsOf = text => validate(text).spec.tests;
 

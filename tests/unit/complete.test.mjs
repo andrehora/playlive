@@ -7,11 +7,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load, site } from './env.mjs';
 
-const { context, suggest } = await load('src/complete.js');
-const { harvest, clearCatalog } = await load('src/catalog.js');
-const { validate } = await load('src/parse.js');
-const { query } = await load('src/find.js');
-const { ACTIONS } = await load('src/actions.js');
+const { context, suggest } = await load('src/html/complete.js');
+const { harvest, clearCatalog } = await load('src/html/catalog.js');
+const { validate } = await load('src/html/parse.js');
+const { query } = await load('src/html/find.js');
+const { ACTIONS } = await load('src/html/actions.js');
 
 const SITE = 'fixture';
 const PAGE = `

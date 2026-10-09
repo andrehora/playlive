@@ -6,8 +6,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { lineForStep, errorLinesFor, hlLine, hlValue, escH, isAction, undoable } = await load('src/editor.js');
-const { validate } = await load('src/parse.js');
+const { lineForStep, errorLinesFor, hlLine, hlValue, isAction } = await load('src/html/editor.js');
+const { undoable } = await load('src/editkeys.js');
+const { escH } = await load('src/util.js');
+const { validate } = await load('src/html/parse.js');
 
 // The line each of a file's steps was written on, in run order.
 function linesOf(text){

@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { flowSvg } = await load('src/flow.js');
+const { flowSvg } = await load('src/code/flow.js');
 
 const block = (lines, texts, end = false) => ({ t: 'block', lines, texts, end });
 const fn = body => ({ name: 'Account.deposit', line: 0, text: 'def deposit(self, amount)', body });

@@ -5,9 +5,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { match, expand, quiet, wordAt } = await load('src/snippets.js');
-const py = (await load('src/python.js')).snippetsFor;
-const js = (await load('src/javascript.js')).snippetsFor;
+const { match, expand, quiet, wordAt } = await load('src/code/snippets.js');
+const py = (await load('src/code/python/python.js')).snippetsFor;
+const js = (await load('src/code/js/javascript.js')).snippetsFor;
 const labels = (snips, text, opts) => match(snips, text, text.length, opts)?.items.map(s => s.label) ?? [];
 
 /* ---------- Finding ---------- */

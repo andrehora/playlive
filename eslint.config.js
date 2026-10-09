@@ -38,7 +38,7 @@ export default [
   },
   {
     // Python mode's worker runs in a worker's globals, not a page's
-    files: ['src/pyworker.js'],
+    files: ['src/code/python/worker.js'],
     languageOptions: { globals: globals.worker }
   },
   {

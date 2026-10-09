@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { corpus, load, spec } from './env.mjs';
 
-const { report, SMELLS, ROULETTE, checksIn } = await load('src/smells.js');
+const { report, SMELLS, ROULETTE, checksIn } = await load('src/html/smells.js');
 
 const smells = text => report(text).items.map(i => i.smell);
 const of = (text, id) => report(text).items.filter(i => i.smell === id);

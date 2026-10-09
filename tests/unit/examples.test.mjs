@@ -10,7 +10,7 @@ import { resolve } from 'node:path';
 import { ROOT, load } from './env.mjs';
 
 const { SITES, SITE_IDS } = await load('examples/html/examples.js');
-const { catIconSvg } = await load('src/icons.js');
+const { catIconSvg } = await load('src/html/icons.js');
 
 // The categories in manifest order, which is the order they are drawn in.
 const CATEGORIES = [...new Set(SITE_IDS.map(id => SITES[id].category))];

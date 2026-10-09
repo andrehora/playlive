@@ -1,12 +1,12 @@
 import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
-import { createSkeleton } from './create.js';
-import { catIconSvg } from './icons.js';
-import { selectExample } from './code.js';
-import { CODE_MODES, exampleOf, codeModeOf } from './codecore.js';
-import { preview } from './run.js';
+import { createSkeleton } from './html/create.js';
+import { catIconSvg } from './html/icons.js';
+import { selectExample } from './code/code.js';
+import { CODE_MODES, exampleOf, codeModeOf } from './code/core.js';
+import { preview } from './html/run.js';
 import { syncUrl } from './share.js';
-import { loadApp, persist, stashEditor, testsFor } from './sites.js';
+import { loadApp, persist, stashEditor, testsFor } from './html/sites.js';
 import { editorSite, mode, previewTimer, recording, running, setCurrentSite, setEditorSite } from './state.js';
 import { paintTabs } from './ui.js';
 

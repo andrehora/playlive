@@ -6,9 +6,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load, site } from './env.mjs';
 
-const { entryFor, harvest, snapshot, clearCatalog, catalogs } = await load('src/catalog.js');
-const { validate } = await load('src/parse.js');
-const { query } = await load('src/find.js');
+const { entryFor, harvest, snapshot, clearCatalog, catalogs } = await load('src/html/catalog.js');
+const { validate } = await load('src/html/parse.js');
+const { query } = await load('src/html/find.js');
 
 const SITE = 'fixture';
 async function harvested(markup, id = SITE){

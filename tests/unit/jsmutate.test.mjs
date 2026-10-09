@@ -1,10 +1,10 @@
-// JS/TS mutations, made on tokens: what jsworker.js runs each test file on in
+// JS/TS mutations, made on tokens: what code/js/worker.js runs each test file on in
 // Create's check. That a check really runs them is javascript.spec.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { mutantsOf, MAX_MUTANTS } = await load('src/jsmutate.js');
+const { mutantsOf, MAX_MUTANTS } = await load('src/code/js/mutate.js');
 const whats = src => mutantsOf(src).map(([m]) => m.what);
 
 test('comparisons, arithmetic, && and ||, numbers, true and false, ! and returns are changed', () => {

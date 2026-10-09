@@ -7,8 +7,8 @@ import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, load } from './env.mjs';
 
-const { hlJs, consoleClass, testsInJs, filesFor, skeletonOf } = await load('src/javascript.js');
-const { lineMap } = await load('src/sourcemap.js');
+const { hlJs, consoleClass, testsInJs, filesFor, skeletonOf } = await load('src/code/js/javascript.js');
+const { lineMap } = await load('src/code/js/sourcemap.js');
 const { JS_EXAMPLES, JS_IDS } = await load('examples/javascript/examples.js');
 const { PY_IDS } = await load('examples/python/examples.js');
 

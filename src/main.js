@@ -1,30 +1,30 @@
 import { SITES, SITE_IDS } from '../examples/html/examples.js';
-import { bugsFor, clearBugs, hunt, inject, renderBugs, repair, report as bugReport } from './bugs.js';
-import { clearCatalog, harvest, snapshot } from './catalog.js';
-import { closeCompletion, completion, context, suggest } from './complete.js';
+import { bugsFor, clearBugs, hunt, inject, renderBugs, repair, report as bugReport } from './html/bugs.js';
+import { clearCatalog, harvest, snapshot } from './html/catalog.js';
+import { closeCompletion, completion, context, suggest } from './html/complete.js';
 import { $id, errorEl, recordBtn, reloadBtn, resetBtn, runBtn, specEl, speedMode, stopBtn, summaryEl } from './dom.js';
-import { setSpecFolded } from './editor.js';
-import { toCypress, toPlaywright } from './exports.js';
-import { applyHtml, htmlDirty, htmlEdit } from './htmlview.js';
-import { query } from './find.js';
-import { HIST, runHistory } from './history.js';
+import { setSpecFolded } from './html/editor.js';
+import { toCypress, toPlaywright } from './html/exports.js';
+import { applyHtml, htmlDirty, htmlEdit } from './html/htmlview.js';
+import { query } from './html/find.js';
+import { HIST, runHistory } from './html/history.js';
 import { setMode } from './modes.js';
-import { codeState, resetCodeModes, runCodeTests, selectExample, setFramework, setLang } from './code.js';
-import { isCodeMode, codeModeOf } from './codecore.js';
-import { validate } from './parse.js';
+import { codeState, resetCodeModes, runCodeTests, selectExample, setFramework, setLang } from './code/code.js';
+import { isCodeMode, codeModeOf } from './code/core.js';
+import { validate } from './html/parse.js';
 import { renderTabs, selectSite, setView } from './picker.js';
-import { createSkeleton, report as createReport, setCreateFolded, titlesOf } from './create.js';
-import { found as smellFound, scanSites, report as smellReport, setSmellView, smellView, smelly } from './smells.js';
-import { startRecording, stopRecording } from './recorder.js';
-import { expandedTests, resultsTab, setResultsTab } from './results.js';
-import { nextResolve, preview, releaseNext, run, syncUI } from './run.js';
+import { createSkeleton, report as createReport, setCreateFolded, titlesOf } from './html/create.js';
+import { found as smellFound, scanSites, report as smellReport, setSmellView, smellView, smelly } from './html/smells.js';
+import { startRecording, stopRecording } from './html/recorder.js';
+import { expandedTests, resultsTab, setResultsTab } from './html/results.js';
+import { nextResolve, preview, releaseNext, run, syncUI } from './html/run.js';
 import { copyLink, codeExampleFromHash, linkedMode, modeFromHash, shareUrl, siteFromHash, syncUrl } from './share.js';
-import { CREATE, SITE_KEYS, STORE, createTests, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './sites.js';
+import { CREATE, SITE_KEYS, STORE, createTests, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './html/sites.js';
 import { clearBugHtml, clearEditedHtml, editorSite, mode, previewTimer, recording, running, setEditorSite, setCodeExample, setPreviewTimer, setStopRequested } from './state.js';
 import { STATUS, paintTabs, setProgress, siteStatus, toast } from './ui.js';
-import './dialog.js';          // registers the export dialog and its Copy button
-import './complete.js';       // registers the editor's suggestion list
-import './codecomplete.js';   // and the code modes' one
+import './html/dialog.js';          // registers the export dialog and its Copy button
+import './html/complete.js';       // registers the editor's suggestion list
+import './code/complete.js';   // and the code modes' one
 
 /* ---------- Wiring ---------- */
 specEl.addEventListener('input', () => {
@@ -34,7 +34,7 @@ specEl.addEventListener('input', () => {
   }, 400));
 });
 document.addEventListener('keydown', e => {
-  if (isCodeMode(mode)) return;            // code.js has the keys there
+  if (isCodeMode(mode)) return;            // code/code.js has the keys there
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); if (nextResolve) releaseNext(); else run(); }
   if (e.key === 'Escape' && running) stopBtn.click();
 });

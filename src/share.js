@@ -2,8 +2,8 @@ import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { $id } from './dom.js';
 import { MODES, setMode } from './modes.js';
 import { selectSite } from './picker.js';
-import { selectExample } from './code.js';
-import { CODE_MODES, exampleOf, codeModeOf } from './codecore.js';
+import { selectExample } from './code/code.js';
+import { CODE_MODES, exampleOf, codeModeOf } from './code/core.js';
 import { editorSite, mode, recording, running } from './state.js';
 import { toast } from './ui.js';
 

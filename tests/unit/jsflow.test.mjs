@@ -1,10 +1,10 @@
 // JS/TS flows, read on tokens: which functions have one, and the items
-// flow.js draws. That a run sends them and the page shows them is javascript.spec.
+// code/flow.js draws. That a run sends them and the page shows them is javascript.spec.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { flowsOf } = await load('src/jsflow.js');
+const { flowsOf } = await load('src/code/js/flow.js');
 
 test('a function, a method of a class or an object, and an arrow are found when they branch', () => {
   const src = 'function a(x) {\n  if (x) return 1;\n  return 2;\n}\nfunction plain() {\n  return 1;\n}\nclass Account {\n  deposit(n: number): void {\n    if (n <= 0) {\n      throw new Error("no");\n    }\n  }\n}\n'

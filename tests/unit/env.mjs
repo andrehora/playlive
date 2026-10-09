@@ -58,7 +58,7 @@ async function build(){
   if (!window.ResizeObserver){
     globalThis.ResizeObserver = window.ResizeObserver = class { observe(){} unobserve(){} disconnect(){} };
   }
-  // Frames are queued rather than run. editor.js keeps a standing rAF loop so a
+  // Frames are queued rather than run. html/editor.js keeps a standing rAF loop so a
   // programmatic edit is picked up without an event — right in a browser,
   // endless in Node, where nothing ever hides the tab. Queuing them leaves the
   // loop dormant and lets a test that wants a redraw ask for one with

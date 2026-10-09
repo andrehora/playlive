@@ -13,8 +13,8 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { corpus, load } from './env.mjs';
 
-const { validate } = await load('src/parse.js');
-const { toPlaywright, toCypress } = await load('src/exports.js');
+const { validate } = await load('src/html/parse.js');
+const { toPlaywright, toCypress } = await load('src/html/exports.js');
 const { setEditorSite } = await load('src/state.js');
 
 // Both exports use import, so both are checked as modules — all of them in one

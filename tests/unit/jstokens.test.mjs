@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { tokenize, close, atTop, statements } = await load('src/jstokens.js');
+const { tokenize, close, atTop, statements } = await load('src/code/js/tokens.js');
 const values = (toks, ids) => ids.map(i => toks[i].value);
 
 test('a bracket\'s partner is found by counting, and one that never closes has none', () => {
