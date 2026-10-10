@@ -212,20 +212,22 @@ test.describe('Modes', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the bar asks the language, then Explore or Create', async ({ page }) => {
+  test('the bar asks Code or Site, then Explore or Create, and the Tests panel the language', async ({ page }) => {
     const { errors } = await openApp(page, { site: SITE });
     const area = a => page.locator(`.area-seg [data-area="${a}"]`);
+    const lang = l => page.locator(`.code-lang [data-lang="${l}"]`);
     const create = page.locator('.mode-seg [data-mode="create"]');
     await expect(area('html')).toHaveAttribute('aria-pressed', 'true');
     await setMode(page, 'create');
 
-    // A language keeps the side you are on, and a side the language
+    // Code, Site and a language keep the side you are on, and a side the language
     const now = () => page.evaluate(() => window.playlive.modes.get());
-    await area('python').click();
+    await area('code').click();
     expect(await now()).toBe('python-create');
     await expect(create).toHaveAttribute('aria-pressed', 'true');
     await expect(create).toHaveAttribute('aria-disabled', 'false');
-    await area('javascript').click();
+    await expect(lang('python')).toHaveAttribute('aria-pressed', 'true');
+    await lang('js').click();
     expect(await now()).toBe('javascript-create');
     expect(new URL(page.url()).hash).toBe('#javascript-create');
     await page.click('.mode-seg [data-mode="explore"]');
@@ -242,11 +244,11 @@ test.describe('Modes', () => {
     await openApp(page, { site: SITE });
     await expect(page.locator('.area-seg')).toBeVisible();
     await expect(page.locator('.mode-seg')).toBeVisible();
-    // A row of their own, the five names sharing it, each worth tapping, without
+    // A row of their own, the four names sharing it, each worth tapping, without
     // pushing the bar sideways — which the sideways check below is what guards.
     const buttons = await page.locator('.area-seg button, .mode-seg button').all();
     const boxes = await Promise.all(buttons.map(b => b.boundingBox()));
-    expect(boxes).toHaveLength(5);
+    expect(boxes).toHaveLength(4);
     expect(new Set(boxes.map(b => Math.round(b.y))).size).toBe(1);
     for (const b of boxes) expect(b.height).toBeGreaterThanOrEqual(28);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);

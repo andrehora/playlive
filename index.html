@@ -23,13 +23,11 @@
         </svg></span>
       <span class="brand-name">Playlive</span>
     </a>
-    <div class="seg area-seg" role="group" aria-label="Language">
-      <button type="button" data-area="python" aria-pressed="true"
-        title="Unit tests in Python (experimental)">Python</button>
-      <button type="button" data-area="javascript" aria-pressed="false"
-        title="Unit tests in JS/TS (experimental)">JS/TS</button>
+    <div class="seg area-seg" role="group" aria-label="What to test">
+      <button type="button" data-area="code" aria-pressed="true"
+        title="Unit tests in Python, JavaScript or TypeScript">Code</button>
       <button type="button" data-area="html" aria-pressed="false"
-        title="End-to-end tests on example sites">HTML</button>
+        title="End-to-end tests on example sites">Site</button>
     </div>
     <div class="seg mode-seg" role="group" aria-label="Mode">
       <button type="button" data-mode="explore" aria-pressed="true"
@@ -196,7 +194,7 @@
         <div class="panel-head">
           <h2>Tests <span class="code-file" id="codeTestsFile"></span> <span id="codeCount" class="file-status" aria-live="polite"></span></h2>
           <div class="head-actions">
-            <div class="seg code-lang" role="group" aria-label="Language" hidden></div>
+            <div class="seg code-lang" role="group" aria-label="Language"></div>
             <div class="seg code-fw" role="group" aria-label="Test framework"></div>
             <button id="codeTestsReset" type="button" class="ghost icon-btn" aria-label="Reset the tests"
               title="Reset the tests"><svg class="i" viewBox="0 0 24 24"

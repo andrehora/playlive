@@ -498,7 +498,8 @@ test.describe('Python mode', () => {
     test.setTimeout(2 * PYTHON);
     const { errors } = await openApp(page, { hash: '#python-create' });
     await expect(page.locator('.mode-seg [data-mode="create"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.area-seg [data-area="python"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.area-seg [data-area="code"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.code-lang [data-lang="python"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-seg [data-codetab="create"]')).toHaveAttribute('aria-pressed', 'true');
     const tests = page.locator('#codeTestsEd textarea');
     await page.click('.code-fw [data-fw="unittest"]');

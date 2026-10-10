@@ -750,6 +750,12 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .toolbar .opts{width:100%;margin-left:0;gap:8px}
   .toolbar .opts .field{flex:1 1 150px;justify-content:space-between}
   .toolbar .opts select{flex:1 1 auto;min-width:0}
+  /* The code modes': Run, Stop and Repeat share a row. What runs the tests is
+     left out (Results says when it is downloading); only a failure takes a row */
+  .code-tests-panel .toolbar{display:grid;grid-template-columns:1fr 1fr auto}
+  .code-tests-panel .toolbar > button{min-width:0;justify-content:center}
+  .code-tests-panel .code-state{grid-column:1/-1;margin-left:0}
+  .code-tests-panel .code-state:not(.bad){display:none}
   .results-panel .head-actions{flex-wrap:wrap}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}

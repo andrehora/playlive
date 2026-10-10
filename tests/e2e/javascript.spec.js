@@ -39,15 +39,20 @@ test.describe('JS/TS mode', () => {
     // Python keeps its own framework, and coming back finds this one as it was
     await setMode(page, 'python');
     await expect(page.locator('#codeFile')).toHaveText('calculator.py');
-    await expect(page.locator('.code-lang')).toBeHidden();
-    await setMode(page, 'javascript');
+    await expect(page.locator('.code-lang [data-lang="python"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.click('.code-lang [data-lang="ts"]');
     await expect(page.locator('#codeFile')).toHaveText('calculator.ts');
+    await expect(page.locator('#codeTestsFile')).toHaveText('calculator.test.ts');
 
-    // Changing language keeps the example
+    // Changing language keeps the example, and Code comes back to the one left
     await page.evaluate(() => window.playlive.code.select('stack'));
     await setMode(page, 'python');
     await expect(page.locator('#codeFile')).toHaveText('stack.py');
-    await setMode(page, 'javascript');
+    await page.click('.code-lang [data-lang="ts"]');
+    await expect(page.locator('#codeFile')).toHaveText('stack.ts');
+    await setMode(page, 'explore');
+    await page.click('.area-seg [data-area="code"]');
+    await expect(page.locator('.code-lang [data-lang="ts"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#codeFile')).toHaveText('stack.ts');
     expect(errors).toEqual([]);
   });

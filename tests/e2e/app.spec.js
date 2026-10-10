@@ -105,7 +105,8 @@ test.describe('Shareable links', () => {
     // "/" is Python on its first example and stays "/".
     const { errors } = await openApp(page, { hash: '' });
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
-    await expect(page.locator('.area-seg [data-area="python"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.area-seg [data-area="code"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.code-lang [data-lang="python"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#siteName')).toHaveText('Calculator');
     expect(new URL(page.url()).pathname).toBe('/');
     expect(new URL(page.url()).hash).toBe('');

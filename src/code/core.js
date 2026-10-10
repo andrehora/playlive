@@ -18,7 +18,8 @@ import { escH } from '../util.js';
 
    Every example's tests come written once per framework. The switch at the top
    of the Tests panel picks which one shows, and a run uses only that one, on
-   that framework's own runner. JS/TS also has a language switch.
+   that framework's own runner. A language switch beside it picks Python,
+   JavaScript or TypeScript, the last two both the JS/TS mode.
 
    The runtime is only fetched when its mode is entered, so the other modes
    never pay its download. Stop throws the worker away, since a running test
@@ -37,6 +38,12 @@ export const CODE_MODES = { python: PYTHON, javascript: JAVASCRIPT };
 export const codeModeOf = m => { const l = m?.replace(/-create$/, ''); return CODE_MODES[l] ? l : null; };
 export const isCodeMode = m => !!codeModeOf(m);
 export const isCodeCreate = m => !!codeModeOf(m) && m.endsWith('-create');
+// The languages the Tests panel offers, in its order: each a code mode and, for
+// one with languages of its own, which of them
+export const LANGS = [
+  { id: 'python', mode: 'python', label: 'Python', logo: 'python', title: 'Python' },
+  ...JAVASCRIPT.langs.map(l => ({ ...l, mode: 'javascript', lang: l.id }))
+];
 
 // Each mode keeps its own framework, edits and runtime, so going from Python
 // to JS/TS and back neither reloads Python nor loses what you typed. The

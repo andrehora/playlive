@@ -1,8 +1,8 @@
 import { repair } from './html/bugs.js';
 import { enterCreate, leaveCreate } from './html/create.js';
 import { reclamp } from './layout.js';
-import { enterCodeMode, leaveCodeMode } from './code/code.js';
-import { CODE_MODES, isCodeMode, isCodeCreate, codeModeOf } from './code/core.js';
+import { chooseLang, enterCodeMode, leaveCodeMode } from './code/code.js';
+import { CODE_MODES, LANGS, isCodeMode, isCodeCreate, codeModeOf } from './code/core.js';
 import { syncUrl } from './share.js';
 import { mode, setAppMode } from './state.js';
 
@@ -27,11 +27,12 @@ import { mode, setAppMode } from './state.js';
    unit tests on a module, run in the browser, each with examples of its own
    (code/code.js).
 
-   The bar asks it as two questions: which language (Python, JS/TS, or HTML for
-   the sites), then Explore or Create. They are still one value here, so links
-   and the stylesheet read it as one: "python" and "python-create" are Python's
-   two (code/code.js), "explore" and "create" the sites'. Changing the language keeps
-   the side you were on.                                                  */
+   The bar asks it as two questions: Code or Site, then Explore or Create. In
+   Code, which language (Python, JavaScript or TypeScript) is the Tests panel's
+   switch. They are still one value here, so links and the stylesheet read it
+   as one: "python" and "python-create" are Python's two (code/code.js),
+   "explore" and "create" the sites'. Changing either keeps the side you were
+   on, and Code comes back to the language you left.                      */
 
 // In the bar's order, and the first is home: "/" opens Python on its first example.
 export const MODES = ['python', 'python-create', 'javascript', 'javascript-create', 'explore', 'create'];
@@ -42,6 +43,8 @@ const canCreate = area => area === 'html' || !!CODE_MODES[area]?.create;
 // The mode a language and a side make, Explore where the language has no Create
 const modeFor = (area, side) => (area === 'html' ? side : side === 'create' && canCreate(area) ? `${area}-create` : area);
 let side = 'explore';                 // the side chosen, kept through a language without Create
+let lastCode = 'python';              // the code mode Code comes back to
+const barOf = area => (area === 'html' ? 'html' : 'code');
 
 // `initial` is boot applying the mode the browser remembered. There is nothing
 // to come from and nothing on screen yet, so the handovers below would only
@@ -61,8 +64,9 @@ export function setMode(m, { initial = false } = {}){
   document.dispatchEvent(new CustomEvent('playlive:mode'));
   const area = areaOf(next), can = canCreate(area);
   if (can) side = sideOf(next);
+  if (area !== 'html') lastCode = area;
   document.querySelectorAll('.area-seg [data-area]')
-    .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.area === area)));
+    .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.area === barOf(area))));
   document.querySelectorAll('.mode-seg [data-mode]')
     .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === sideOf(next))));
   const create = document.querySelector('.mode-seg [data-mode="create"]');
@@ -80,9 +84,17 @@ export function setMode(m, { initial = false } = {}){
   reclamp();           // a panel arriving or leaving changes what fits
 }
 
-// A language keeps the side you are on; a side keeps the language
+// Code or Site, and a language, keep the side you are on; a side keeps the language
 const go = m => { if (m !== mode) setMode(m); };
 document.querySelectorAll('.area-seg [data-area]')
-  .forEach(b => b.addEventListener('click', () => go(modeFor(b.dataset.area, side))));
+  .forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.area !== barOf(areaOf(mode))) go(modeFor(b.dataset.area === 'code' ? lastCode : 'html', side));
+  }));
+document.querySelector('.code-lang').addEventListener('click', e => {
+  const l = LANGS.find(x => x.id === e.target.closest('[data-lang]')?.dataset.lang);
+  if (!l) return;
+  if (l.lang) chooseLang(l.mode, l.lang);
+  go(modeFor(l.mode, side));
+});
 document.querySelectorAll('.mode-seg [data-mode]')
   .forEach(b => b.addEventListener('click', () => go(modeFor(areaOf(mode), b.dataset.mode))));

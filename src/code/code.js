@@ -4,7 +4,7 @@ import { syncUrl } from '../share.js';
 import { mode, setCodeExample } from '../state.js';
 import { setProgress, toast } from '../ui.js';
 import { escH, plural, runSummary } from '../util.js';
-import { CODE_MODES, P, S, active, codeEd, creating, exampleOf, files, handlerOf, isCodeMode, isCodeCreate, job, key, label, codeModeOf, onWorker, progressEl,
+import { CODE_MODES, LANGS, P, S, active, codeEd, creating, exampleOf, files, handlerOf, isCodeMode, isCodeCreate, job, key, label, codeModeOf, onWorker, progressEl,
   request, rt, session, sessions, setActive, setCreating, setCurrentView, setJob, shipped, testsEd, view } from './core.js';
 import { coverage, setCoverage } from './coverage.js';
 import { createBtn, createEl, endCheck, renderCreate, resetCreate } from './create.js';
@@ -415,9 +415,8 @@ function drawSwitches(){
     }
   };
   draw(document.querySelector('.code-fw'), p.frameworks, s.framework, 'fw');
-  const lang = document.querySelector('.code-lang');
-  lang.hidden = !(p.langs?.length > 1);
-  if (!lang.hidden) draw(lang, p.langs, s.lang, 'lang', { logoOnly: true });
+  const cur = LANGS.find(l => l.mode === active && (l.lang ?? null) === s.lang)?.id;
+  draw(document.querySelector('.code-lang'), LANGS, cur, 'lang', { logoOnly: true });
 }
 // Put the example, in the framework and language chosen, into the editors
 function show(){
@@ -475,6 +474,14 @@ function switchTo(change){
 }
 export const setFramework = framework => switchTo({ framework });
 export const setLang = lang => switchTo({ lang });
+// The language switch can name JS/TS's TypeScript from Python, so the language
+// is chosen before the mode is entered, which then opens in it
+export function chooseLang(m, lang){
+  if (m === active) return setLang(lang);
+  const s = session(m);
+  if (lang === s.lang || !CODE_MODES[m].langs?.some(c => c.id === lang)) return;
+  drop(m); s.lang = lang; s.versions = null;
+}
 export const codeState = () => ({ mode: active, create: creating, example: active && exampleOf(active), framework: active && S().framework, lang: active && S().lang });
 // Entering a code mode is what fetches its files and starts its runtime
 // downloading. Leaving one leaves its runtime loaded for coming back.
@@ -543,7 +550,6 @@ function setCodeFolded(f){
 }
 $id('foldCode').addEventListener('click', () => setCodeFolded(!codeFolded));
 document.querySelector('.code-fw').addEventListener('click', e => { const b = e.target.closest('[data-fw]'); if (b) setFramework(b.dataset.fw); });
-document.querySelector('.code-lang').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); });
 runBtn.addEventListener('click', () => runCodeTests());
 stopBtn.addEventListener('click', stopCodeTests);
 document.addEventListener('keydown', e => {

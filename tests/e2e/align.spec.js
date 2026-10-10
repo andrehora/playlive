@@ -36,7 +36,7 @@ test('every example says the same in Python and in JS/TS', async ({ page }) => {
   const python = {};
   for (const id of await steadyCodeIds(ids)) python[id] = await measure(page, id);
 
-  await page.click('.area-seg [data-area="javascript"]');
+  await page.click('.code-lang [data-lang="js"]');
   await expect(page.locator('#codeFile')).toHaveText(/\.js$/);
   await page.locator('#codeCovShow').check();
   const differ = [];

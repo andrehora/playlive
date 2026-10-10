@@ -71,12 +71,18 @@ export async function setSpeed(page, value){
 
 // The mode is chosen in the app bar, and it is what decides which panels the
 // left column has: Create is the one that brings a panel of its own in. The
-// bar asks the language first (Python, JS/TS, HTML), then Explore or Create.
+// bar asks Code or Site, then Explore or Create; in Code, the Tests panel's
+// switch picks the language ("javascript" here is its JavaScript).
 export async function setMode(page, value){
-  const area = ['python', 'javascript'].includes(value) ? value : 'html';
+  const area = ['python', 'javascript'].includes(value) ? 'code' : 'html';
   await page.click(`.area-seg [data-area="${area}"]`);
   await expect(page.locator(`.area-seg [data-area="${area}"]`)).toHaveAttribute('aria-pressed', 'true');
-  if (area !== 'html') return;
+  if (area === 'code'){
+    const lang = value === 'python' ? 'python' : 'js';
+    await page.click(`.code-lang [data-lang="${lang}"]`);
+    await expect(page.locator(`.code-lang [data-lang="${lang}"]`)).toHaveAttribute('aria-pressed', 'true');
+    return;
+  }
   await page.click(`.mode-seg [data-mode="${value}"]`);
   await expect(page.locator(`.mode-seg [data-mode="${value}"]`)).toHaveAttribute('aria-pressed', 'true');
 }
