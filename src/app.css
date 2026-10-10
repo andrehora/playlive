@@ -1,6 +1,6 @@
 :root{
   --bg:#EEF1F5; --panel:#FFF; --panel-2:#F7F8FA; --ink:#18202E; --muted:#5B6577; --line:#DCE1E8;
-  --run:#2563EB; --on-run:#FFF; --running:#EAB308; --running-ink:#8A6100; --active:#94A0B4; --active-ink:#4A5569; --pass:#1F8A55; --fail:#C2412D; --warn:#9A6700; --rec:#D92D20;
+  --run:#2563EB; --on-run:#FFF; --running:#EAB308; --running-ink:#8A6100; --active:#94A0B4; --active-ink:#4A5569; --pass:#1F8A55; --fail:#C2412D; --warn:#9A6700; --rec:#D92D20; --diff:#7C3AED;
   --syn-key:#6D28D9; --syn-act:#B45309; --syn-str:#15803D; --syn-var:#BE185D; --syn-com:#8A93A3; --syn-num:#0E7490;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
   --left-w:480px; --editor-h:36vh; --code-h:46vh;
@@ -17,14 +17,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0E131B; --panel:#151C27; --panel-2:#111720; --ink:#E6EAF1; --muted:#97A1B3; --line:#253043;
-    --run:#7AA5FF; --on-run:#0B1426; --running:#FACC15; --running-ink:#FACC15; --active:#8792A6; --active-ink:#C3CBD9; --logo-bg:#F3F4F6; --logo-pad:1.5px; --pass:#4CC38A; --fail:#F0735C; --warn:#E3B341; --rec:#FF6B5E;
+    --run:#7AA5FF; --on-run:#0B1426; --running:#FACC15; --running-ink:#FACC15; --active:#8792A6; --active-ink:#C3CBD9; --logo-bg:#F3F4F6; --logo-pad:1.5px; --pass:#4CC38A; --fail:#F0735C; --warn:#E3B341; --rec:#FF6B5E; --diff:#B794F6;
     --syn-key:#C4B5FD; --syn-act:#FBBF24; --syn-str:#86EFAC; --syn-var:#F9A8D4; --syn-com:#6B7588; --syn-num:#67E8F9;
     --shadow:0 1px 2px rgba(0,0,0,.4);
   }
 }
 :root[data-theme="dark"]{
   --bg:#0E131B; --panel:#151C27; --panel-2:#111720; --ink:#E6EAF1; --muted:#97A1B3; --line:#253043;
-  --run:#7AA5FF; --on-run:#0B1426; --running:#FACC15; --running-ink:#FACC15; --active:#8792A6; --active-ink:#C3CBD9; --logo-bg:#F3F4F6; --logo-pad:1.5px; --pass:#4CC38A; --fail:#F0735C; --warn:#E3B341; --rec:#FF6B5E;
+  --run:#7AA5FF; --on-run:#0B1426; --running:#FACC15; --running-ink:#FACC15; --active:#8792A6; --active-ink:#C3CBD9; --logo-bg:#F3F4F6; --logo-pad:1.5px; --pass:#4CC38A; --fail:#F0735C; --warn:#E3B341; --rec:#FF6B5E; --diff:#B794F6;
   --syn-key:#C4B5FD; --syn-act:#FBBF24; --syn-str:#86EFAC; --syn-var:#F9A8D4; --syn-com:#6B7588; --syn-num:#67E8F9;
   --shadow:0 1px 2px rgba(0,0,0,.4);
 }
@@ -175,14 +175,15 @@ body.resizing iframe{pointer-events:none}
 .hist i{width:4px;height:12px;border-radius:2px;background:var(--line)}
 .hist i.h-pass{background:var(--pass)} .hist i.h-fail{background:var(--fail)}
 .sdots{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px;margin-left:8px;vertical-align:1px;max-width:100%}
+/* What the run says, and its circles under it rather than beside it, so the
+   head keeps its width for the tabs */
+.run-said{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-width:0;overflow:hidden;line-height:1.15}
+.run-said .sdots{margin-left:0;max-width:100%;overflow:hidden;flex-wrap:nowrap;line-height:1}
+.run-said #summary,.run-said #codeSummary{max-width:100%}
 /* The head's row says what it is. It is drawn here rather than in the markup
    because the row goes when the circles do, and :empty is what takes it. */
 #runDots::before,#codeDots::before{content:"Tests:";margin-right:4px;font-size:11.5px;font-weight:400;color:var(--muted)}
 #runDots:empty,#codeDots:empty{display:none}
-/* The code modes' head also holds the Coverage tab, so its circles go without
-   the label and keep their row */
-#codeDots{flex:none;flex-wrap:nowrap}
-#codeDots::before{content:none}
 .sdots i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--line);animation:dot-in .18s ease-out}
 /* A step or test the run has not reached yet: there from the start, so the row
    shows how long the run is, and hollow, so it does not read as a result. */
@@ -241,24 +242,17 @@ body.resizing iframe{pointer-events:none}
 .bugs-tab[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
 .bugs-tab[data-band="bad"]{--band:var(--fail)}
 #bugs{flex:1;min-height:0}
-/* A panel a mode has no use for is not there to be folded, it is not there:
-   Create adds its own panel below Results. */
-:root[data-mode="explore"] .create-panel,
-:root[data-mode="explore"] #createResizer{display:none}
-
 /* ---------- Create: the example's tests, for you to write ----------
-   A score out of the tests the example ships, in the app's three colours, and
-   the three states differ in shape as well: hollow to write, ringed written
-   without a check, solid green done. */
-.create-panel{flex:0 1 auto;min-height:0;--band:var(--muted)}
-.create-panel[data-band="ok"]{--band:var(--pass)}
-.create-panel[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
-.create-panel[data-band="bad"]{--band:var(--fail)}
+   A tab of the Results panel. A score out of the tests the example ships, in
+   the app's three colours, and the three states differ in shape as well:
+   hollow to write, ringed written without a check, solid green done. */
+.create-tab{--band:var(--muted)}
+.create-tab[data-band="ok"]{--band:var(--pass)}
+.create-tab[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
+.create-tab[data-band="bad"]{--band:var(--fail)}
 #createScore{font-weight:400;font-size:12px;color:var(--band-ink,var(--band));white-space:nowrap}
 #createScore:empty{display:none}
 #create{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
-.left[data-create="collapsed"] .create-panel{flex:0 0 auto;height:auto;min-height:0}
-.left[data-create="collapsed"] #createResizer{visibility:hidden}
 .create-group{border-bottom:1px solid var(--line)}
 .create-group:last-child{border-bottom:0}
 .create-dot{width:9px;height:9px;border-radius:50%;flex:none;border:1.5px solid var(--muted)}
@@ -330,23 +324,32 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .site-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .picker{position:relative}
 /* One size whatever is chosen: a long name or goal is cut short instead */
-.site-btn{font-weight:600;gap:8px;justify-content:flex-start;min-width:230px;overflow:hidden;container:site/inline-size}
+/* One box: the arrows at its ends, the list's button between them */
+.picker-box{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:var(--btn-r);background:var(--panel)}
+.picker-box:hover{border-color:color-mix(in srgb,var(--ink) 25%,var(--line))}
+.picker-box > button{border:0;min-height:var(--tap)}
+.step-btn{padding:0;width:max(36px,var(--icon-tap));flex:none;color:var(--ink)}
+.step-btn svg.i{width:22px;height:22px;stroke-width:2.25}
+.step-btn:first-child{border-radius:var(--btn-r) 0 0 var(--btn-r)}
+.step-btn:last-child{border-radius:0 var(--btn-r) var(--btn-r) 0}
+.site-btn{flex:1 1 auto;border-radius:0;padding-inline:4px;font-weight:600;gap:8px;justify-content:flex-start;min-width:0;overflow:hidden;container:site/inline-size}
 .site-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .site-btn .caret{margin-left:auto;color:var(--muted)}
 /* What the example teaches; it gives way before the name when space is short */
 .site-goal{flex-shrink:100;font-weight:400;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .site-goal:empty{display:none}
-/* Too narrow to say much of it, it is not said at all (the list still says it) */
-@container site (max-width:300px){.site-goal{display:none}}
 /* The app bar and the picker's category heads both show the category's icon,
    tinted with its accent, so the colour still groups and the icon names. */
 .swatch{display:inline-flex;flex:none;color:var(--cat,var(--muted))}
 .swatch svg.i{width:15px;height:15px}
+.swatch:empty{display:none}
 .tres{font-size:11px;font-weight:700;line-height:1}
 [data-status="pass"] .tres{color:var(--pass)} [data-status="pass"] .tres::before{content:"✓"}
 [data-status="fail"] .tres{color:var(--fail)} [data-status="fail"] .tres::before{content:"✕"}
 .pop{position:absolute;z-index:30;top:calc(100% + 6px);left:0;width:min(360px,86vw);max-height:min(72vh,560px);display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 48px rgba(16,24,40,.22);overflow:hidden}
-#siteSearch{margin:8px;padding:var(--ctl-pad);min-height:var(--tap);border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);font:inherit;font-size:var(--ctl-font);outline:none}
+/* The search, and where the example showing is in the list */
+.pop-head{display:flex;align-items:center;gap:6px;padding:8px}
+#siteSearch{flex:1 1 auto;min-width:0;margin:0;padding:var(--ctl-pad);min-height:var(--tap);border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);font:inherit;font-size:var(--ctl-font);outline:none}
 #siteSearch:focus{border-color:var(--run)}
 .pop-list{overflow:auto;padding:0 6px 8px;overscroll-behavior:contain}
 /* The category heads a band in its own accent, the same mix the Site panel's
@@ -364,19 +367,23 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .pop-list .tab .tres{margin-left:auto}
 .pop-list .tab .tsub{margin-left:auto;font-size:var(--small-font);color:var(--muted)}
 .pop-empty{color:var(--muted);font-size:13px;padding:6px 14px 14px;margin:0}
-.stepper{display:flex;align-items:center;gap:2px}
-.site-count{font-size:var(--small-font);color:var(--muted);font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
+.site-count{flex:none;font-size:var(--small-font);color:var(--muted);font-variant-numeric:tabular-nums;padding-right:4px}
 .addr{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}
 .icon-btn{padding:0;width:var(--icon-tap);height:var(--icon-tap);min-height:0;flex:none;border-radius:var(--small-r)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;background:var(--panel-2)}
 .seg button{border:0;background:transparent;padding:5px 7px;min-height:0;border-radius:6px;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
+/* The choice in force, in every switch: tinted and edged in the controls' blue,
+   enough to find at a glance without the weight of a filled button */
+.seg button[aria-pressed="true"]{font-weight:600;background:color-mix(in srgb,var(--run) 16%,var(--panel));color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--run) 60%,transparent)}
 /* The mode governs every panel below, not just what one of them shows, so its
    button is filled rather than merely lifted: the bar says which app this is
    from across the room. Ink on panel inverts with the theme, so it reads in
    both without a colour of its own. */
-:is(.area-seg,.mode-seg) button[aria-pressed="true"]{background:var(--ink);color:var(--panel);box-shadow:none}
-.mode-seg button[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.area-seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);box-shadow:none}
+/* Two equal halves, at full button size: "E2E" is shorter than "Unit" and
+   would otherwise read as the lesser choice */
+.area-seg{display:inline-grid;grid-template-columns:1fr 1fr}
+.area-seg button{min-height:var(--tap);min-width:4.5em;padding:0 14px;font-size:var(--btn-font);font-weight:600;justify-content:center}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 12px;border-bottom:1px solid var(--line)}
 .snapbar{background:color-mix(in srgb,var(--run) 10%,transparent);color:var(--run)}
 .bugbar{background:color-mix(in srgb,var(--fail) 10%,transparent);color:var(--fail)}
@@ -431,10 +438,10 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 .code-file{font:500 12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
 .code-tests-panel{flex:0 0 auto;min-height:0}
 /* Its handle sets the code's height, as the editor's does in the other modes;
-   Results and Console take whatever is left */
+   Results and Output take whatever is left */
 .code-tests-panel .code-ed{flex:none;height:var(--code-h)}
 .console-panel{flex:1 1 0;min-height:130px}
-/* Collapsed, Results and Console are their head and nothing else */
+/* Collapsed, Results and Output are their head and nothing else */
 .left[data-code="collapsed"] .console-panel{flex:0 0 auto;min-height:0}
 .left[data-code="collapsed"] :is(#codeCreate, #codeResults, #codeConsole, #codeMutation, #codeSmells){display:none!important}
 .code-module-panel{min-height:0}
@@ -521,9 +528,12 @@ svg.flow{display:block;max-width:none;overflow:visible}
 .code-tests-panel .head-actions{flex-wrap:nowrap}
 .code-tests-panel .panel-head h2{flex:0 1 auto;overflow:hidden}
 .code-tests-panel .code-file{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.code-fw button,.code-lang button{font-size:12.5px;font-weight:600;gap:5px}
+:is(.code-fw,.code-lang,.cmp-fw,.cmp-lang) button{font-size:12.5px;font-weight:600;gap:5px;padding-block:2px}
 /* The frameworks' own logos, from devicon, inline because the CSP allows no remote images */
-.code-fw button svg,.code-lang button svg{width:15px;height:15px;flex:none;background:var(--logo-bg,transparent);border-radius:4px;padding:var(--logo-pad,0)}
+:is(.code-fw,.code-lang,.cmp-fw,.cmp-lang) button svg{width:19px;height:19px;flex:none;background:var(--logo-bg,transparent);border-radius:4px;padding:var(--logo-pad,0)}
+/* The others' logos step back, so the choice in force stands out */
+.seg:is(.code-fw,.code-lang,.cmp-fw,.cmp-lang) button[aria-pressed="false"] svg{opacity:.55}
+.seg:is(.code-fw,.code-lang,.cmp-fw,.cmp-lang) button[aria-pressed="false"]:hover svg{opacity:1}
 .console-panel .panel-head{flex-wrap:nowrap}
 .console-panel .panel-head h2{gap:10px;flex:0 1 auto;min-width:0;overflow:hidden}
 .console-panel .head-actions{flex:none;flex-wrap:nowrap}
@@ -552,6 +562,30 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 .dlg-tabs button svg{width:18px;height:18px;flex:none;background:var(--logo-bg,transparent);border-radius:5px;padding:var(--logo-pad,0)}
 .dlg-tabs button[aria-selected="true"]{background:color-mix(in srgb,var(--run) 12%,var(--panel));border-color:var(--run);color:var(--ink);font-weight:600}
 #dlgCopied{color:var(--pass);font-size:13px}
+/* The code modes' tests, large, alone or beside another framework's. Each
+   side's head is the Tests panel's: its name, file and count, then its
+   switches; the last one showing ends with Compare and Close. */
+.cmp-dlg{width:calc(100vw - 32px);height:calc(100dvh - 32px);max-width:none;max-height:none}
+.cmp-dlg[open]{display:flex;flex-direction:column}
+.cmp-dlg #cmpCompare[aria-pressed="true"]{border-color:var(--run);background:color-mix(in srgb,var(--run) 12%,var(--panel))}
+.cmp-panes{flex:1;min-height:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.cmp-pane{display:flex;flex-direction:column;min-height:0;min-width:0}
+.cmp-pane[hidden]{display:none}
+.cmp-pane + .cmp-pane{border-left:1px solid var(--line)}
+.cmp-head{display:flex;flex-wrap:nowrap;align-items:center;gap:8px 10px;padding:10px 12px 10px 16px;border-bottom:1px solid var(--line)}
+.cmp-head h2{flex:1 1 auto;min-width:0;margin:0;font-size:15px;display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden}
+.cmp-head .code-file{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cmp-head .cmp-count{flex:none}
+.cmp-actions{display:flex;align-items:center;gap:6px}
+.cmp-code{flex:1;min-height:0;margin:0;overflow:auto;padding:12px 16px 12px 0;background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;white-space:pre;tab-size:4;counter-reset:ln;outline:none}
+.cmp-code:focus-visible{box-shadow:inset 0 0 0 2px var(--run)}
+.cmp-code .l{display:block;min-height:var(--code-line)}
+.cmp-code .l::before{counter-increment:ln;content:counter(ln);display:inline-block;width:4.5ch;margin-right:16px;padding-right:8px;text-align:right;color:var(--muted);opacity:.55;border-right:1px solid var(--line)}
+.cmp-none{display:block;padding-left:16px;color:var(--muted)}
+/* Compare's Diff: a changed line tinted, what differs in it stronger */
+.cmp-code .l.diff{background:color-mix(in srgb,var(--diff) 11%,transparent)}
+.cmp-code .l.diff mark{color:inherit;background:color-mix(in srgb,var(--diff) 30%,transparent);border-radius:2px}
+.cmp-code .l.diff::before{border-right-color:var(--diff)}
 .toast{position:fixed;left:50%;max-width:calc(100vw - 32px);text-align:center;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
@@ -573,56 +607,31 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   main{flex:1;min-height:560px;grid-template-rows:minmax(0,1fr)}
   .left{min-height:0}
   .tests-panel{flex:none}
-  /* Two panels share this column, three in Create, so the editor starts a
-     little shorter there and the lists below split what is left, Results
-     taking the larger share. None can be squeezed away: the floors here are
-     what keeps the page itself from ever scrolling. The clamps in layout.js
-     hold the floors; these are only where a column the user has not dragged
-     begins. */
-  :root{--editor-h:30vh}
-  :root[data-mode="explore"]{--editor-h:38vh}
+  /* The editor and Results share this column, in Explore and Create alike.
+     Neither can be squeezed away: the floors here are what keeps the page
+     itself from ever scrolling. The clamps in layout.js hold the floors; these
+     are only where a column the user has not dragged begins. */
+  :root{--editor-h:38vh}
   .results-panel{flex:1 1 130px;min-height:130px}
-  /* Its own handle sets the height, and Results takes whatever is left over.
-     It still gives way when the window is short, down to the floor below. */
-  .create-panel{height:var(--create-h);min-height:100px}
-  /* Explore has only Results below the editor, so a collapsed Results leaves
-     nothing to take the room: the editor takes it, as it does when both lists
-     are down to a row. */
-  :root[data-mode="explore"] .left[data-results="collapsed"] .tests-panel{flex:1 1 auto;min-height:0}
-  :root[data-mode="explore"] .left[data-results="collapsed"] .editor{flex:1 1 auto;height:auto}
-  :root[data-mode="explore"] .left[data-results="collapsed"] #rowResizer{visibility:hidden}
+  /* A collapsed Results leaves nothing below to take the room: the editor
+     takes it. */
+  .left[data-results="collapsed"] .tests-panel{flex:1 1 auto;min-height:0}
+  .left[data-results="collapsed"] .editor{flex:1 1 auto;height:auto}
+  .left[data-results="collapsed"] #rowResizer{visibility:hidden}
   /* ...but only while there is an editor to fill it. With the code folded too,
      growing the Tests panel would stretch it over a hidden editor, which is the
      blank this rule exists to avoid, so the column ends instead. */
-  :root[data-mode="explore"] .left[data-spec="collapsed"][data-results="collapsed"] .tests-panel{flex:0 1 auto}
-  /* The code hidden, the room the Tests panel gave up goes to the list with the
-     most to show rather than stretching Results past its own rows. In Explore,
-     Results is the only list there is, so it still takes it all. Nothing is
-     left above the editor's handle to split. */
+  .left[data-spec="collapsed"][data-results="collapsed"] .tests-panel{flex:0 1 auto}
+  /* The code hidden, Results takes the room, and nothing is left above the
+     editor's handle to split. */
   .left[data-spec="collapsed"] #rowResizer{visibility:hidden}
-  /* ...unless the list that would take it is folded too, in which case Results
-     is the only one left that can, and giving the room back to it is what keeps
-     the column from ending half way down. */
-  /* Results gives way here so the mode's own list can take the room — but only
-     while it has rows to give: collapsed it is its one head, and a list long
-     enough to want the whole column (the All smells catalogue) would otherwise
-     squeeze that head out of its own panel. */
-  :root[data-mode="create"] .left[data-spec="collapsed"]:not([data-create="collapsed"], [data-results="collapsed"]) .results-panel{flex:0 1 auto}
-  :root[data-mode="create"] .left[data-spec="collapsed"]:not([data-create="collapsed"]) .create-panel{flex:1 1 auto;height:auto}
-  :root[data-mode="create"] .left[data-spec="collapsed"] #createResizer{visibility:hidden}
-  :root[data-mode="create"] .left[data-results="collapsed"]:not([data-create="collapsed"]) .create-panel{flex:1 1 auto;height:auto;min-height:0}
-  :root[data-mode="create"] .left[data-results="collapsed"][data-create="collapsed"] .tests-panel{flex:1 1 auto;min-height:0}
-  :root[data-mode="create"] .left[data-results="collapsed"][data-create="collapsed"] .editor{flex:1 1 auto;height:auto}
-  :root[data-mode="create"] .left[data-results="collapsed"][data-create="collapsed"] #rowResizer{visibility:hidden}
-  :root[data-mode="create"] .left[data-spec="collapsed"][data-results="collapsed"][data-create="collapsed"] .tests-panel{flex:0 1 auto}
-  /* With the code and both lists down to a row there is nothing left to stretch,
-     so the column simply ends rather than leaving a panel blank. */
-  /* The code modes: with Results and Console down to their head, the code
+  /* The code modes: with Results and Output down to their head, the code
      takes the room, and the handle has nothing left to split */
   .left[data-code="collapsed"] .code-tests-panel{flex:1 1 auto}
   .left[data-code="collapsed"] .code-tests-panel .code-ed{flex:1 1 auto;height:auto}
   .left[data-code="collapsed"] #codeResizer{visibility:hidden}
-  .site-btn{padding:7px 10px;width:clamp(230px, calc(100vw - 770px), 380px)}
+  /* One width whatever the example and the window: a long name is cut short */
+  .site-btn{padding:7px 10px;flex:none;width:344px}
   .site-name{flex-shrink:0}
 }
 /* ---------- Narrow screens: one column, site right after the editor ---------- */
@@ -630,7 +639,6 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   main{grid-template-columns:minmax(0,1fr);gap:12px;padding:10px max(10px,env(safe-area-inset-right,0px)) 14px max(10px,env(safe-area-inset-left,0px))}
   .left{display:contents}
   .tests-panel{order:1} .browser{order:2} .results-panel{order:3}
-  .create-panel{order:7}
   .code-tests-panel{order:1} .code-module-panel{order:2} .console-panel{order:3}
   .code-tests-panel .code-ed{flex:none;height:clamp(220px,42dvh,380px)}
   .code-module-panel .code-ed{flex:none;height:clamp(300px,60dvh,560px)}
@@ -665,16 +673,30 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .site-head{flex-direction:column;align-items:center;gap:8px;padding:10px}
   .site-head h2{justify-content:center;flex-wrap:wrap;row-gap:4px}
   .addr{margin-left:0;width:100%;justify-content:center}
-  .site-btn{width:100%;min-width:0}
-  .stepper{gap:4px}
+  /* The example takes a row of its own, the whole width: its button measures
+     nothing of its own (it is a size container), so it needs a width to be given */
+  .appbar{flex-wrap:wrap}
+  .appbar .picker{order:3;flex:1 1 100%;min-width:0;margin-left:0}
+  .site-btn{min-width:0}
   /* The screen-size toggle goes, but Site/HTML stays, at a size worth tapping */
-  .seg{display:none} .view-seg,.area-seg,.mode-seg,.smell-seg,.res-seg,.code-seg,.code-fw,.code-lang,.code-flowseg,.cov-seg{display:inline-flex}
-  .view-seg button,.area-seg button,.mode-seg button,.smell-seg button,.res-seg button,.code-seg button,.code-fw button,.code-lang button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
-  .code-lang button{padding:0 9px}
-  /* The tests' switches share their row, Reset at its end */
-  .code-tests-panel .head-actions{width:100%}
-  .code-tests-panel .head-actions>.seg{flex:1}
+  .seg{display:none} .area-seg{display:inline-grid} .view-seg,.smell-seg,.res-seg,.code-seg,.code-fw,.code-lang,.code-flowseg,.cov-seg,.cmp-fw,.cmp-lang{display:inline-flex}
+  .view-seg button,.smell-seg button,.res-seg button,.code-seg button,.code-fw button,.code-lang button,.cmp-fw button,.cmp-lang button{min-height:var(--small-tap);padding:0 12px;font-size:var(--small-font)}
+  .code-lang button,.cmp-lang button{padding:0 6px}
+  /* On a phone the frameworks are told apart by name; the languages keep their logos, their only label */
+  :is(.code-fw,.cmp-fw) button svg{display:none}
+  /* The tests' switches share a row of their own; Open large and Reset end
+     the name's row above it */
+  .code-tests-panel .head-actions{display:contents}
+  .code-tests-panel .panel-head h2{flex:1 1 calc(100% - 2 * var(--icon-tap) - 16px);min-width:0}
+  .code-tests-panel .head-actions>.icon-btn{order:1}
+  .code-tests-panel .head-actions>.seg{order:2;flex:1}
   .code-tests-panel .head-actions>.seg button{flex:1;justify-content:center}
+  /* On a phone it takes the whole screen but a sliver of the page around it */
+  .cmp-dlg{width:calc(100vw - 16px);height:calc(100dvh - 16px)}
+  .cmp-head{flex-wrap:wrap}
+  /* Stacked, the two files read one above the other */
+  .cmp-panes{grid-auto-flow:row;grid-auto-rows:minmax(0,1fr)}
+  .cmp-pane + .cmp-pane{border-left:0;border-top:1px solid var(--line)}
 
   /* The example list opens as a sheet, so it is reachable wherever the page sits */
   .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(70dvh,560px);border-radius:14px}
@@ -693,8 +715,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 
   /* Results: roomier rows, and the list scrolls inside its own panel */
   #results{max-height:70dvh}
-  #bugs,#smells{max-height:60dvh}
-  #create{max-height:46dvh}
+  #bugs,#smells,#create{max-height:60dvh}
   .test-head{gap:6px;padding:6px 8px}
   .steps li{padding:6px 10px 6px 16px}
   .warn{padding:2px 12px 4px 30px}
@@ -709,30 +730,31 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 /* ---------- Phones: one control per row rather than a crowded line ---------- */
 @media (max-width:600px){
   /* Two rows that each use the whole width: the name, then Reset, Share and the
-     repository spread across the rest of the first, then the example's list and
-     its stepper sharing the second 60/40 (the 8px gap comes off both). */
+     repository spread across the rest of the first, then the example's list
+     across the whole second. */
   .appbar{column-gap:8px}
   .appbar .spacer{display:none}
   .appbar #share,.appbar #reset,.appbar .repo-link{flex:1 1 auto;justify-content:center}
   /* The language and the mode are what every panel below answers to, so they
      take the second row between them, 60/40 like the example's row below. */
-  .appbar .area-seg{order:2;flex:1 1 calc(60% - 4px);min-width:0}
-  .appbar .mode-seg{order:2;flex:1 1 calc(40% - 4px);min-width:0}
-  .appbar :is(.area-seg,.mode-seg) button{flex:1 1 0;min-width:0;padding:0 4px}
-  /* Up to five tabs over the code modes' results (Create, Results, Console,
-     Mutation, Smells): a row of their own, shared, with what the run said and
-     the Coverage check on the row below */
-  .console-panel .panel-head{flex-wrap:wrap}
-  .console-panel .panel-head h2{flex:1 1 100%;flex-wrap:wrap;row-gap:6px;overflow:visible}
-  .console-panel .code-seg{flex:1 1 100%}
-  .console-panel .code-seg button{flex:1 1 0;min-width:0;padding:0 4px}
+  .appbar .area-seg{order:2;flex:1 1 100%;min-width:0}
+  .appbar .area-seg button{flex:1 1 0;min-width:0;padding:0 4px}
+  /* The Results panels' heads: the tabs fill the first row, and what the run
+     said (with its circles) shares the second with Coverage and the fold. In
+     Site the fold ends the tabs' row, and the second row is only there while
+     the run has something to say. The heading stops being a box of its own
+     so its parts can sit in those rows. */
+  :is(.results-panel,.console-panel) .panel-head{flex-wrap:wrap;row-gap:6px}
+  :is(.results-panel,.console-panel) .panel-head h2{display:contents}
+  :is(.res-seg,.code-seg){flex:1 1 auto;min-width:0}
+  :is(.res-seg,.code-seg) button{flex:1 1 0;min-width:0;padding:0 4px}
+  .console-panel .code-seg{flex-basis:100%}
+  .results-panel .head-actions{order:1}
+  .results-panel .run-said{order:2;flex:1 1 100%}
+  .console-panel .run-said{flex:1 1 0}
   .console-panel .head-actions{margin-left:auto}
-  .appbar .picker{order:3;flex:1 1 calc(60% - 4px);min-width:0;margin-left:0}
-  .appbar .stepper{order:4;flex:1 1 calc(40% - 4px);min-width:0;justify-content:space-between}
-  /* The stepper has a share of the row rather than its natural width, so its
-     arrows and count give up what they can spare. */
-  .appbar .stepper .icon-btn{width:36px}
-  .site-count{min-width:0;font-size:12.5px}
+  .run-said:not(:has(> :not(:empty))){display:none}
+  .appbar .picker{order:3;flex:1 1 100%;min-width:0;margin-left:0}
   /* The site panel's head fills its rows the same way. Its controls stop being a
      row of their own (`display:contents`) so the reload can end the first row
      beside the page and its category, leaving the whole second to Site/HTML. */
@@ -745,17 +767,17 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .site-head .view-seg{flex:1 1 100%}
   .site-head .view-seg button{flex:1 1 0;min-width:0}
 
-  /* Run is the primary target, so it takes whatever room the row has spare */
+  /* Run tests (Stop while running) is the primary target, so it takes whatever
+     room the row has spare */
   .toolbar #run{flex:1 1 auto}
   .toolbar .opts{width:100%;margin-left:0;gap:8px}
   .toolbar .opts .field{flex:1 1 150px;justify-content:space-between}
   .toolbar .opts select{flex:1 1 auto;min-width:0}
-  /* The code modes': Run, Stop and Repeat share a row. What runs the tests is
+  /* The code modes': Run tests and Repeat share a row. What runs the tests is
      left out (Results says when it is downloading); only a failure takes a row */
-  .code-tests-panel .toolbar{display:grid;grid-template-columns:1fr 1fr auto}
+  .code-tests-panel .toolbar{display:grid;grid-template-columns:1fr auto}
   .code-tests-panel .toolbar > button{min-width:0;justify-content:center}
   .code-tests-panel .code-state{grid-column:1/-1;margin-left:0}
   .code-tests-panel .code-state:not(.bad){display:none}
-  .results-panel .head-actions{flex-wrap:wrap}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}

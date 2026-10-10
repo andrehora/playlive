@@ -9,6 +9,57 @@ const overflow = page => page.evaluate(() => document.documentElement.scrollHeig
 const ready = (page, label = /^(JavaScript \(.+\)|TypeScript [\d.]+) · (Jasmine|Mocha) \d/) => codeReady(page, label);
 
 test.describe('JS/TS mode', () => {
+  test('the tests open large, and Compare puts another framework beside them', async ({ page }) => {
+    const { errors } = await openApp(page, { mode: 'python' });
+    const dlg = page.locator('#cmp'), mine = page.locator('#cmpMine'), other = page.locator('#cmpOther');
+    const pressed = (pane, sel) => expect(pane.locator(sel)).toHaveAttribute('aria-pressed', 'true');
+    // Python: pytest first, with the Tests panel's own switches, and no list to pick from
+    await page.click('#codeTestsOpen');
+    await expect(dlg).toBeVisible();
+    await expect(dlg.locator('select')).toHaveCount(0);
+    await pressed(mine, '[data-lang="python"]');
+    await pressed(mine, '[data-fw="pytest"]');
+    await expect(mine.locator('.cmp-code')).toContainText('import pytest');
+    await expect(other).toBeHidden();
+    // Compare: unittest beside it by default
+    await page.click('#cmpCompare');
+    await pressed(other, '[data-fw="unittest"]');
+    await expect(other.locator('.cmp-code')).toContainText('import unittest');
+    // Diff marks, on both sides, what the other lacks, and only while checked
+    await expect(dlg.locator('.l.diff')).toHaveCount(0);
+    await page.check('#cmpDiff');
+    await expect(mine.locator('.l.diff mark', { hasText: 'pytest' }).first()).toBeVisible();
+    await expect(other.locator('.l.diff mark', { hasText: 'assertEqual' }).first()).toBeVisible();
+    await expect(mine.locator('.l.diff', { hasText: 'import pytest' })).toHaveCount(1);
+    await page.uncheck('#cmpDiff');
+    await expect(dlg.locator('.l.diff')).toHaveCount(0);
+    // Either side changes: TypeScript keeps no pytest, so it opens on Jasmine; then Mocha
+    await other.locator('[data-lang="ts"]').click();
+    await pressed(other, '[data-fw="jasmine"]');
+    await other.locator('[data-fw="mocha"]').click();
+    await expect(other.locator('.code-file')).toHaveText('calculator.test.ts');
+    await expect(other.locator('.cmp-code')).toContainText('from "chai"');
+    await mine.locator('[data-fw="unittest"]').click();
+    await expect(mine.locator('.cmp-code')).toContainText('import unittest');
+    await page.keyboard.press('Escape');
+    await expect(dlg).toBeHidden();
+    // The modal never changed the panel's own choice
+    await expect(page.locator('.code-fw [data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
+
+    // JavaScript: Jasmine, and Mocha beside it; your edits are what is shown
+    await setMode(page, 'javascript');
+    await page.locator('#codeTestsEd textarea').fill('// mine\n');
+    await page.click('#codeTestsOpen');
+    await expect(mine.locator('.cmp-code')).toHaveText('// mine');
+    await page.click('#cmpCompare');
+    await pressed(other, '[data-lang="js"]');
+    await pressed(other, '[data-fw="mocha"]');
+    await expect(other.locator('.cmp-code')).toContainText('require("chai")');
+    await page.click('#cmpClose');
+    await expect(dlg).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+
   test('has the code panels, its own examples, and Jasmine on JavaScript first', async ({ page }) => {
     const { errors } = await openApp(page);
     await setMode(page, 'javascript');
@@ -18,7 +69,7 @@ test.describe('JS/TS mode', () => {
 
     await expect(page.locator('#siteName')).toHaveText('Calculator');
     await expect(page.locator('#siteCount')).toHaveText('1 of 63');
-    await expect(page.locator('#codeTitle')).toHaveText('JavaScript code');
+    await expect(page.locator('#codeTitle')).toHaveText('JS source');
     await expect(page.locator('#codeFile')).toHaveText('calculator.js');
     await expect(page.locator('#codeTestsFile')).toHaveText('calculator.spec.js');
     await expect(page.locator('.code-fw [data-fw="jasmine"]')).toHaveAttribute('aria-pressed', 'true');
@@ -32,7 +83,7 @@ test.describe('JS/TS mode', () => {
     await expect(page.locator('#codeTestsFile')).toHaveText('calculator.test.js');
     await expect(page.locator('#codeTestsEd textarea')).toHaveValue(/require\("chai"\)/);
     await page.click('.code-lang [data-lang="ts"]');
-    await expect(page.locator('#codeTitle')).toHaveText('TypeScript code');
+    await expect(page.locator('#codeTitle')).toHaveText('TS source');
     await expect(page.locator('#codeFile')).toHaveText('calculator.ts');
     await expect(page.locator('#codeTestsEd textarea')).toHaveValue(/import \{ expect \} from "chai"/);
 
@@ -385,7 +436,7 @@ describe("Mine", () => {
     await tests.fill('import { expect } from "chai";\n\ndescribe("Forever", () => {\n  it("loops", () => {\n    while (true) {}\n  });\n});\n');
     await page.click('#codeRun');
     await page.waitForTimeout(500);
-    await page.click('#codeStop');
+    await page.click('#codeRun');
     await expect(page.locator('#codeSummary')).toHaveText('Stopped. 0 of 1 test passed.');
     await tests.fill('import { expect } from "chai";\n\ndescribe("Quick", () => {\n  it("passes", () => {\n    expect(1).to.equal(1);\n  });\n});\n');
     await ready(page, /TypeScript/);

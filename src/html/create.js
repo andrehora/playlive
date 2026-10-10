@@ -9,16 +9,16 @@ import { band, plural } from '../util.js';
 
 /* ---------- Create: write the example's tests yourself ----------
 
-   Every other mode hands you a file that already works and asks a question
-   about it. This one takes the file away. The editor starts as nothing but the
-   titles of the tests the example ships, written as comments, and the panel
-   says how many of them are still yours to write.
+   Every other tab of the Results panel asks a question about a file that
+   already works. This one takes the file away: while it is open the editor holds
+   nothing but the titles of the tests the example ships, written as comments,
+   and the tab says how many of them are still yours to write.
 
    The titles are the whole brief, and that is deliberate: "Shows an error for a
    missing ZIP" says what the test must prove without saying which control to
    click, which is the part worth working out. The example's real tests are
-   still there — they are what every other mode is reading — so the answer is
-   one mode away rather than hidden, and the panel's job is to say how far you
+   still there — they are what every other tab is reading — so the answer is
+   one tab away rather than hidden, and the tab's job is to say how far you
    have got, not to grade you.
 
    A test is done when it carries the example's title **exactly** and makes the
@@ -30,9 +30,10 @@ import { band, plural } from '../util.js';
    count on neither side, for the same reason they do not count in the Unknown
    Test smell: they are not what this test claims.
 
-   It is the one mode that changes what the editor holds, so it keeps a file per
+   It is the one tab that changes what the editor holds, so it keeps a file per
    site of its own (`createTests` in html/sites.js) and gives the other one back on
-   the way out.                                                                */
+   the way out. Underneath it is still a mode ("create"; modes.js), which is what
+   the tab chooses.                                                                */
 
 // The titles an example ships, in file order — except the titles of tests that
 // check nothing. A brief is "prove this", and a test with no check of its own
@@ -121,10 +122,9 @@ function lineOf(lines, title, done){
   return i;
 }
 
-/* ---------- The panel ---------- */
+/* ---------- The tab ---------- */
 export const createEl = $id('create'), createScore = $id('createScore');
-const createPanel = createEl.closest('.panel');
-const foldCreateBtn = $id('foldCreate');
+const createPanel = $id('createTab');
 const GROUPS = [
   ['todo', 'TODO', 'No test with this title yet'],
   ['nocheck', 'DOING', 'Missing some of the original checks'],
@@ -165,17 +165,3 @@ export function renderCreate(){
 // What is missing is the group's name, so the row says only how far it is
 const row = i => lineRow('create', { what: i.title, detail: i.state === 'todo' ? '' : plural(i.steps, 'step'),
   go: i.line >= 0 && (() => jumpToLine(i.line)), title: i.state === 'todo' ? 'Go to its comment' : 'Go to the test', label: `Go to ${i.title}` });
-
-/* ---------- Folding ---------- */
-let folded = false;
-export function setCreateFolded(f){
-  folded = f;
-  createEl.hidden = f;
-  $id('left').dataset.create = f ? 'collapsed' : 'open';
-  foldCreateBtn.setAttribute('aria-expanded', String(!f));
-  foldCreateBtn.setAttribute('aria-label', f ? 'Expand the list' : 'Collapse the list');
-  foldCreateBtn.title = f ? 'Show tests' : 'Hide tests';
-  $id('foldCreateIcon').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
-}
-foldCreateBtn.addEventListener('click', () => setCreateFolded(!folded));
-setCreateFolded(false);

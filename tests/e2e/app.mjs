@@ -69,10 +69,9 @@ export async function setSpeed(page, value){
   await page.selectOption('#speed', value);
 }
 
-// The mode is chosen in the app bar, and it is what decides which panels the
-// left column has: Create is the one that brings a panel of its own in. The
-// bar asks Code or Site, then Explore or Create; in Code, the Tests panel's
-// switch picks the language ("javascript" here is its JavaScript).
+// The mode decides what the editor holds. The bar asks Code or Site; in Site,
+// the Results panel's Create tab is Create and any other tab Explore; in Code,
+// the Tests panel's switch picks the language ("javascript" here is its JavaScript).
 export async function setMode(page, value){
   const area = ['python', 'javascript'].includes(value) ? 'code' : 'html';
   await page.click(`.area-seg [data-area="${area}"]`);
@@ -83,8 +82,11 @@ export async function setMode(page, value){
     await expect(page.locator(`.code-lang [data-lang="${lang}"]`)).toHaveAttribute('aria-pressed', 'true');
     return;
   }
-  await page.click(`.mode-seg [data-mode="${value}"]`);
-  await expect(page.locator(`.mode-seg [data-mode="${value}"]`)).toHaveAttribute('aria-pressed', 'true');
+  // Create is the Results panel's Create tab, and Explore any other tab
+  const tab = value === 'create' ? 'create' : 'results';
+  await page.click(`.res-seg [data-resview="${tab}"]`);
+  await expect(page.locator(`.res-seg [data-resview="${tab}"]`)).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('html')).toHaveAttribute('data-mode', value);
 }
 
 // Mutation and Smells are tabs beside Results.
@@ -93,11 +95,13 @@ export async function setTab(page, value){
   await expect(page.locator(`.res-seg [data-resview="${value}"]`)).toHaveAttribute('aria-pressed', 'true');
 }
 
-// Presses Run and waits for the run to finish (the button comes back).
-export async function runAll(page, { timeout = RUN_TIMEOUT } = {}){
-  await page.click('#run');
-  await expect(page.locator('#run')).toBeDisabled();
-  await expect(page.locator('#run')).toBeEnabled({ timeout });
+// Presses a button that starts a run (Run tests unless told) and waits for
+// that run to end. Run tests is Stop meanwhile, so it never disables.
+export async function runAll(page, { timeout = RUN_TIMEOUT, click = '#run' } = {}){
+  const before = await page.evaluate(() => window.playlive.runs());
+  await page.click(click);
+  await expect.poll(() => page.evaluate(() => window.playlive.runs()), { timeout }).toBeGreaterThan(before);
+  await expect(page.locator('#run .lbl')).toHaveText('Run tests');
   return readResults(page);
 }
 

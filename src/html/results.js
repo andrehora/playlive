@@ -40,13 +40,15 @@ export function renderResults(tests){
   updateFoldAll();
   syncUI();
 }
-/* ---------- Results, Mutation or Smells: one panel, three tabs ----------
-   The two graders answer questions about the tests on screen, so they sit
-   beside the run rather than in modes of their own, as in the code modes. The
-   tab is about this browser and costs nothing to choose again, so it is never
-   stored. The panels behind the other two tabs listen for the change. */
+/* ---------- Create, Results, Mutation or Smells: one panel, four tabs ----------
+   The graders answer questions about the tests on screen, so they sit beside
+   the run rather than in modes of their own, as in the code modes. Create is
+   the one that changes the editor's file, so choosing it, or leaving it, also
+   changes the mode (modes.js listens). The tab is about this browser and costs
+   nothing to choose again, so it is never stored. The panels behind the other
+   tabs listen for the change. */
 export let resultsTab = 'results';
-const TABS = { results: resultsEl, mutation: $id('bugTab'), smells: $id('smellTab') };
+const TABS = { create: $id('createTab'), results: resultsEl, mutation: $id('bugTab'), smells: $id('smellTab') };
 export function setResultsTab(v){
   resultsTab = TABS[v] ? v : 'results';
   for (const [k, el] of Object.entries(TABS)) el.hidden = k !== resultsTab;

@@ -28,7 +28,8 @@ function renderExampleTabs(){
   const startGroup = title => {
     group = document.createElement('div'); group.className = 'pop-group';
     const head = document.createElement('div'); head.className = 'pop-cat';
-    head.innerHTML = catIconSvg('Code') + '<span></span>';
+    // Every code example is code, so its groups need no icon to say so
+    head.innerHTML = '<span></span>';
     head.lastChild.textContent = title;
     head.style.setProperty('--cat', CODE_ACCENT);
     group.appendChild(head);
@@ -48,9 +49,7 @@ function renderExampleTabs(){
 function setExampleView(id){
   const p = profile();
   tabsEl.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === id)));
-  const swatch = $id('siteSwatch');
-  swatch.innerHTML = catIconSvg('Code');
-  swatch.style.setProperty('--cat', CODE_ACCENT);
+  $id('siteSwatch').innerHTML = '';
   $id('siteName').textContent = p.examples[id].name;
   // What the example teaches, beside its name
   $id('siteGoal').textContent = p.examples[id].teaches;
@@ -147,6 +146,10 @@ function openPicker(){
   sitePop.hidden = false; siteBtn.setAttribute('aria-expanded', 'true');
   siteSearch.value = ''; filterSites('');
   siteSearch.focus({ preventScroll: true });
+  showCurrent();
+}
+// The example showing, in the middle of the list
+function showCurrent(){
   const cur = tabsEl.querySelector('.tab[aria-pressed="true"]');
   if (cur) tabsEl.scrollTop = cur.offsetTop - tabsEl.clientHeight / 2;
 }
@@ -176,6 +179,7 @@ function stepSite(d){
   if (list.length < 2) return;
   const i = list.indexOf(current()), next = list[(i + d + list.length) % list.length];
   if (profile()) selectExample(next); else selectSite(next);
+  if (!sitePop.hidden) showCurrent();
 }
 $id('prevSite').addEventListener('click', () => stepSite(-1));
 $id('nextSite').addEventListener('click', () => stepSite(1));

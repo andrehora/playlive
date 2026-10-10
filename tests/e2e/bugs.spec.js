@@ -186,8 +186,8 @@ test.describe('Bugs', () => {
     await setSpeed(page, 'slow');
     await page.click('#run');
     await expect(page.locator('#hunt')).toBeDisabled();
-    await page.click('#stop');
-    await expect(page.locator('#run')).toBeEnabled({ timeout: RUN_TIMEOUT });
+    await page.click('#run');
+    await expect(page.locator('#run .lbl')).toHaveText('Run tests', { timeout: RUN_TIMEOUT });
     await expect(page.locator('#hunt')).toBeEnabled();
 
     // And a hunt that will not start puts its own button back: the click

@@ -19,3 +19,9 @@ export function runSummary({ ran, passed, secs, stopped = false }){
   if (passed === ran) return { text: `${ran === 1 ? 'The test' : `All ${ran} tests`} passed in ${secs}s`, ok: true };
   return { text: `${ran - passed} of ${ran} ${noun(ran)} failed (${secs}s)`, ok: false };
 }
+// A button that changes its label while it works (Run tests to Stop) keeps the
+// width it had, so nothing beside it moves; it lets go once it is back.
+export function holdWidth(btn, hold){
+  if (!hold) btn.style.minWidth = '';
+  else if (!btn.style.minWidth && btn.offsetWidth) btn.style.minWidth = `${btn.offsetWidth}px`;
+}

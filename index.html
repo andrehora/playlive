@@ -25,39 +25,36 @@
     </a>
     <div class="seg area-seg" role="group" aria-label="What to test">
       <button type="button" data-area="code" aria-pressed="true"
-        title="Unit tests in Python, JavaScript or TypeScript">Code</button>
+        title="Unit tests in Python, JavaScript or TypeScript">Unit</button>
       <button type="button" data-area="html" aria-pressed="false"
-        title="End-to-end tests on example sites">Site</button>
-    </div>
-    <div class="seg mode-seg" role="group" aria-label="Mode">
-      <button type="button" data-mode="explore" aria-pressed="true"
-        title="Read and run tests">Explore</button>
-      <button type="button" data-mode="create" aria-pressed="false" aria-disabled="true"
-        title="Not yet for this language">Create</button>
+        title="End-to-end tests on example sites">E2E</button>
     </div>
     <div class="picker">
-      <button id="siteBtn" type="button" class="site-btn" aria-haspopup="true" aria-expanded="false"
-        aria-controls="sitePop" title="Choose an example"><span class="swatch" id="siteSwatch"
-          aria-hidden="true"></span><span id="siteName" class="site-name"></span><span id="siteGoal" class="site-goal"></span><span class="tres"
-          aria-hidden="true"></span><svg class="i caret" viewBox="0 0 24 24">
-          <path d="M6 9l6 6 6-6" />
-        </svg></button>
+      <!-- The arrows step through the list without opening it, inside its box -->
+      <div class="picker-box">
+        <button id="prevSite" type="button" class="ghost step-btn" aria-label="Previous example"
+          title="Previous example"><svg class="i" viewBox="0 0 24 24">
+            <path d="M15 6l-6 6 6 6" />
+          </svg></button>
+        <button id="siteBtn" type="button" class="site-btn" aria-haspopup="true" aria-expanded="false"
+          aria-controls="sitePop" title="Choose an example"><span class="swatch" id="siteSwatch"
+            aria-hidden="true"></span><span id="siteName" class="site-name"></span><span id="siteGoal" class="site-goal"></span><span class="tres"
+            aria-hidden="true"></span><svg class="i caret" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg></button>
+        <button id="nextSite" type="button" class="ghost step-btn" aria-label="Next example" title="Next example"><svg
+            class="i" viewBox="0 0 24 24">
+            <path d="M9 6l6 6-6 6" />
+          </svg></button>
+      </div>
       <div class="pop" id="sitePop" hidden>
-        <input id="siteSearch" type="search" aria-label="Search examples" autocomplete="off" spellcheck="false">
+        <div class="pop-head">
+          <input id="siteSearch" type="search" aria-label="Search examples" autocomplete="off" spellcheck="false">
+          <span class="site-count" id="siteCount"></span>
+        </div>
         <div class="pop-list" id="tabs" role="group" aria-label="Example sites"></div>
         <p class="pop-empty" id="popEmpty" hidden>No examples match.</p>
       </div>
-    </div>
-    <div class="stepper">
-      <button id="prevSite" type="button" class="ghost icon-btn" aria-label="Previous example"
-        title="Previous example"><svg class="i" viewBox="0 0 24 24">
-          <path d="M15 6l-6 6 6 6" />
-        </svg></button>
-      <span class="site-count" id="siteCount"></span>
-      <button id="nextSite" type="button" class="ghost icon-btn" aria-label="Next example" title="Next example"><svg
-          class="i" viewBox="0 0 24 24">
-          <path d="M9 6l6 6-6 6" />
-        </svg></button>
     </div>
     <span class="spacer"></span>
     <button id="reset" type="button" class="ghost small" aria-label="Reset"
@@ -110,10 +107,8 @@
               <path class="ic-play" d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none" />
               <path class="ic-next" d="M5 4.5v15l10-7.5zM16.5 4.5h2.5v15h-2.5z" fill="currentColor" stroke="none"
                 hidden />
-            </svg><span class="lbl">Run</span></button>
-          <button id="stop" type="button" disabled title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24">
-              <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" />
-            </svg>Stop</button>
+              <rect class="ic-stop" x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" hidden />
+            </svg><span class="lbl">Run tests</span></button>
           <button id="record" type="button" title="Record your actions as steps"><span class="rec-dot"
               aria-hidden="true"></span><span class="lbl">Record</span></button>
           <div class="opts">
@@ -146,8 +141,10 @@
                 title="Mutation testing">Mutation</button>
               <button type="button" data-resview="smells" aria-pressed="false"
                 title="Find smells in the tests">Smells</button>
-            </span><span id="summary" aria-live="polite"></span><span id="runDots" class="sdots"
-              aria-hidden="true"></span></h2>
+              <button type="button" data-resview="create" aria-pressed="false"
+                title="Write tests from their titles">Create</button>
+            </span><span class="run-said"><span id="summary" aria-live="polite"></span><span id="runDots"
+                class="sdots" aria-hidden="true"></span></span></h2>
           <div class="head-actions">
             <button id="foldAll" type="button" class="ghost icon-btn" aria-label="Collapse the panel"><svg class="i"
                 viewBox="0 0 24 24" aria-hidden="true">
@@ -155,6 +152,10 @@
               </svg></button>
           </div>
           <div class="progress" id="progress" hidden><span></span></div>
+        </div>
+        <div class="res-tab create-tab" id="createTab" hidden>
+          <div class="mut-head"><span id="createScore" aria-live="polite"></span></div>
+          <div id="create"></div>
         </div>
         <div id="results"></div>
         <div class="res-tab bugs-tab" id="bugTab" hidden>
@@ -175,27 +176,16 @@
           <div id="smells"></div>
         </div>
       </section>
-      <div class="resizer row-resizer" id="createResizer" role="separator" aria-orientation="horizontal"
-        aria-label="Resize the create panel" tabindex="0" title="Drag to resize"></div>
-      <section class="panel create-panel">
-        <div class="panel-head">
-          <h2>Create <span id="createScore" aria-live="polite"></span></h2>
-          <div class="head-actions">
-            <button id="foldCreate" type="button" class="ghost icon-btn" aria-expanded="true"
-              aria-controls="create"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
-                <path id="foldCreateIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
-              </svg></button>
-          </div>
-          <div class="scorebar" id="createBar" hidden><span></span></div>
-        </div>
-        <div id="create"></div>
-      </section>
       <section class="panel code-tests-panel code-panel">
         <div class="panel-head">
           <h2>Tests <span class="code-file" id="codeTestsFile"></span> <span id="codeCount" class="file-status" aria-live="polite"></span></h2>
           <div class="head-actions">
             <div class="seg code-lang" role="group" aria-label="Language"></div>
             <div class="seg code-fw" role="group" aria-label="Test framework"></div>
+            <button id="codeTestsOpen" type="button" class="ghost icon-btn" aria-label="Open the tests large"
+              title="Open large"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg></button>
             <button id="codeTestsReset" type="button" class="ghost icon-btn" aria-label="Reset the tests"
               title="Reset the tests"><svg class="i" viewBox="0 0 24 24"
               aria-hidden="true">
@@ -214,11 +204,9 @@
         </div>
         <div class="toolbar">
           <button id="codeRun" class="primary" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none" />
-            </svg><span class="lbl">Run</span></button>
-          <button id="codeStop" type="button" disabled title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24">
-              <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" />
-            </svg>Stop</button>
+              <path class="ic-play" d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none" />
+              <rect class="ic-stop" x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" hidden />
+            </svg><span class="lbl">Run tests</span></button>
           <label class="field">Repeat
             <select id="codeRepeat">
               <option value="1">1×</option>
@@ -234,18 +222,18 @@
       <section class="panel console-panel code-panel">
         <div class="panel-head">
           <h2><span class="seg code-seg" role="group" aria-label="What to show">
-              <button type="button" data-codetab="create" aria-pressed="false" hidden
-                title="The tests to write">Create</button>
               <button type="button" data-codetab="results" aria-pressed="true"
                 title="Test results">Results</button>
               <button type="button" data-codetab="console" aria-pressed="false"
-                title="Test output">Console</button>
+                title="Test output">Output</button>
               <button type="button" data-codetab="mutation" aria-pressed="false" hidden
                 title="Mutation testing">Mutation</button>
               <button type="button" data-codetab="smells" aria-pressed="false" hidden
                 title="Smells in these tests">Smells</button>
-            </span><span id="codeSummary" aria-live="polite"></span><span id="codeDots" class="sdots"
-              aria-hidden="true"></span></h2>
+              <button type="button" data-codetab="create" aria-pressed="false" hidden
+                title="Write tests from their names">Create</button>
+            </span><span class="run-said"><span id="codeSummary" aria-live="polite"></span><span id="codeDots"
+                class="sdots" aria-hidden="true"></span></span></h2>
           <div class="head-actions">
             <label class="cov-toggle" title="Show coverage in the code"><input type="checkbox"
                 id="codeCovShow">Coverage</label>
@@ -259,7 +247,7 @@
         </div>
         <div id="codeCreate" class="code-mutation" hidden></div>
         <div id="codeResults" class="code-results"></div>
-        <pre id="codeConsole" class="code-console" tabindex="0" aria-label="Console output" hidden></pre>
+        <pre id="codeConsole" class="code-console" tabindex="0" aria-label="Output" hidden></pre>
         <div id="codeMutation" class="code-mutation" hidden></div>
         <div id="codeSmells" class="code-mutation" hidden></div>
       </section>
@@ -375,6 +363,34 @@
     <pre id="dlgText" class="code-view" tabindex="0" aria-label="Exported code"></pre>
     <div class="dlg-foot"><button id="dlgCopy" class="primary" type="button">Copy</button><span id="dlgCopied"
         aria-live="polite"></span></div>
+  </dialog>
+  <!-- The code modes' tests, large, and beside them another framework's or language's -->
+  <dialog id="cmp" class="cmp-dlg" aria-labelledby="cmpTitle">
+    <div class="cmp-panes">
+      <section class="cmp-pane" id="cmpMine">
+        <div class="cmp-head">
+          <h2 id="cmpTitle">Tests <span class="code-file"></span> <span class="file-status cmp-count"></span></h2>
+          <div class="seg cmp-lang" role="group" aria-label="Language"></div>
+          <div class="seg cmp-fw" role="group" aria-label="Test framework"></div>
+        </div>
+        <pre class="cmp-code code-view" tabindex="0"></pre>
+      </section>
+      <section class="cmp-pane" id="cmpOther" hidden>
+        <div class="cmp-head">
+          <h2>Tests <span class="code-file"></span> <span class="file-status cmp-count"></span></h2>
+          <div class="seg cmp-lang" role="group" aria-label="Language to compare with"></div>
+          <div class="seg cmp-fw" role="group" aria-label="Test framework to compare with"></div>
+          <label class="cov-toggle" title="Mark what differs"><input type="checkbox" id="cmpDiff">Diff</label>
+        </div>
+        <pre class="cmp-code code-view" tabindex="0"></pre>
+      </section>
+    </div>
+    <!-- Ends the head of the last side showing (code/compare.js moves it) -->
+    <div class="cmp-actions">
+      <button id="cmpCompare" type="button" class="small" aria-pressed="false"
+        title="Show another framework beside these">Compare</button>
+      <button id="cmpClose" type="button" class="ghost small">Close</button>
+    </div>
   </dialog>
   <script type="module" src="src/main.js"></script>
 </body>

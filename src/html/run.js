@@ -1,6 +1,6 @@
 import { ACTIONS } from './actions.js';
 import { harvest } from './catalog.js';
-import { $id, KEY, errorEl, recBar, recordBtn, reloadBtn, resetBtn, resultsEl, runBtn, specEl, speed, speedMode, stopBtn, summaryEl, tabsEl } from '../dom.js';
+import { $id, KEY, errorEl, recBar, recordBtn, reloadBtn, resetBtn, resultsEl, runBtn, specEl, speed, speedMode, summaryEl, tabsEl } from '../dom.js';
 import { lineForStep, setCurrentLine, setFileStatus } from './editor.js';
 import { describeStep, followInResults } from './find.js';
 import { renderHtmlView } from './htmlview.js';
@@ -13,7 +13,7 @@ import { markStep, renderResults } from './results.js';
 import { loadApp, pageErrors, persist } from './sites.js';
 import { TIMEOUT, editorSite, hunting, mode, previewTimer, recording, running, setLastEl, setRunning, setStepTimeout, setStopRequested, stopRequested } from '../state.js';
 import { setProgress, setSiteStatus } from '../ui.js';
-import { runSummary, sleep } from '../util.js';
+import { holdWidth, runSummary, sleep } from '../util.js';
 
 /* ---------- Running ---------- */
 export function withUnique(step, unique){
@@ -28,6 +28,8 @@ export function withUnique(step, unique){
 // panel still shows how long the run is and how far it has got.
 const dots = (box, n) => { box.innerHTML = '<i class="todo"></i>'.repeat(n); };
 
+// How many runs have ended, so a test can wait for the next one to
+export let runsDone = 0;
 export let nextResolve = null;
 // Step by step: the Run button turns into Next step and waits for a click (or Ctrl/⌘+Enter)
 function waitNext(){ return new Promise(res => { nextResolve = res; syncUI(); runBtn.focus({ preventScroll: true }); }); }
@@ -157,19 +159,23 @@ export async function run(only){
   setProgress(stopRequested ? null : 1, allOk ? 'ok' : 'bad');
   if (!stopRequested && only === undefined && !hunting) setSiteStatus(editorSite, allOk);
   if (!stopRequested && passed < ran){ const f = resultsEl.querySelector('li.failed'); if (f) followInResults(f); }
-  setRunning(false); setCurrentLine(-1); syncUI();
+  setRunning(false); setCurrentLine(-1); runsDone++; syncUI();
   return { ran, passed, records, stopped: stopRequested };
 }
 
 export function syncUI(){
   const busy = running || recording || hunting;
   const stepping = running && speedMode() === 'step';
-  runBtn.disabled = busy && !nextResolve;
-  runBtn.querySelector('.lbl').textContent = stepping ? 'Next step' : 'Run';
-  runBtn.querySelector('.ic-play').toggleAttribute('hidden', stepping);
+  // While the tests run, Run is Stop; step by step it is Next step, and Esc stops
+  const stops = running && !stepping;
+  holdWidth(runBtn, stops);                 // Stop is as wide as Run tests was
+  runBtn.disabled = (busy && !running) || (stepping && !nextResolve);
+  runBtn.classList.toggle('primary', !stops);
+  runBtn.querySelector('.lbl').textContent = stepping ? 'Next step' : stops ? 'Stop' : 'Run tests';
+  runBtn.querySelector('.ic-play').toggleAttribute('hidden', stepping || stops);
   runBtn.querySelector('.ic-next').toggleAttribute('hidden', !stepping);
-  runBtn.title = stepping ? `Run the next step (${KEY}+Enter)` : `Run all tests (${KEY}+Enter)`;
-  stopBtn.disabled = !running;
+  runBtn.querySelector('.ic-stop').toggleAttribute('hidden', !stops);
+  runBtn.title = stepping ? `Run the next step (${KEY}+Enter), Esc to stop` : stops ? 'Stop (Esc)' : `Run all tests (${KEY}+Enter)`;
   recordBtn.disabled = running;
   recordBtn.querySelector('.lbl').textContent = recording ? 'Stop recording' : 'Record';
   recordBtn.classList.toggle('recording', recording);

@@ -3,7 +3,7 @@ import { LOGOS } from './logos.js';
 import { syncUrl } from '../share.js';
 import { mode, setCodeExample } from '../state.js';
 import { setProgress, toast } from '../ui.js';
-import { escH, plural, runSummary } from '../util.js';
+import { escH, holdWidth, plural, runSummary } from '../util.js';
 import { CODE_MODES, LANGS, P, S, active, codeEd, creating, exampleOf, files, handlerOf, isCodeMode, isCodeCreate, job, key, label, codeModeOf, onWorker, progressEl,
   request, rt, session, sessions, setActive, setCreating, setCurrentView, setJob, shipped, testsEd, view } from './core.js';
 import { coverage, setCoverage } from './coverage.js';
@@ -117,7 +117,7 @@ function renderResults(){
     const sec = document.createElement('section');
     sec.className = 'test'; sec.dataset.state = 'error';
     sec.innerHTML = '<div class="test-head"><span></span><span class="tstate" aria-hidden="true"></span><h3></h3></div>';
-    sec.querySelector('h3').textContent = `${files().tests} did not load. The Console tab has the whole error.`;
+    sec.querySelector('h3').textContent = `${files().tests} did not load. The Output tab has the whole error.`;
     detail(sec, collectError);
     listEl.append(sec);
   }
@@ -175,8 +175,8 @@ function onTest(data){
 }
 
 
-/* ---------- Results, console or mutation: one panel, three views ---------- */
-function setView(v){
+/* ---------- Create, results, console, mutation or smells: one panel, five views ---------- */
+export function setCodeView(v){
   // All smells is read again each time the tab opens
   if (v === 'smells' && view !== 'smells' && smellView === 'all') scanAll();
   setCurrentView(v);
@@ -189,12 +189,12 @@ function setView(v){
   listMutations();
   listSmells();
 }
-document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => setView(b.dataset.codetab)));
+document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => setCodeView(b.dataset.codetab)));
 
 
 /* ---------- The console ---------- */
 const consoleEl = $id('codeConsole'), summaryEl = $id('codeSummary'), stateEl = $id('codeState');
-const runBtn = $id('codeRun'), stopBtn = $id('codeStop');
+const runBtn = $id('codeRun');
 let out = [];
 function print(line, cls = P().consoleClass(line)){
   out.push(line);
@@ -303,7 +303,13 @@ function fail(message){
 }
 // Each panel disables its own buttons while a job runs (playlive:code-job)
 function syncButtons(){
-  runBtn.disabled = !!job; stopBtn.disabled = !job;
+  // While a job runs, Run is Stop, as wide as it was
+  holdWidth(runBtn, !!job);
+  runBtn.classList.toggle('primary', !job);
+  runBtn.querySelector('.lbl').textContent = job ? 'Stop' : 'Run tests';
+  runBtn.querySelector('.ic-play').toggleAttribute('hidden', !!job);
+  runBtn.querySelector('.ic-stop').toggleAttribute('hidden', !job);
+  runBtn.title = job ? 'Stop (Esc)' : `Run tests (${KEY}+Enter)`;
   listEl.querySelectorAll('.run-one').forEach(b => { b.disabled = !!job; });
   document.dispatchEvent(new CustomEvent('playlive:code-job'));
 }
@@ -448,7 +454,7 @@ function show(){
     resetSmells();
     if (view === 'smells' && smellView === 'all') scanAll();
     renderCreate();
-    runBtn.title = `Run tests (${KEY}+Enter)`;
+    if (!job) runBtn.title = `Run tests (${KEY}+Enter)`;
   })();
 }
 // The picker, the stepper and a link all come here
@@ -494,10 +500,10 @@ export function enterCodeMode(mode){
   setActive(m); setCreating(create);
   mutationBtn.hidden = !P().mutation;
   smellsBtn.hidden = !P().smells;
-  createBtn.hidden = !creating;
+  createBtn.hidden = !P().create;
   // Create opens on its list; leaving it, the list goes with it
-  if (creating) setView('create');
-  else if ((mutationBtn.hidden && view === 'mutation') || (smellsBtn.hidden && view === 'smells') || view === 'create') setView('results');
+  if (creating) setCodeView('create');
+  else if ((mutationBtn.hidden && view === 'mutation') || (smellsBtn.hidden && view === 'smells') || view === 'create') setCodeView('results');
   // the editors keep their contents, so colour them for the language now showing
   testsEd.render(); codeEd.render();
   boot(m);
@@ -527,16 +533,19 @@ async function resetFile(which){
     const ships = await shipped(shown.id, which === 'code' ? 'code' : 'tests');
     text = which === 'tests' && shown.create ? P().skeleton(ships, files().tests) : ships;
   } catch { toast('The example did not load. Reload the page to try again.'); return; }
-  if (active !== m || S().shown !== shown || job || ed.value === text) return;
-  ed.ta.setRangeText(text, 0, ed.value.length, 'start');
-  ed.ta.dispatchEvent(new Event('input'));
-  ed.ta.scrollTop = 0;
+  if (active !== m || S().shown !== shown || job) return;
+  if (ed.value !== text){
+    ed.ta.setRangeText(text, 0, ed.value.length, 'start');
+    ed.ta.dispatchEvent(new Event('input'));
+    ed.ta.scrollTop = 0;
+  }
+  toast(which === 'code' ? 'Code reset' : 'Tests reset');
 }
 const resetBtns = { tests: $id('codeTestsReset'), code: $id('codeReset') };
 for (const [which, b] of Object.entries(resetBtns)) b.addEventListener('click', () => resetFile(which));
 document.addEventListener('playlive:code-job', () => { for (const b of Object.values(resetBtns)) b.disabled = !!job; });
 
-// Results and Console fold to their head, which still carries the summary and
+// Results and Output fold to their head, which still carries the summary and
 // the circles, and the code takes the room
 let codeFolded = false;
 function setCodeFolded(f){
@@ -550,8 +559,7 @@ function setCodeFolded(f){
 }
 $id('foldCode').addEventListener('click', () => setCodeFolded(!codeFolded));
 document.querySelector('.code-fw').addEventListener('click', e => { const b = e.target.closest('[data-fw]'); if (b) setFramework(b.dataset.fw); });
-runBtn.addEventListener('click', () => runCodeTests());
-stopBtn.addEventListener('click', stopCodeTests);
+runBtn.addEventListener('click', () => (job ? stopCodeTests() : runCodeTests()));
 document.addEventListener('keydown', e => {
   if (!isCodeMode(mode)) return;
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); runCodeTests(); }

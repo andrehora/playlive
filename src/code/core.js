@@ -9,7 +9,7 @@ import { escH } from '../util.js';
 
    Python and JS/TS are experiments beside the end-to-end modes, laid out the
    same way: the tests on the left with Run under them, what they did below
-   (Results and the runner's Console), and on the right what they test (a
+   (Results and the runner's Output), and on the right what they test (a
    module rather than a site). The example picker lists the mode's own
    examples. Both modes share these panels and this module; what differs is a
    profile (code/python/python.js, code/js/javascript.js): the examples, the frameworks, how the
@@ -140,7 +140,7 @@ function makeEditor(root){
   };
 }
 export const testsEd = makeEditor($id('codeTestsEd')), codeEd = makeEditor($id('codeEd'));
-// The bar under the Results and Console head, which every job fills
+// The bar under the Results and Output head, which every job fills
 export const progressEl = $id('codeProgress');
 
 /* ---------- Examples ---------- */

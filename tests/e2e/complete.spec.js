@@ -3,7 +3,7 @@
 // left here is the half that needs a browser — the hundred real pages, and the
 // list on screen owning its keys.
 import { test, expect } from '@playwright/test';
-import { openApp, selectSite, siteIds } from './app.mjs';
+import { openApp, runAll, selectSite, siteIds } from './app.mjs';
 
 const ids = await siteIds();
 
@@ -117,8 +117,7 @@ test.describe('In the editor', () => {
     await page.keyboard.press('Enter');
 
     await page.selectOption('#speed', 'fast');
-    await page.click('#run');
-    await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
+    await runAll(page, { timeout: 60_000 });
     await expect(page.locator('#summary')).toHaveClass('ok');
   });
 

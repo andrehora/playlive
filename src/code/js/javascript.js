@@ -150,7 +150,7 @@ export const JAVASCRIPT = {
     { id: 'js', label: 'JavaScript', logo: 'javascript', title: 'JavaScript' },
     { id: 'ts', label: 'TypeScript', logo: 'typescript', title: 'TypeScript (types not checked)' }
   ],
-  codeTitle: lang => (lang === 'ts' ? 'TypeScript code' : 'JavaScript code'),
+  codeTitle: lang => (lang === 'ts' ? 'TS source' : 'JS source'),
   files: filesFor,
   highlight: hlJs,
   testsIn: testsInJs,

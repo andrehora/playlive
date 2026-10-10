@@ -1,7 +1,7 @@
 // End-to-end tests of the app itself: picker, editor, running, stopping,
 // step by step, time travel, the HTML view, recorder, export, reset, persistence, layout.
 import { test, expect } from '@playwright/test';
-import { describeFailures, openApp, readResults, runAll, selectSite, setSpeed, siteIds, siteName } from './app.mjs';
+import { describeFailures, openApp, runAll, selectSite, setSpeed, siteIds, siteName } from './app.mjs';
 
 const ids = await siteIds();
 // Home is whatever the manifest lists first, so reordering the examples cannot stale these tests.
@@ -66,7 +66,7 @@ test.describe('Site picker', () => {
     await expect(page.locator('#spec')).toHaveValue(/test: Edited/);
   });
 
-  test('Escape closes the picker and the stepper walks the list', async ({ page }) => {
+  test('Escape closes the picker and the arrows walk the list without opening it', async ({ page }) => {
     await openApp(page);
     await page.click('#siteBtn');
     await page.locator('#siteSearch').press('Escape');
@@ -80,6 +80,7 @@ test.describe('Site picker', () => {
     // The list wraps, so going back from the first lands on the last.
     await page.click('#prevSite');
     await expect(page.locator('#siteCount')).toHaveText(`${ids.length} of ${ids.length}`);
+    await expect(page.locator('#sitePop')).toBeHidden();
   });
 });
 
@@ -360,9 +361,7 @@ test.describe('Running', () => {
     const count = await page.locator('#results .test').count();
     test.skip(count < 2, 'needs a site with more than one example test');
 
-    await page.locator('#results .test .run-one').nth(1).click();
-    await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
-    const res = await readResults(page);
+    const res = await runAll(page, { click: '#results .test >> nth=1 >> .run-one', timeout: 60_000 });
     const ran = res.tests.filter(t => t.state === 'passed' || t.state === 'failed');
     expect(ran.map(t => t.title)).toEqual([res.tests[1].title]);
     expect(res.tests[1].state).toBe('passed');
@@ -370,13 +369,15 @@ test.describe('Running', () => {
     expect(res.summary).toMatch(/^The test passed/);
   });
 
-  test('Stop ends the run and says so', async ({ page }) => {
+  test('Run tests is Stop while they run, and stopping says so', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
+    await expect(page.locator('#stop')).toHaveCount(0);
+    await expect(page.locator('#run .lbl')).toHaveText('Run tests');
     await setSpeed(page, 'slow');
     await page.click('#run');
-    await expect(page.locator('#stop')).toBeEnabled();
-    await page.click('#stop');
-    await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
+    await expect(page.locator('#run .lbl')).toHaveText('Stop');
+    await page.click('#run');
+    await expect(page.locator('#run .lbl')).toHaveText('Run tests', { timeout: 60_000 });
     await expect(page.locator('#summary')).toHaveText(/^Stopped\./);
     await expect(page.locator('#summary')).toHaveClass('bad');
   });
@@ -392,9 +393,10 @@ test.describe('Running', () => {
     await page.click('#run');
     await expect(steps.first()).toHaveClass(/passed/);
 
-    await page.click('#stop');
+    // Esc stops a run going step by step
+    await page.keyboard.press('Escape');
     await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
-    await expect(page.locator('#run .lbl')).toHaveText('Run');
+    await expect(page.locator('#run .lbl')).toHaveText('Run tests');
   });
 
   test('the head lays out a circle for every test and fills them as the run goes', async ({ page }) => {
@@ -414,8 +416,8 @@ test.describe('Running', () => {
     await expect(page.locator('#runDots i').first()).toHaveAttribute('title', await page.locator('#results .test .ttl').first().textContent());
 
     // Stopped part way, the test stopped and the ones not reached stay hollow
-    await page.click('#stop');
-    await expect(page.locator('#run')).toBeEnabled({ timeout: 60_000 });
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#run .lbl')).toHaveText('Run tests', { timeout: 60_000 });
     await expect(page.locator('#runDots i')).toHaveCount(all);
     await expect(page.locator('#runDots i.todo')).toHaveCount(all);
   });
@@ -889,26 +891,22 @@ test.describe('Layout and theming', () => {
       await page.setViewportSize({ width, height: 844 });
       await openApp(page);
       const box = async sel => page.locator(sel).boundingBox();
-      const [brand, share, reset, repo, picker, stepper] =
-        await Promise.all(['.brand', '#share', '#reset', '.repo-link', '.picker', '.stepper'].map(box));
+      const [brand, share, reset, repo, picker] =
+        await Promise.all(['.brand', '#share', '#reset', '.repo-link', '.picker'].map(box));
       // First row: the name and the three icons.
       for (const [what, b] of [['Share', share], ['Reset', reset], ['the repository', repo]])
         expect(Math.abs(b.y - brand.y), `${what} is not on the brand's row at ${width}px`).toBeLessThan(20);
-      // Second row: the example and its stepper, side by side.
+      // Second row: the example.
       expect(picker.y, `the example is not on its own row at ${width}px`).toBeGreaterThan(brand.y + brand.height);
-      expect(Math.abs(stepper.y - picker.y), `the stepper left the example's row at ${width}px`).toBeLessThan(20);
 
       // Both rows use the whole bar: the names spread across the first, and the
-      // example and its stepper share the second 60/40.
+      // example takes the second.
       const bar = await box('.appbar');
-      for (const [what, row] of [['the names', [brand, repo]], ['the example', [picker, stepper]]]){
+      for (const [what, row] of [['the names', [brand, repo]], ['the example', [picker, picker]]]){
         expect(row[0].x, `${what} does not start at the edge at ${width}px`).toBeLessThan(bar.x + 14);
         expect(row[1].x + row[1].width, `${what} does not reach the edge at ${width}px`)
           .toBeGreaterThan(bar.x + bar.width - 14);
       }
-      const row2 = stepper.x + stepper.width - picker.x;
-      expect(picker.width / row2, `the example is not 60% of its row at ${width}px`).toBeCloseTo(0.6, 1);
-      expect(stepper.width / row2, `the stepper is not 40% of its row at ${width}px`).toBeCloseTo(0.4, 1);
     }
   });
 

@@ -3,13 +3,13 @@
 // here is the mode holding a file of its own, and the two files never treading
 // on each other.
 import { test, expect } from '@playwright/test';
-import { openApp, setMode, selectSite } from './app.mjs';
+import { openApp, setMode, setTab, selectSite } from './app.mjs';
 
 const SITE = 'address-form';
 const spec = page => page.inputValue('#spec');
 
 test.describe('Create', () => {
-  test('Results drops the shipped tests, and empty it still collapses and opens again', async ({ page }) => {
+  test('Results drops the shipped tests, and the Create tab still collapses and opens again', async ({ page }) => {
     await openApp(page, { site: SITE });
     await expect(page.locator('#results .test')).toHaveCount(3);
     // The titles alone do not parse, but the last list was the shipped tests:
@@ -24,7 +24,7 @@ test.describe('Create', () => {
       await expect(fold).toBeEnabled();
       const before = await results();
       await fold.click();
-      expect(await results()).toBe(before === 'collapsed' ? 'expanded' : 'collapsed');
+      expect(await results() === 'collapsed').toBe(before !== 'collapsed');
     }
   });
 
@@ -34,8 +34,9 @@ test.describe('Create', () => {
     expect(shipped).toContain('test: Saves a US address');
 
     await setMode(page, 'create');
-    // Three panels: nothing is being measured here, there is something to write.
-    await expect(page.locator('.create-panel')).toBeVisible();
+    // Create is the Results panel's last tab
+    await expect(page.locator('#createTab')).toBeVisible();
+    await expect(page.locator('#results')).toBeHidden();
 
     // The titles, as comments, and nothing else: no steps, no settings.
     await expect(page.locator('#spec')).toHaveValue('# Saves a US address\n\n# The postal field becomes Postcode for the UK\n\n# Rejects a short ZIP code\n');
@@ -95,22 +96,15 @@ test.describe('Create', () => {
       .filter(k => k.startsWith('live-test-runner') && k !== 'live-test-runner:layout'))).toEqual([]);
   });
 
-  test('the panel folds to its one row and Results takes the room back', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 1000 });
+  test('any other tab gives the example\'s tests back, and Create gives yours', async ({ page }) => {
     await openApp(page, { site: SITE, mode: 'create' });
-    const h = sel => page.locator(sel).boundingBox().then(b => Math.round(b.height));
-    const wasPanel = await h('.create-panel'), wasResults = await h('.results-panel');
-
-    await page.click('#foldCreate');
-    await expect(page.locator('#create')).toBeHidden();
-    await expect(page.locator('#createScore')).toBeVisible();      // the count stays
-    expect(await h('.create-panel')).toBeLessThanOrEqual(await h('.create-panel .panel-head') + 2);
-    expect(await h('.results-panel')).toBeGreaterThan(wasResults);
-    await expect(page.locator('#createResizer')).toBeHidden();
-
-    await page.click('#foldCreate');
-    await expect(page.locator('#create')).toBeVisible();
-    expect(await h('.create-panel')).toBe(wasPanel);
+    await page.locator('#spec').fill('# mine\n');
+    await setTab(page, 'smells');
+    expect(await page.evaluate(() => window.playlive.modes.get())).toBe('explore');
+    await expect(page.locator('#spec')).toHaveValue(/test: Saves a US address/);
+    await setTab(page, 'create');
+    expect(await page.evaluate(() => window.playlive.modes.get())).toBe('create');
+    await expect(page.locator('#spec')).toHaveValue('# mine\n');
   });
 
 });

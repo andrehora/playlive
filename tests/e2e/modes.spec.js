@@ -20,13 +20,11 @@ const slack = page => page.evaluate(() => {
 });
 
 test.describe('Modes', () => {
-  test('Create adds its panel, and Mutation and Smells are tabs beside Results', async ({ page }) => {
+  test('Create, Mutation and Smells are tabs beside Results', async ({ page }) => {
     const { errors } = await openApp(page, { site: SITE });
 
     // Explore is the tests and what they did.
-    await expect(page.locator('.mode-seg [data-mode="explore"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.mode-seg [data-mode="mutation"]')).toHaveCount(0);
-    await expect(page.locator('.mode-seg [data-mode="smells"]')).toHaveCount(0);
+    await expect(page.locator('.mode-seg')).toHaveCount(0);
     expect(await panels(page)).toEqual(['tests', 'results']);
     await expect(page.locator('.res-seg [data-resview="results"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#hunt')).toBeHidden();
@@ -44,15 +42,15 @@ test.describe('Modes', () => {
     await expect(page.locator('#bugTab')).toBeHidden();
     await expect(page.locator('#smellScore')).toHaveText('No smells in 3 tests');
 
-    // Create is the one that changes what the editor holds, so it adds a panel,
-    // and the tabs stay.
-    await setMode(page, 'create');
-    expect(await panels(page)).toEqual(['tests', 'results', 'create']);
-    await expect(page.locator('#createResizer')).toBeVisible();
-    await expect(page.locator('#smellTab')).toBeVisible();
+    // Create is the tab that changes what the editor holds, so it is the mode too
+    await setTab(page, 'create');
+    expect(await page.evaluate(() => window.playlive.modes.get())).toBe('create');
+    expect(await panels(page)).toEqual(['tests', 'results']);
+    await expect(page.locator('#createTab')).toBeVisible();
+    await expect(page.locator('#smellTab')).toBeHidden();
 
-    await setMode(page, 'explore');
     await setTab(page, 'results');
+    expect(await page.evaluate(() => window.playlive.modes.get())).toBe('explore');
     expect(await panels(page)).toEqual(['tests', 'results']);
     await expect(page.locator('#results .test').first()).toBeVisible();
     expect(errors).toEqual([]);
@@ -86,7 +84,7 @@ test.describe('Modes', () => {
     };
     for (const [mode, foldSel, foldKey, tab = 'results'] of [['explore'],
       ['explore', null, null, 'mutation'], ['explore', null, null, 'smells'],
-      ['create', '#foldCreate', 'create']]){
+      ['create', null, null, 'create']]){
       await setMode(page, mode);
       await setResults(false);
       await setTab(page, tab);
@@ -183,7 +181,7 @@ test.describe('Modes', () => {
     await page.evaluate(() => { location.hash = '#html-create#coupon-code'; });
     await expect.poll(() => page.evaluate(() => window.playlive.modes.get())).toBe('create');
     await expect(page.locator('#siteName')).toHaveText('Coupon code');
-    await expect(page.locator('.create-panel')).toBeVisible();
+    await expect(page.locator('#createTab')).toBeVisible();
 
     // Explore names the sites' language and the example
     await page.evaluate(() => { location.hash = '#html#click-counter'; });
@@ -212,11 +210,11 @@ test.describe('Modes', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the bar asks Code or Site, then Explore or Create, and the Tests panel the language', async ({ page }) => {
+  test('the bar asks Code or Site, the Create tab Explore or Create, and the Tests panel the language', async ({ page }) => {
     const { errors } = await openApp(page, { site: SITE });
     const area = a => page.locator(`.area-seg [data-area="${a}"]`);
     const lang = l => page.locator(`.code-lang [data-lang="${l}"]`);
-    const create = page.locator('.mode-seg [data-mode="create"]');
+    const create = page.locator('.code-seg [data-codetab="create"]');
     await expect(area('html')).toHaveAttribute('aria-pressed', 'true');
     await setMode(page, 'create');
 
@@ -225,16 +223,15 @@ test.describe('Modes', () => {
     await area('code').click();
     expect(await now()).toBe('python-create');
     await expect(create).toHaveAttribute('aria-pressed', 'true');
-    await expect(create).toHaveAttribute('aria-disabled', 'false');
     await expect(lang('python')).toHaveAttribute('aria-pressed', 'true');
     await lang('js').click();
     expect(await now()).toBe('javascript-create');
     expect(new URL(page.url()).hash).toBe('#javascript-create');
-    await page.click('.mode-seg [data-mode="explore"]');
+    await page.click('.code-seg [data-codetab="results"]');
     expect(await now()).toBe('javascript');
     await area('html').click();
     expect(await now()).toBe('explore');
-    await create.click();
+    await page.click('.res-seg [data-resview="create"]');
     expect(await now()).toBe('create');
     expect(errors).toEqual([]);
   });
@@ -243,12 +240,11 @@ test.describe('Modes', () => {
     await page.setViewportSize({ width: 360, height: 740 });
     await openApp(page, { site: SITE });
     await expect(page.locator('.area-seg')).toBeVisible();
-    await expect(page.locator('.mode-seg')).toBeVisible();
-    // A row of their own, the four names sharing it, each worth tapping, without
+    // A row of their own, the two names sharing it, each worth tapping, without
     // pushing the bar sideways — which the sideways check below is what guards.
-    const buttons = await page.locator('.area-seg button, .mode-seg button').all();
+    const buttons = await page.locator('.area-seg button').all();
     const boxes = await Promise.all(buttons.map(b => b.boundingBox()));
-    expect(boxes).toHaveLength(4);
+    expect(boxes).toHaveLength(2);
     expect(new Set(boxes.map(b => Math.round(b.y))).size).toBe(1);
     for (const b of boxes) expect(b.height).toBeGreaterThanOrEqual(28);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
@@ -258,6 +254,7 @@ test.describe('Modes', () => {
     await expect(page.locator('#bugs .bug-row').first()).toBeVisible();
     for (const b of await page.locator('.res-seg button').all()) expect((await b.boundingBox()).height).toBeGreaterThanOrEqual(28);
     await setMode(page, 'create');
-    expect(await panels(page)).toEqual(['tests', 'results', 'create']);
+    expect(await panels(page)).toEqual(['tests', 'results']);
+    await expect(page.locator('#createTab')).toBeVisible();
   });
 });

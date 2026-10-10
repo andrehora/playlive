@@ -2,7 +2,7 @@ import { SITES, SITE_IDS } from '../examples/html/examples.js';
 import { bugsFor, clearBugs, hunt, inject, renderBugs, repair, report as bugReport } from './html/bugs.js';
 import { clearCatalog, harvest, snapshot } from './html/catalog.js';
 import { closeCompletion, completion, context, suggest } from './html/complete.js';
-import { $id, errorEl, recordBtn, reloadBtn, resetBtn, runBtn, specEl, speedMode, stopBtn, summaryEl } from './dom.js';
+import { $id, errorEl, recordBtn, reloadBtn, resetBtn, runBtn, specEl, speedMode, summaryEl } from './dom.js';
 import { setSpecFolded } from './html/editor.js';
 import { toCypress, toPlaywright } from './html/exports.js';
 import { applyHtml, htmlDirty, htmlEdit } from './html/htmlview.js';
@@ -13,11 +13,11 @@ import { codeState, resetCodeModes, runCodeTests, selectExample, setFramework, s
 import { isCodeMode, codeModeOf } from './code/core.js';
 import { validate } from './html/parse.js';
 import { renderTabs, selectSite, setView } from './picker.js';
-import { createSkeleton, report as createReport, setCreateFolded, titlesOf } from './html/create.js';
+import { createSkeleton, report as createReport, titlesOf } from './html/create.js';
 import { found as smellFound, scanSites, report as smellReport, setSmellView, smellView, smelly } from './html/smells.js';
 import { startRecording, stopRecording } from './html/recorder.js';
 import { expandedTests, resultsTab, setResultsTab } from './html/results.js';
-import { nextResolve, preview, releaseNext, run, syncUI } from './html/run.js';
+import { nextResolve, preview, releaseNext, run, runsDone, syncUI } from './html/run.js';
 import { copyLink, codeExampleFromHash, linkedMode, modeFromHash, shareUrl, siteFromHash, syncUrl } from './share.js';
 import { CREATE, SITE_KEYS, STORE, createTests, exampleTests, loadApp, persist, savedTests, siteKeys, testsFor } from './html/sites.js';
 import { clearBugHtml, clearEditedHtml, editorSite, mode, previewTimer, recording, running, setEditorSite, setCodeExample, setPreviewTimer, setStopRequested } from './state.js';
@@ -25,6 +25,7 @@ import { STATUS, paintTabs, setProgress, siteStatus, toast } from './ui.js';
 import './html/dialog.js';          // registers the export dialog and its Copy button
 import './html/complete.js';       // registers the editor's suggestion list
 import './code/complete.js';   // and the code modes' one
+import './code/compare.js';    // the code modes' tests, large and side by side
 
 /* ---------- Wiring ---------- */
 specEl.addEventListener('input', () => {
@@ -36,11 +37,12 @@ specEl.addEventListener('input', () => {
 document.addEventListener('keydown', e => {
   if (isCodeMode(mode)) return;            // code/code.js has the keys there
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); if (nextResolve) releaseNext(); else run(); }
-  if (e.key === 'Escape' && running) stopBtn.click();
+  if (e.key === 'Escape' && running) stop();
 });
 $id('snapBack').addEventListener('click', () => loadApp());
-runBtn.addEventListener('click', () => { if (nextResolve) releaseNext(); else run(); });
-stopBtn.addEventListener('click', () => { setStopRequested(true); releaseNext(); });
+// One button: Run tests, then Stop while they run (Next step when going step by step)
+const stop = () => { setStopRequested(true); releaseNext(); };
+runBtn.addEventListener('click', () => { if (nextResolve) releaseNext(); else if (running) stop(); else run(); });
 $id('speed').addEventListener('change', () => { if (speedMode() !== 'step') releaseNext(); else syncUI(); });
 recordBtn.addEventListener('click', () => recording ? stopRecording() : startRecording());
 // Reset = a clean slate for every example, not only the one showing: the example
@@ -74,7 +76,7 @@ async function resetAll(){
   errorEl.textContent = ''; summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
   // deliberately no persist(): after Reset nothing of ours is in storage until you type
   setView(site); paintTabs(); preview(); renderBugs(); loadApp(); syncUI();
-  toast('Reset: every example back as it ships, saved data and history cleared');
+  toast('Reset done');
 }
 resetBtn.addEventListener('click', () => {
   if (running || recording) return;
@@ -113,11 +115,12 @@ window.playlive = {
   bugs: { report: bugReport, list: bugsFor, hunt, inject, repair, render: renderBugs },
   modes: { set: setMode, get: () => mode },
   tabs: { set: setResultsTab, get: () => resultsTab },
+  runs: () => runsDone,
   smells: {
     report: smellReport, scan: scanSites, sites: () => [...smelly],
     view: setSmellView, viewing: smellView, found: id => smellFound.get(id) || []
   },
-  create: { report: createReport, fold: setCreateFolded, skeleton: createSkeleton, titles: titlesOf },
+  create: { report: createReport, skeleton: createSkeleton, titles: titlesOf },
   share: { copy: copyLink, url: shareUrl, linked: siteFromHash, linkedMode: modeFromHash },
   complete: { suggest, context, showing: completion, close: closeCompletion },
   html: { markup: () => htmlEdit.value, apply: applyHtml, edited: () => htmlDirty() },

@@ -106,15 +106,17 @@ test.describe('Python mode', () => {
 
     await page.click('#codeTestsReset');
     await expect(tests).toHaveValue(shippedTests);
+    await expect(page.locator('#toast')).toHaveText('Tests reset');
     await expect(code).toHaveValue('# mine too\n');
     await tests.focus();
     await page.keyboard.press('ControlOrMeta+z');
     await expect(tests).toHaveValue('# mine\n');
     await page.click('#codeReset');
     await expect(code).toHaveValue(shippedCode);
+    await expect(page.locator('#toast')).toHaveText('Code reset');
 
     // In Create, the tests go back to the names
-    await page.click('.mode-seg [data-mode="create"]');
+    await page.click('.code-seg [data-codetab="create"]');
     await expect(tests).toHaveValue(/^# test_adds_two_numbers$/m);
     const skeleton = await tests.inputValue();
     await tests.fill('# mine\n');
@@ -178,9 +180,11 @@ test.describe('Python mode', () => {
     await tests.fill('def test_forever():\n    while True:\n        pass\n');
     await expect(page.locator('#codeCount')).toHaveText('1 test');
     await page.click('#codeRun');
-    await expect(page.locator('#codeStop')).toBeEnabled();
+    // While it runs, Run tests is Stop
+    await expect(page.locator('#codeRun .lbl')).toHaveText('Stop');
     await page.waitForTimeout(500);
-    await page.click('#codeStop');
+    await page.click('#codeRun');
+    await expect(page.locator('#codeRun .lbl')).toHaveText('Run tests');
     await expect(summary).toHaveText('Stopped. 0 of 1 test passed.');
     await tests.fill('def test_quick():\n    assert True\n');
     await page.click('#codeRun');
@@ -497,7 +501,6 @@ test.describe('Python mode', () => {
   test('Create starts from the names, sorts them as you write, and Check says what a test misses', async ({ page }) => {
     test.setTimeout(2 * PYTHON);
     const { errors } = await openApp(page, { hash: '#python-create' });
-    await expect(page.locator('.mode-seg [data-mode="create"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.area-seg [data-area="code"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-lang [data-lang="python"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-seg [data-codetab="create"]')).toHaveAttribute('aria-pressed', 'true');
@@ -537,11 +540,11 @@ class MyTest(unittest.TestCase):
     await expect(group('nocheck')).toHaveText(['test_adds_two_numbers', 'test_divides_into_a_decimal']);
 
     // Explore keeps the example's tests, and Create gives yours back
-    await page.click('.mode-seg [data-mode="explore"]');
+    await page.click('.code-seg [data-codetab="results"]');
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
     await expect(tests).toHaveValue(/class CalculatorTest/);
-    await expect(page.locator('.code-seg [data-codetab="create"]')).toBeHidden();
-    await page.click('.mode-seg [data-mode="create"]');
+    await expect(page.locator('.code-seg [data-codetab="create"]')).toHaveAttribute('aria-pressed', 'false');
+    await page.click('.code-seg [data-codetab="create"]');
     await expect(tests).toHaveValue(/class MyTest/);
     expect(errors).toEqual([]);
   });

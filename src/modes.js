@@ -1,23 +1,23 @@
 import { repair } from './html/bugs.js';
 import { enterCreate, leaveCreate } from './html/create.js';
 import { reclamp } from './layout.js';
-import { chooseLang, enterCodeMode, leaveCodeMode } from './code/code.js';
+import { chooseLang, enterCodeMode, leaveCodeMode, setCodeView } from './code/code.js';
+import { resultsTab, setResultsTab } from './html/results.js';
 import { CODE_MODES, LANGS, isCodeMode, isCodeCreate, codeModeOf } from './code/core.js';
 import { syncUrl } from './share.js';
 import { mode, setAppMode } from './state.js';
 
 /* ---------- Modes: what the whole app is for right now ----------
 
-   A mode is not a view of one panel. It is which panels the left column has at
-   all, so the choice sits in the app bar beside the example rather than inside
-   something it governs.
+   A mode is which panels the left column has, and what its editor holds.
 
-   They run in the order you would meet them. **Explore** is the examples and
-   their tests: read them, watch them run. **Create** takes the file away and
-   asks you to write it back from the titles alone. The two that judge what you
-   ended up with are tabs beside Results in both: **Mutation** asks whether the
-   tests would notice the page going wrong, and **Smells** reads the tests
-   themselves and names what is wrong with them.
+   **Explore** is the examples and their tests: read them, watch them run.
+   **Create** takes the file away and asks you to write it back from the titles
+   alone. Create is chosen as a tab, the last of the Results panel (the code
+   modes' too), and any other tab there is Explore. The two that judge what you
+   ended up with are tabs beside Results: **Mutation** asks whether the tests
+   would notice the page going wrong, and **Smells** reads the tests themselves
+   and names what is wrong with them.
 
    Create is the one mode that changes what the editor holds, so it keeps its
    own file per site and hands the other one back on the way out. Nothing you
@@ -27,10 +27,10 @@ import { mode, setAppMode } from './state.js';
    unit tests on a module, run in the browser, each with examples of its own
    (code/code.js).
 
-   The bar asks it as two questions: Code or Site, then Explore or Create. In
-   Code, which language (Python, JavaScript or TypeScript) is the Tests panel's
-   switch. They are still one value here, so links and the stylesheet read it
-   as one: "python" and "python-create" are Python's two (code/code.js),
+   The bar asks Code or Site, and the Results panel's Create tab Explore or
+   Create. In Code, which language (Python, JavaScript or TypeScript) is the
+   Tests panel's switch. They are still one value here, so links and the
+   stylesheet read it as one: "python" and "python-create" are Python's two (code/code.js),
    "explore" and "create" the sites'. Changing either keeps the side you were
    on, and Code comes back to the language you left.                      */
 
@@ -67,11 +67,11 @@ export function setMode(m, { initial = false } = {}){
   if (area !== 'html') lastCode = area;
   document.querySelectorAll('.area-seg [data-area]')
     .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.area === barOf(area))));
-  document.querySelectorAll('.mode-seg [data-mode]')
-    .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === sideOf(next))));
-  const create = document.querySelector('.mode-seg [data-mode="create"]');
-  create.setAttribute('aria-disabled', String(!can));
-  create.title = !can ? 'Not yet for this language' : area === 'html' ? 'Write tests from their titles' : 'Write tests from their names';
+  // The Create tab says which side this is: on it in Create, off it otherwise
+  if (area === 'html'){
+    if (next === 'create') setResultsTab('create');
+    else if (resultsTab === 'create') setResultsTab('results');
+  }
   if (!initial){
     // A page left broken on purpose must not outlive the mode it was broken in.
     if (was !== next) repair();
@@ -96,5 +96,14 @@ document.querySelector('.code-lang').addEventListener('click', e => {
   if (l.lang) chooseLang(l.mode, l.lang);
   go(modeFor(l.mode, side));
 });
-document.querySelectorAll('.mode-seg [data-mode]')
-  .forEach(b => b.addEventListener('click', () => go(modeFor(areaOf(mode), b.dataset.mode))));
+// The Create tab is Create, and every other tab is Explore. The tab's own
+// module has already shown it; this makes the mode, and the editor, follow.
+const sideOfTab = t => (t === 'create' ? 'create' : 'explore');
+document.querySelectorAll('.res-seg [data-resview]').forEach(b => b.addEventListener('click', () => {
+  go(modeFor('html', sideOfTab(b.dataset.resview)));
+  setResultsTab(b.dataset.resview);
+}));
+document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => {
+  go(modeFor(areaOf(mode), sideOfTab(b.dataset.codetab)));
+  setCodeView(b.dataset.codetab);
+}));

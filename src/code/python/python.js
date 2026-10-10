@@ -126,7 +126,7 @@ export const PYTHON = {
     { id: 'unittest', label: 'unittest', logo: 'python', title: 'Tests with unittest' }
   ],
   langs: null,
-  codeTitle: () => 'Python code',
+  codeTitle: () => 'Python source',
   files: filesFor,
   highlight: hlPython,
   testsIn: testsInFile,
