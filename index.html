@@ -47,6 +47,10 @@
             <path d="M9 6l6 6-6 6" />
           </svg></button>
       </div>
+      <button id="newCode" type="button" class="new-btn" hidden
+        title="Blank code and tests"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>New</button>
       <div class="pop" id="sitePop" hidden>
         <div class="pop-head">
           <input id="siteSearch" type="search" aria-label="Search examples" autocomplete="off" spellcheck="false">
@@ -167,8 +171,8 @@
         <div class="res-tab smells-tab" id="smellTab" hidden>
           <div class="mut-head">
             <div class="seg smell-seg" role="group" aria-label="What to list">
-              <button type="button" data-smellview="file" title="Smells in these tests">This file</button>
-              <button type="button" data-smellview="all" title="All smells">All smells</button>
+              <button type="button" data-smellview="file" title="Smells in this example">This example</button>
+              <button type="button" data-smellview="all" title="Smells in all examples">All examples</button>
             </div>
             <span id="smellScore" aria-live="polite"></span>
           </div>
@@ -228,23 +232,18 @@
                 title="Test results">Results</button>
               <button type="button" data-codetab="console" aria-pressed="false"
                 title="Test output">Output</button>
-              <span class="code-extra" id="codeExtra">
-                <button type="button" data-codetab="mutation" aria-pressed="false" hidden
-                  title="Mutation testing">Mutation</button>
-                <button type="button" data-codetab="smells" aria-pressed="false" hidden
-                  title="Smells in these tests">Smells</button>
-                <button type="button" data-codetab="create" aria-pressed="false" hidden
-                  title="Write tests from their names">Create</button>
-              </span>
-              <button type="button" class="code-more" aria-haspopup="true" aria-expanded="false"
-                aria-controls="codeExtra" title="More tabs">More<svg class="i" viewBox="0 0 24 24"
-                  aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
+              <button type="button" data-codetab="coverage" aria-pressed="false"
+                title="Coverage of every example">Coverage</button>
+              <button type="button" data-codetab="mutation" aria-pressed="false" hidden
+                title="Mutation testing">Mutation</button>
+              <button type="button" data-codetab="smells" aria-pressed="false" hidden
+                title="Smells in these tests">Smells</button>
+              <button type="button" data-codetab="create" aria-pressed="false" hidden
+                title="Write tests from their names">Create</button>
             </span><span class="run-said"><span id="codeSummary" aria-live="polite"></span></span></h2>
           <div class="head-actions">
-            <label class="cov-toggle" title="Show coverage in the code"><input type="checkbox"
-                id="codeCovShow">Coverage</label>
             <button id="foldCode" type="button" class="ghost icon-btn" aria-label="Collapse the panel"
-              aria-expanded="true" aria-controls="codeCreate codeResults codeConsole codeMutation codeSmells" title="Collapse"><svg class="i"
+              aria-expanded="true" aria-controls="codeCreate codeResults codeConsole codeRanking codeMutation codeSmells" title="Collapse"><svg class="i"
                 viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M7 4l5 5 5-5M7 20l5-5 5 5" />
               </svg></button>
@@ -254,6 +253,7 @@
         <div id="codeCreate" class="code-mutation" hidden></div>
         <div id="codeResults" class="code-results"></div>
         <pre id="codeConsole" class="code-console" tabindex="0" aria-label="Output" hidden></pre>
+        <div id="codeRanking" class="code-mutation" hidden></div>
         <div id="codeMutation" class="code-mutation" hidden></div>
         <div id="codeSmells" class="code-mutation" hidden></div>
       </section>

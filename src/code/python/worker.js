@@ -24,6 +24,8 @@
    With `smells` and `src` (a test file), { type: 'smells', report: { tests,
    items: [{ smell, what, detail, line }] }, example }, or report null when
    it does not parse; `example` is passed back as it was sent.
+   With `measure` and `example`, the run's coverage alone, quietly (see measure
+   below): { type: 'measured', example, file, lines, hit, branches }.
    With `mutate`, the same files are mutated instead (see mutate below):
    { type: 'mutants', mutants: [{ id, line, what, text, after }] } (after:
    the line with the change, when it fits on it), then
@@ -680,7 +682,7 @@ def smells_of(src):
                           'detail': 'used by no test given it' if k == len(given) else 'not used by ' + str(k) + ' of ' + str(len(given)) + ' tests given it'})
     return {'tests': len(tests), 'items': items}
 
-# example, when given, says which file it was: the All smells list reads them all
+# example, when given, says which file it was: the All examples list reads them all
 def list_smells(src, example=None):
     tell('smells', report=smells_of(src), example=example)
 
@@ -838,6 +840,34 @@ def brief(files, cover, mine, original, framework):
             sys.modules.pop(m, None)
         os.remove(theirs)
 
+# ---------- Coverage of every example: one example's tests, quietly ----------
+# What run measures, without telling how each test went or printing anything:
+# { type: 'measured', example, file, lines, hit, branches }, lines None when
+# this Python cannot measure. The example is passed back as it was sent.
+def measure(files, target, framework, cover, example):
+    files = json.loads(files)
+    modules = write_files(files)
+    if not MON:
+        tell('measured', example=example, file=cover, lines=None)
+        return
+    HIT.clear()
+    TAKEN.clear()
+    WATCH[0] = os.path.abspath(cover)
+    MON.restart_events()
+    events = MON.events.LINE
+    if BRANCHING:
+        events |= MON.events.BRANCH_LEFT | MON.events.BRANCH_RIGHT
+    MON.set_events(MON.COVERAGE_ID, events)
+    try:
+        failing(target, framework, modules)
+    finally:
+        MON.set_events(MON.COVERAGE_ID, 0)
+        for m in modules:
+            sys.modules.pop(m, None)
+    lines, points = code_map(files[cover], WATCH[0])
+    tell('measured', example=example, file=cover, lines=sorted(n - 1 for n in lines), hit=sorted(n - 1 for n in HIT & lines),
+         branches=statement_branches(files[cover], points, HIT) if BRANCHING else None)
+
 def run(files, target, framework, cover=None):
     files = json.loads(files)
     for m in write_files(files):
@@ -864,7 +894,7 @@ def run(files, target, framework, cover=None):
 
 const say = line => postMessage({ type: 'out', line });
 const ready = (async () => {
-  postMessage({ type: 'status', text: 'Downloading Python…' });
+  postMessage({ type: 'status', text: 'Loading Python…' });
   const py = await loadPyodide({ indexURL: PYODIDE, stdout: () => {}, stderr: () => {} });
   postMessage({ type: 'status', text: 'Loading pytest…' });
   await py.loadPackage('pytest', { messageCallback: () => {}, errorCallback: () => {} });
@@ -876,7 +906,7 @@ const ready = (async () => {
     python: py.runPython('import sys; sys.version.split()[0]'),
     pytest: py.runPython('import pytest; pytest.__version__')
   } });
-  return { run: py.globals.get('run'), mutate: py.globals.get('mutate'), list: py.globals.get('list_mutants'), smells: py.globals.get('list_smells'), brief: py.globals.get('brief') };
+  return { run: py.globals.get('run'), mutate: py.globals.get('mutate'), list: py.globals.get('list_mutants'), smells: py.globals.get('list_smells'), brief: py.globals.get('brief'), measure: py.globals.get('measure') };
 })();
 ready.catch(e => postMessage({ type: 'error', message: String(e?.message || e) }));
 
@@ -887,6 +917,7 @@ onmessage = async ({ data }) => {
     if (data.list) py.list(data.src);
     else if (data.brief) py.brief(JSON.stringify(data.files), data.cover, data.target, data.original, data.framework);
     else if (data.smells) py.smells(data.src, data.example ?? undefined);
+    else if (data.measure) py.measure(JSON.stringify(data.files), data.target, data.framework, data.cover, data.example);
     else if (data.mutate){
       py.mutate(JSON.stringify(data.files), data.target, data.framework, data.cover, data.only ?? undefined);   // undefined is None; null is not
       postMessage({ type: 'mutation-done' });

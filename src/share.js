@@ -3,7 +3,7 @@ import { $id } from './dom.js';
 import { MODES, setMode } from './modes.js';
 import { selectSite } from './picker.js';
 import { selectExample } from './code/code.js';
-import { CODE_MODES, exampleOf, codeModeOf } from './code/core.js';
+import { CODE_MODES, exampleOf, codeModeOf, isExample } from './code/core.js';
 import { editorSite, mode, recording, running } from './state.js';
 import { toast } from './ui.js';
 
@@ -36,7 +36,7 @@ const read = (hash = location.hash) => {
   return {
     mode: m,
     site: m && !codeModeOf(m) && SITES[ex] ? ex : null,
-    codeExample: m && codeModeOf(m) && CODE_MODES[codeModeOf(m)].examples[ex] ? ex : null
+    codeExample: m && codeModeOf(m) && isExample(codeModeOf(m), ex) ? ex : null
   };
 };
 export const siteFromHash = hash => read(hash).site;

@@ -1,19 +1,20 @@
 import { $id } from '../dom.js';
 import { FLOW_DEFS, flowSvg } from './flow.js';
-import { codeEd, onWorker } from './core.js';
+import { codeEd, onWorker, view } from './core.js';
 import { band, escH } from '../util.js';
 
 /* ---------- Coverage: which lines of the code the last run ran ----------
-   Measured on every run. A check in the Results head shades the code's lines (light green ran, light red never did, light yellow ran but
-   left a branch untaken) and puts the scores on top of the code. It is
+   Measured on every run. While the Coverage tab is open, the code's lines are
+   shaded (light green ran, light red never did, light yellow ran but left a
+   branch untaken) and the scores are on top of the code. It is
    { file, lines, hit, branches }: the lines holding code and those that ran,
    counted from 0, and, where the runtime measures them, the lines with
    branches as line -> [ways out, ways taken], and the flows of the methods
    with a branch (code/flow.js draws them). The code is coloured by lines or by
    branches, as chosen on top of it. An edit to the code moves its
    lines, so it makes the measure stale until the next run. `note` says why
-   there is none, on top of the code while the check is on. */
-const covShow = $id('codeCovShow'), codeCov = $id('codeCov'), codeBranch = $id('codeBranch'), covNote = $id('codeCovNote');
+   there is none, on top of the code while the tab is open. */
+const codeCov = $id('codeCov'), codeBranch = $id('codeBranch'), covNote = $id('codeCovNote');
 const covSeg = document.querySelector('.cov-seg'), viewSeg = document.querySelector('.code-flowseg'), flowEl = $id('codeFlow');
 export let coverage = null, coverageNote = '';
 let covBy = 'lines', codeView = 'code';    // what colours the code, and code or flow
@@ -46,8 +47,8 @@ function boxClass(lines, decision){
   const code = lines.filter(l => coverage.lines.includes(l)), ran = code.filter(l => coverage.hit.has(l)).length;
   return !code.length ? 'none' : ran === code.length ? 'hit' : ran ? 'part' : 'miss';
 }
-function renderCoverage(){
-  const live = coverage && !coverage.stale, on = live && covShow.checked, br = live && coverage.branches;
+export function renderCoverage(){
+  const shown = view === 'coverage', live = coverage && !coverage.stale, on = live && shown, br = live && coverage.branches;
   if (live){
     score(codeCov, coverage.lines.filter(l => coverage.hit.has(l)).length, coverage.lines.length, 'lines');
     if (br){
@@ -59,11 +60,12 @@ function renderCoverage(){
   covSeg.hidden = !on;
   codeBranch.hidden = !br;
   for (const b of covSeg.querySelectorAll('[data-covby]')) b.setAttribute('aria-pressed', String(b.dataset.covby === covBy));
-  // Checked with nothing to show: why
+  // Open with nothing to show: why
   const why = coverage?.stale ? `${coverage.file} changed after the run. Run the tests again to measure it.` : coverageNote;
   covNote.textContent = why;
-  covNote.hidden = !(covShow.checked && !live && why);
+  covNote.hidden = !(shown && !live && why);
   codeEd.paint(on ? new Map(coverage.lines.map(l => [l, lineClass(l)])) : null);
+  document.dispatchEvent(new CustomEvent('playlive:code-coverage'));
   // The flow is there while coverage is shown, for the methods with a branch
   viewSeg.hidden = !(on && coverage.flows?.length);
   if (viewSeg.hidden) codeView = 'code';
@@ -89,6 +91,5 @@ flowEl.addEventListener('click', goToBox);
 flowEl.addEventListener('keydown', goToBox);
 covSeg.addEventListener('click', e => { const b = e.target.closest('[data-covby]'); if (b){ covBy = b.dataset.covby; renderCoverage(); } });
 viewSeg.addEventListener('click', e => { const b = e.target.closest('[data-codeview]'); if (b){ codeView = b.dataset.codeview; renderFlow(); } });
-covShow.addEventListener('change', renderCoverage);
 codeEd.ta.addEventListener('input', () => { if (coverage && !coverage.stale){ coverage.stale = true; renderCoverage(); } });
 

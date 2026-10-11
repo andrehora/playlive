@@ -10,15 +10,15 @@ import { plural } from '../util.js';
    and a row per finding that goes to its line. Read again as the tests are
    typed; nothing runs. `smells` is { src, report } for the file it read.
 
-   Two tabs, as in the site modes' panel: **This file** is what the tests on
-   screen smell of, **All smells** every smell with the examples that have it,
+   Two tabs, as in the site modes' panel: **This example** is what the tests on
+   screen smell of, **All examples** every smell with the examples that have it,
    in the framework (and language) on screen. `all` is { key, found }: each
    example's report, read again each time the tab opens, and the example on
    screen followed as it is typed. Never stored. */
 export const smellsEl = $id('codeSmells'), smellsBtn = document.querySelector('.code-seg [data-codetab="smells"]');
 smellsEl.innerHTML = `<div class="mut-head"><div class="seg smell-seg" role="group" aria-label="What to list">
-  <button type="button" data-codesmells="file" aria-pressed="true" title="Smells in these tests">This file</button>
-  <button type="button" data-codesmells="all" aria-pressed="false" title="All smells">All smells</button>
+  <button type="button" data-codesmells="file" aria-pressed="true" title="Smells in this example">This example</button>
+  <button type="button" data-codesmells="all" aria-pressed="false" title="Smells in all examples">All examples</button>
   </div><span class="smell-score" aria-live="polite"></span></div><div class="code-smells"></div>`;
 const smellScoreEl = smellsEl.querySelector('.smell-score'), smellList = smellsEl.querySelector('.code-smells');
 export let smells = null, smellsAsked = null, smellView = 'file', all = null;
@@ -75,7 +75,7 @@ export function onSmells(report, example){
   }
   if (smellsAsked !== testsEd.value) return;   // typed since: a newer one is coming
   smells = { src: smellsAsked, report };
-  // The example on screen is in the All smells list as it is now
+  // The example on screen is in the All examples list as it is now
   if (all?.key === allKey()) all.found.set(exampleOf(active), report);
   renderSmells();
 }
@@ -112,8 +112,12 @@ function renderAllSmells(){
   smellScoreEl.textContent = !scanned ? 'Reading every example…'
     : `${having.length} of ${ids.length} examples ${having.length === 1 ? 'has' : 'have'} one`;
   if (scanned) smellScoreEl.dataset.band = having.length ? 'warn' : 'ok';
-  for (const sm of P().smells(S().framework)){
-    const rows = ids.flatMap(id => found(id).filter(i => i.smell === sm.id).map(item => ({ id, item })));
+  // The most common first, by how many examples have it, then how many times;
+  // a tie keeps the catalogue's order
+  const bySmell = P().smells(S().framework).map(sm => ({ sm, rows: ids.flatMap(id => found(id).filter(i => i.smell === sm.id).map(item => ({ id, item }))) }));
+  const examplesWith = rows => new Set(rows.map(x => x.id)).size;
+  bySmell.sort((a, b) => examplesWith(b.rows) - examplesWith(a.rows) || b.rows.length - a.rows.length);
+  for (const { sm, rows } of bySmell){
     const g = smellGroup(sm, new Set(rows.map(x => x.id)).size);
     if (!rows.length){
       g.dataset.none = '';

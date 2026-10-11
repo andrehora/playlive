@@ -3,7 +3,7 @@ import { plural } from '../util.js';
 import { LOGOS } from './logos.js';
 import { diffLines, markHtml } from './diff.js';
 import { apisOf, linkApis } from './apis.js';
-import { CODE_MODES, LANGS, S, active, exampleOf, key, sessions, testsEd } from './core.js';
+import { CODE_MODES, LANGS, NEW, S, active, exampleOf, key, sessions, testsEd } from './core.js';
 
 /* ---------- The tests, large, and another framework's beside them ----------
    The Tests panel's Open large shows the file on screen alone, read-only, in a
@@ -33,6 +33,7 @@ async function textOf(c, id){
   if (same(c, current())) return testsEd.value;          // what the editor holds, Create's included
   const edited = sessions[c.mode]?.edits.get(key({ id, lang: c.lang, framework: c.fw }, 'tests'));
   if (edited != null) return edited;
+  if (id === NEW) return '';
   const file = CODE_MODES[c.mode].files(id, c.fw, c.lang ?? undefined).tests;
   const url = new URL(`../../examples/${c.mode}/${id}/${c.fw}/${file}`, import.meta.url).href;
   if (!fetched.has(url)) fetched.set(url, fetch(url).then(r => (r.ok ? r.text() : Promise.reject(new Error(r.status)))));

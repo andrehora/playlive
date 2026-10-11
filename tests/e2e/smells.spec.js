@@ -27,7 +27,7 @@ test.describe('Test smells', () => {
 
   // The tab leaves the example list alone. It once narrowed it to the
   // examples that have a smell, which hid the clean ones you would compare them
-  // with and made the list change length under you; the All smells tab is where
+  // with and made the list change length under you; the All examples tab is where
   // "which examples have one" is answered now.
   test('the tab leaves every example in the list', async ({ page }) => {
     await openApp(page, { site: SITE });
@@ -56,7 +56,7 @@ test.describe('Test smells', () => {
   // The catalogue is read from the files, and the file on screen is the one
   // being typed into, so it follows the editor the way the panel's other tab
   // does — a smell you have just written names your example straight away.
-  test('the All smells tab follows a smell typed into the editor', async ({ page }) => {
+  test('the All examples tab follows a smell typed into the editor', async ({ page }) => {
     await openApp(page, { site: SITE, tab: 'smells' });
     await page.click('.smell-seg [data-smellview="all"]');
     await expect(score(page)).toHaveText('8 of 100 examples have one');
@@ -85,16 +85,18 @@ test.describe('Test smells', () => {
   // The panel answers two questions and they are not the same one: what the
   // file on screen smells of, and what the app looks for at all. The second is
   // the catalogue, and it is a way into the examples rather than a glossary.
-  test('the All smells tab lists every smell and the examples that have one', async ({ page }) => {
+  test('the All examples tab lists every smell and the examples that have one', async ({ page }) => {
     const { errors } = await openApp(page, { site: SITE, tab: 'smells' });
     await expect(page.locator('#smells .list-note')).toHaveText('Nothing to report.');
 
     await page.click('.smell-seg [data-smellview="all"]');
     await expect(page.locator('.smell-seg [data-smellview="all"]')).toHaveAttribute('aria-pressed', 'true');
-    // Every smell is named and explained, in the order the panel keeps them.
-    const names = await page.$$eval('.smell-group .list-title', t => t.map(x => x.textContent));
-    expect(names).toEqual(['Unknown Test', 'Assertion Roulette', 'Duplication of Setup', 'General Fixture']);
+    // Every smell is named and explained, the most common first.
     await expect(score(page)).toHaveText('8 of 100 examples have one');
+    const names = await page.$$eval('.smell-group .list-title', t => t.map(x => x.textContent));
+    expect([...names].sort()).toEqual(['Assertion Roulette', 'Duplication of Setup', 'General Fixture', 'Unknown Test']);
+    const counts = await page.$$eval('.smell-group', gs => gs.map(g => Number(g.querySelector('.list-n')?.textContent) || 0));
+    expect(counts).toEqual([...counts].sort((a, b) => b - a));
 
     // Each group counts the examples that have it, and names them.
     const group = page.locator('.smell-group[data-smell="assertion-roulette"]');

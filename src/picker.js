@@ -3,7 +3,7 @@ import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
 import { createSkeleton } from './html/create.js';
 import { catIconSvg } from './html/icons.js';
 import { selectExample } from './code/code.js';
-import { CODE_MODES, exampleOf, codeModeOf } from './code/core.js';
+import { CODE_MODES, NEW, exampleOf, codeModeOf, isCodeCreate } from './code/core.js';
 import { preview } from './html/run.js';
 import { syncUrl } from './share.js';
 import { loadApp, persist, stashEditor, testsFor } from './html/sites.js';
@@ -20,6 +20,10 @@ const profile = () => CODE_MODES[codeModeOf(mode)];
 const CODE_ACCENT = '#306998';
 const current = () => (profile() ? exampleOf(mode) : editorSite);
 const nameOf = id => (profile() ? profile().examples : SITES)[id]?.name || '';
+// New is beside the list, not in it: a blank file and tests in the Tests panel's language
+const NEW_EXAMPLE = { name: 'New', teaches: 'Your own code and tests' };
+const newBtn = $id('newCode');
+newBtn.addEventListener('click', () => { closePicker(); selectExample(NEW); });
 function renderExampleTabs(){
   const p = profile();
   tabsEl.innerHTML = '';
@@ -47,12 +51,12 @@ function renderExampleTabs(){
   }
 }
 function setExampleView(id){
-  const p = profile();
+  const ex = profile().examples[id] || NEW_EXAMPLE;
   tabsEl.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === id)));
   $id('siteSwatch').innerHTML = '';
-  $id('siteName').textContent = p.examples[id].name;
+  $id('siteName').textContent = ex.name;
   // What the example teaches, beside its name
-  $id('siteGoal').textContent = p.examples[id].teaches;
+  $id('siteGoal').textContent = ex.teaches;
   delete siteBtn.dataset.status;
   siteBtn.title = 'Choose an example';
   setCount(id);
@@ -101,14 +105,14 @@ export function setView(id){
 // "2 of 100", or of however many the mode is offering
 function setCount(id){
   const list = listed(), i = list.indexOf(id);
-  if (i < 0) return;
+  if (i < 0){ $id('siteCount').textContent = ''; return; }
   $id('siteCount').textContent = `${i + 1} of ${list.length}`;
 }
 // Every example, in every mode. Smells mode once narrowed this to the examples
 // that have a smell, which hid the ones worth comparing them with: an example
 // whose tests are clean is the answer to the one that is not, and a list that
 // changes length when the mode changes is a list you cannot keep your place in.
-// The All smells tab in the panel is where "which examples have one" is
+// The All examples tab in the panel is where "which examples have one" is
 // answered now, and it names them.
 export const listed = () => (profile() ? profile().ids : SITE_IDS);
 function filterSites(q){
@@ -133,6 +137,8 @@ function filterSites(q){
 let listedFor = null;                 // the code mode the list is of, or null for the sites
 const relist = () => {
   const now = codeModeOf(mode);
+  // Only the unit modes have New, and not their Create, which needs an example's names
+  newBtn.hidden = !now || isCodeCreate(mode);
   if (now !== listedFor){
     listedFor = now;
     renderTabs();
@@ -177,7 +183,8 @@ function stepSite(d){
   if (running || recording) return;
   const list = listed();
   if (list.length < 2) return;
-  const i = list.indexOf(current()), next = list[(i + d + list.length) % list.length];
+  // From New, the arrows go to the list's ends
+  const i = list.indexOf(current()), next = i < 0 ? list.at(d > 0 ? 0 : -1) : list[(i + d + list.length) % list.length];
   if (profile()) selectExample(next); else selectSite(next);
   if (!sitePop.hidden) showCurrent();
 }

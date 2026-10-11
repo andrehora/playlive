@@ -154,7 +154,7 @@ export function report(text = specEl.value){
 }
 
 /* ---------- Which examples have one ----------
-   The All smells tab lists the examples worth opening: a hundred rows where
+   The All examples tab lists the examples worth opening: a hundred rows where
    fifteen have anything to say is a worse list than fifteen. The scan reads
    each example's file the same way the tab reads the one on screen, so what
    the list promises is what the tab will show.
@@ -163,7 +163,7 @@ export function report(text = specEl.value){
    and the site being edited is re-read on every keystroke, so the list follows
    the file you are typing into as well as the ninety-nine you are not.        */
 export const smelly = new Set();
-// What each example smells of, which is what the All smells tab lists. The set
+// What each example smells of, which is what the All examples tab lists. The set
 // above is this map's keys: one answers "narrow the list", the other "show me".
 export const found = new Map();
 let scanned = false, scanning = null;
@@ -204,7 +204,7 @@ function rescanEditor(r){
    from the file as it is typed.
 
    Two tabs, because the panel answers two questions and they are not the same
-   one. **This file** is what the tests on screen smell of. **All smells** is
+   one. **This example** is what the tests on screen smell of. **All examples** is
    the catalogue: every smell the app looks for, named and explained whether or
    not anything has it, with the examples that do underneath. A student who has
    never met Assertion Roulette should be able to find out that it exists without first
@@ -226,7 +226,7 @@ export function setSmellView(v){
 }
 smellSeg.querySelectorAll('button').forEach(b =>
   b.addEventListener('click', () => setSmellView(b.dataset.smellview)));
-// The scan is what the All smells tab lists, and it finishes after the tab has
+// The scan is what the All examples tab lists, and it finishes after the tab has
 // opened. It says so rather than being reached into from here.
 document.addEventListener('playlive:smelly', () => { if (view === 'all') renderSmells(); });
 
@@ -274,11 +274,12 @@ function renderAll(){
   smellScore.textContent = !scanned ? 'Reading every example…'
     : `${sites.length} of ${SITE_IDS.length} examples ${sites.length === 1 ? 'has' : 'have'} one`;
 
-  for (const s of SMELLS){
-    const rows = [];
-    for (const id of SITE_IDS) for (const i of found.get(id) || []){
-      if (i.smell === s.id) rows.push({ id, item: i });
-    }
+  // The most common first, by how many examples have it, then how many times;
+  // a tie keeps the catalogue's order
+  const bySmell = SMELLS.map(s => ({ s, rows: SITE_IDS.flatMap(id => (found.get(id) || []).filter(i => i.smell === s.id).map(item => ({ id, item }))) }));
+  const examplesWith = rows => new Set(rows.map(x => x.id)).size;
+  bySmell.sort((a, b) => examplesWith(b.rows) - examplesWith(a.rows) || b.rows.length - a.rows.length);
+  for (const { s, rows } of bySmell){
     const g = group(s, new Set(rows.map(x => x.id)).size);
     if (!rows.length){
       // The smell is still named and still explained: a catalogue that only

@@ -18,7 +18,7 @@ test.describe('Python mode', () => {
     const { errors } = await openApp(page);
     await setMode(page, 'python');
     // Choosing the mode is what starts the download; the toolbar says so, and Results keeps quiet
-    await expect(page.locator('#codeState')).toContainText('Downloading Python');
+    await expect(page.locator('#codeState')).toContainText('Loading Python');
     await expect(page.locator('#codeResults .code-note')).toBeHidden();
     for (const p of ['.code-tests-panel', '.console-panel', '.code-module-panel']) await expect(page.locator(p)).toBeVisible();
     for (const p of ['.tests-panel', '.results-panel', '.browser']) await expect(page.locator(p)).toBeHidden();
@@ -61,6 +61,48 @@ test.describe('Python mode', () => {
     expect(errors).toEqual([]);
   });
 
+  test('New gives a blank code file and tests, in the language the Tests panel picks', async ({ page }) => {
+    test.setTimeout(2 * PYTHON);
+    const { errors } = await openApp(page, { mode: 'python' });
+    const newBtn = page.locator('#newCode'), code = page.locator('#codeEd textarea'), tests = page.locator('#codeTestsEd textarea');
+    await expect(newBtn).toBeVisible();
+    await newBtn.click();
+    await expect(page.locator('#siteName')).toHaveText('New');
+    await expect(page.locator('#siteCount')).toHaveText('');
+    await expect(page.locator('#codeFile')).toHaveText('new.py');
+    await expect(page.locator('#codeTestsFile')).toHaveText('test_new.py');
+    await expect(code).toHaveValue('');
+    await expect(tests).toHaveValue('');
+    expect(new URL(page.url()).hash).toBe('#python#new');
+
+    // What you write there runs like any example's tests
+    await code.fill('def double(n):\n    return n * 2\n');
+    await tests.fill('from new import double\n\ndef test_doubles():\n    assert double(2) == 4\n');
+    await ready(page);
+    expect(allPassed(await codeRun(page))).toBe(1);
+
+    // The language switch keeps you on New, in that language
+    await page.click('.code-lang [data-lang="ts"]');
+    await expect(page.locator('#codeFile')).toHaveText('new.ts');
+    await expect(code).toHaveValue('');
+    await page.click('.code-lang [data-lang="python"]');
+    await expect(code).toHaveValue(/def double/);
+
+    // The arrows step back into the list
+    await page.click('#nextSite');
+    await expect(page.locator('#siteName')).toHaveText('Calculator');
+
+    // Only the unit modes have it, and not their Create, which needs an example's names
+    await newBtn.click();
+    await page.click('.code-seg [data-codetab="create"]');
+    await expect.poll(() => page.evaluate(() => window.playlive.modes.get())).toBe('python-create');
+    await expect(newBtn).toBeHidden();
+    await expect(page.locator('#siteName')).toHaveText('Calculator');
+    await setMode(page, 'explore');
+    await expect(newBtn).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+
   test('the tests resize, and Results and Console collapse to their head', async ({ page }) => {
     const { errors } = await openApp(page, { mode: 'python' });
     const h = sel => page.locator(sel).boundingBox().then(b => Math.round(b.height));
@@ -97,46 +139,19 @@ test.describe('Python mode', () => {
     expect(errors).toEqual([]);
   });
 
-  test('a phone shows Results and Output beside Coverage, and More the graders', async ({ page }) => {
+  test('a phone shows every tab on the first row, and Coverage and the fold below', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await openApp(page);
     await setMode(page, 'python');
-    const tab = name => page.locator(`.code-seg [data-codetab="${name}"]`), more = page.locator('.code-seg .code-more');
-    for (const t of ['results', 'console']) await expect(tab(t)).toBeVisible();
-    for (const t of ['mutation', 'smells', 'create']) await expect(tab(t)).toBeHidden();
-    // One row: the tabs, More, Coverage and the fold
     const y = async sel => (await page.locator(sel).boundingBox()).y;
     const row = await y('.code-seg [data-codetab="results"]');
-    for (const sel of ['.code-seg .code-more', '.console-panel .cov-toggle', '#foldCode'])
-      expect(Math.abs(await y(sel) - row), `${sel} is not on the tabs' row`).toBeLessThan(20);
-
-    // More opens the graders as a menu over the results, not a row of its own
-    const head = (await page.locator('.console-panel .panel-head').boundingBox()).height;
-    await more.click();
-    await expect(more).toHaveAttribute('aria-expanded', 'true');
-    for (const t of ['mutation', 'smells', 'create']) await expect(tab(t)).toBeVisible();
-    expect((await page.locator('.console-panel .panel-head').boundingBox()).height).toBe(head);
-    await expect(tab('mutation')).toBeFocused();
-    // Escape closes it and gives the focus back
-    await page.keyboard.press('Escape');
-    await expect(more).toHaveAttribute('aria-expanded', 'false');
-    await expect(more).toBeFocused();
-    // Picking one closes it, and the one open stays in the row
-    await more.click();
-    await tab('smells').click();
-    await expect(more).toHaveAttribute('aria-expanded', 'false');
-    await expect(tab('smells')).toBeVisible();
-    await expect(tab('mutation')).toBeHidden();
-    await expect(page.locator('#codeSmells')).toBeVisible();
-    // A tap elsewhere closes it too
-    await more.click();
-    await page.locator('#codeTestsFile').click();
-    await expect(more).toHaveAttribute('aria-expanded', 'false');
-
-    // A wide screen has no More: every tab shows
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await expect(more).toBeHidden();
-    for (const t of ['results', 'console', 'mutation', 'smells', 'create']) await expect(tab(t)).toBeVisible();
+    for (const t of ['console', 'coverage', 'mutation', 'smells', 'create']){
+      await expect(page.locator(`.code-seg [data-codetab="${t}"]`)).toBeVisible();
+      expect(Math.abs(await y(`.code-seg [data-codetab="${t}"]`) - row), `${t} is not on the first row`).toBeLessThan(5);
+    }
+    for (const sel of ['#foldCode'])
+      expect(await y(sel), `${sel} is not below the tabs`).toBeGreaterThan(row + 20);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   });
 
   test('the tests, large, link the framework\'s names to a search in a new tab, and close by an icon', async ({ page }) => {
@@ -297,26 +312,26 @@ test.describe('Python mode', () => {
     expect(errors).toEqual([]);
   });
 
-  test('every run measures which lines of the code ran, and a check shades them in the code', async ({ page }) => {
+  test('every run measures which lines of the code ran, and the Coverage tab shades them in the code', async ({ page }) => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Bank account');
     await page.click('.code-fw [data-fw="unittest"]');
     await ready(page);
-    const show = page.locator('#codeCovShow'), score = page.locator('#codeCov'), branch = page.locator('#codeBranch');
+    const tab = t => page.click(`.code-seg [data-codetab="${t}"]`), score = page.locator('#codeCov'), branch = page.locator('#codeBranch');
     const note = page.locator('#codeCovNote');
     const lines = cls => page.locator(`#codeEd .hl .l.${cls}`);
     const texts = cls => lines(cls).evaluateAll(ls => ls.map(l => l.textContent.trim()));
     const code = page.locator('#codeEd textarea');
     await expect(page.locator('#codeConsole')).toHaveText('Press Run to run the tests.');
-    // The Results head has the check alone, never a number
-    await expect(page.locator('.cov-toggle')).toHaveText('Coverage');
+    // There is no check: the Coverage tab is what shows it
+    await expect(page.locator('#codeCovShow')).toHaveCount(0);
 
-    // Measured on every run, and the code stays plain until the check is on
+    // Measured on every run, and the code stays plain until the tab is open
     await codeRun(page);
     await expect(score).toBeHidden();
     await expect(lines('cov-hit')).toHaveCount(0);
-    await show.check();
+    await tab('coverage');
     await expect(score).toHaveText(/^Line: 84%\s*\(11 of 13 lines\)$/);
     await expect(score).toHaveAttribute('data-band', 'warn');
     await expect(branch).toHaveText(/^Branch: 50%\s*\(2 of 4 branches\)$/);
@@ -347,9 +362,8 @@ test.describe('Python mode', () => {
     await expect(page.locator('#codeEd')).toBeVisible();
     expect(await code.evaluate(t => t.value.slice(t.selectionStart, t.selectionEnd))).toBe('raise ValueError("Deposit must be positive")');
     await page.click('[data-codeview="flow"]');
-    await expect(page.locator('.cov-toggle')).toHaveText('Coverage');
-    // Unchecked, the code is plain, and the flow goes with the scores
-    await show.uncheck();
+    // On another tab, the code is plain, and the flow goes with the scores
+    await tab('results');
     await expect(page.locator('#codeEd')).toBeVisible();
     await expect(flow).toBeHidden();
     await expect(page.locator('.code-flowseg')).toBeHidden();
@@ -358,15 +372,17 @@ test.describe('Python mode', () => {
     await expect(branch).toBeHidden();
 
     // An edit moves the lines, so the measure waits for the next run, and says so
-    await show.check();
+    await tab('coverage');
     await code.fill((await code.inputValue()) + '\n');
     await expect(note).toHaveText('bank_account.py changed after the run. Run the tests again to measure it.');
     await expect(lines('cov-miss')).toHaveCount(0);
     await expect(score).toBeHidden();
 
     // One test on its own measures only what it ran
+    await tab('results');
     await page.locator('#codeResults .test').first().locator('.run-one').click();
     await expect(page.locator('#codeSummary')).toHaveText(/^The test passed/, { timeout: PYTHON });
+    await tab('coverage');
     await expect(lines('cov-miss')).not.toHaveCount(0);
     expect(errors).toEqual([]);
   });
@@ -498,7 +514,7 @@ test.describe('Python mode', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the All smells tab lists every smell and the Python examples that have one', async ({ page }) => {
+  test('the All examples tab lists every smell and the Python examples that have one', async ({ page }) => {
     test.setTimeout(3 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await ready(page);
@@ -510,10 +526,12 @@ test.describe('Python mode', () => {
     // Bank account and Cart repeat their setup, on purpose
     await expect(score).toHaveText(/^\d+ of 63 examples have one$/);
     await expect(group('duplication-of-setup').locator('.smell-what')).toContainText(['Cart', 'Bank account']);
-    // Every smell is named, whether or not an example has it
+    // Every smell is named, whether or not an example has it, the most common first
     await expect(panel.locator('.smell-group')).toHaveCount(4);
+    const counts = await panel.locator('.smell-group').evaluateAll(gs => gs.map(g => Number(g.querySelector('.list-n')?.textContent) || 0));
+    expect(counts).toEqual([...counts].sort((a, b) => b - a));
 
-    // A row opens the example at its line, on This file
+    // A row opens the example at its line, on This example
     await group('duplication-of-setup').locator('.smell-line', { hasText: 'Bank account' }).click();
     await expect(page.locator('#codeTestsFile')).toHaveText('test_bank_account.py');
     await expect(panel.locator('[data-codesmells="file"]')).toHaveAttribute('aria-pressed', 'true');
@@ -525,6 +543,64 @@ test.describe('Python mode', () => {
     await panel.locator('[data-codesmells="all"]').click();
     await expect(group('duplication-of-setup').locator('.smell-why')).toContainText('a fixture');
     await expect(group('duplication-of-setup').locator('.smell-what')).toContainText(['Cart', 'Bank account']);
+    expect(errors).toEqual([]);
+  });
+
+  test('the Coverage tab shows this example\'s, and ranks every example by how much of it the tests run', async ({ page }) => {
+    test.setTimeout(3 * PYTHON);
+    const { errors } = await openApp(page, { mode: 'python' });
+    await ready(page);
+    const panel = page.locator('#codeRanking'), rows = panel.locator('.rank-row');
+    // Before Mutation
+    const tabs = await page.locator('.code-seg [data-codetab]').evaluateAll(bs => bs.map(b => b.dataset.codetab));
+    expect(tabs.indexOf('coverage')).toBe(tabs.indexOf('mutation') - 1);
+    await page.click('.code-seg [data-codetab="coverage"]');
+    // This example first, measured by running its tests as the tab opens
+    await expect(panel.locator('[data-codecov="file"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(rows).toHaveCount(1, { timeout: PYTHON });
+    await expect(rows.locator('.rank-line')).toHaveText('calculator.py');
+    await expect(rows.locator('.rank-lines')).toHaveText('100%');
+    await expect(panel.locator('.rank-missed .list-note')).toHaveText('Every line ran, and every branch went both ways.');
+
+    // All examples runs every example as it is chosen
+    await panel.locator('[data-codecov="all"]').click();
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 63 files fully covered$/, { timeout: PYTHON });
+    await expect(rows).toHaveCount(63);
+    const pcts = await panel.locator('.rank-lines').allTextContents();
+    expect(pcts.map(parseFloat)).toEqual(pcts.map(parseFloat).sort((a, b) => b - a));
+    // Water teaches coverage: its tests leave a line unrun
+    const water = rows.filter({ hasText: 'water.py' });
+    await expect(water.locator('.rank-lines')).not.toHaveText('100%');
+    // A column for lines and one for branches, under a header
+    await expect(panel.locator('th')).toHaveText(['File', 'Lines', 'Branches']);
+    await expect(water.locator('.rank-branches')).toHaveText(/^\d+%$/);
+
+    // A row opens that example's source, on This example, with what its tests never ran
+    await water.locator('.rank-line').click();
+    await expect(page.locator('#codeFile')).toHaveText('water.py');
+    await expect(page.locator('#codeEd textarea')).toBeFocused();
+    await expect(panel.locator('[data-codecov="file"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(rows.locator('.rank-line')).toHaveText('water.py');
+    const unrun = panel.locator('.bug-group[data-state="escaped"] .smell-line');
+    await expect(unrun.first()).toContainText('line');
+    const at = Number((await unrun.first().locator('.smell-what').textContent()).match(/\d+/)[0]);
+    await unrun.first().click();
+    const ed = page.locator('#codeEd textarea');
+    expect(await ed.evaluate(t => t.value.slice(0, t.selectionStart).split('\n').length)).toBe(at);
+    // Back on All examples, the ranking is still up to date, so nothing runs
+    await panel.locator('[data-codecov="all"]').click();
+    await expect(rows).toHaveCount(63);
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 63 files fully covered$/);
+    // An edit makes it stale, so choosing it again measures again
+    await panel.locator('[data-codecov="file"]').click();
+    await ed.evaluate(t => { t.value += '\n'; t.dispatchEvent(new Event('input')); });
+    await expect(panel.locator('.list-note')).toHaveText('The code changed after the last run. Run the tests to measure it again.');
+    await panel.locator('[data-codecov="all"]').click();
+    await expect(panel.locator('.rank-score')).toHaveText(/^Measuring/);
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 63 files fully covered$/, { timeout: PYTHON });
+    await expect(panel.locator('.list-note')).toHaveCount(0);
+    // The tab has no buttons of its own: choosing a view is what measures it
+    await expect(panel.locator('.mut-head > button')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 

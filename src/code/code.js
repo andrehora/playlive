@@ -4,17 +4,18 @@ import { syncUrl } from '../share.js';
 import { mode, setCodeExample } from '../state.js';
 import { setProgress, toast } from '../ui.js';
 import { escH, holdWidth, plural, runSummary } from '../util.js';
-import { CODE_MODES, LANGS, P, S, active, codeEd, creating, exampleOf, files, handlerOf, isCodeMode, isCodeCreate, job, key, label, codeModeOf, onWorker, progressEl,
-  request, rt, session, sessions, setActive, setCreating, setCurrentView, setJob, shipped, testsEd, view } from './core.js';
-import { coverage, setCoverage } from './coverage.js';
+import { CODE_MODES, LANGS, P, S, active, codeEd, creating, exampleOf, files, handlerOf, isExample, isCodeMode, isCodeCreate, job, key, label, codeModeOf, onWorker, progressEl,
+  request, rt, session, sessions, setActive, setCreating, setCurrentView, setJob, shipped, testsEd, NEW, view } from './core.js';
+import { coverage, renderCoverage, setCoverage } from './coverage.js';
 import { createBtn, createEl, endCheck, renderCreate, resetCreate } from './create.js';
 import { endHunt, listMutations, mutationBtn, mutationEl, resetMutation } from './mutation.js';
+import { endRanking, listRanking, rankEl } from './ranking.js';
 import { listSmells, resetSmells, scanAll, smellView, smellsBtn, smellsEl } from './smells.js';
 
 /* ---------- The code modes' panels, and what runs them ----------
    code/core.js holds what every panel shares (the profiles, the sessions, the
    two editors and the state they all read); each grader's tab is its own
-   module (coverage, mutation, smells, create, beside this one). This is the rest:
+   module (coverage, ranking, mutation, smells, create, beside this one). This is the rest:
    Results, the console, the runtime and the jobs it runs, and moving between
    examples, frameworks and languages. */
 
@@ -160,9 +161,9 @@ function onTest(data){
 }
 
 
-/* ---------- Create, results, console, mutation or smells: one panel, five views ---------- */
+/* ---------- Create, results, console, coverage, mutation or smells: one panel, six views ---------- */
 export function setCodeView(v){
-  // All smells is read again each time the tab opens
+  // All examples is read again each time the tab opens
   if (v === 'smells' && view !== 'smells' && smellView === 'all') scanAll();
   setCurrentView(v);
   document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.codetab === v)));
@@ -171,22 +172,13 @@ export function setCodeView(v){
   consoleEl.hidden = v !== 'console';
   mutationEl.hidden = v !== 'mutation';
   smellsEl.hidden = v !== 'smells';
+  rankEl.hidden = v !== 'coverage';
   listMutations();
   listSmells();
+  listRanking();
+  renderCoverage();
 }
-document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => { setCodeView(b.dataset.codetab); setMore(false); }));
-// On a phone, More opens the graders' tabs as a menu; a pick, Escape or a tap elsewhere closes it
-const moreBtn = document.querySelector('.code-seg .code-more'), extraEl = $id('codeExtra');
-const moreOpen = () => moreBtn.getAttribute('aria-expanded') === 'true';
-function setMore(open){ moreBtn.setAttribute('aria-expanded', String(open)); }
-moreBtn.addEventListener('click', () => {
-  setMore(!moreOpen());
-  if (moreOpen()) extraEl.querySelector('button:not([hidden])')?.focus();
-});
-document.addEventListener('click', e => { if (moreOpen() && !e.target.closest('.code-seg')) setMore(false); });
-document.querySelector('.code-seg').addEventListener('keydown', e => {
-  if (e.key === 'Escape' && moreOpen()){ e.stopPropagation(); setMore(false); moreBtn.focus(); }
-});
+document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => setCodeView(b.dataset.codetab)));
 
 
 /* ---------- The console ---------- */
@@ -267,7 +259,7 @@ function drop(m = active){
   const s = session(m);
   s.worker?.terminate(); s.worker = null; s.ready = false; s.pending = null;
 }
-/* ---------- Jobs: a run, the mutations, or Create's check ----------
+/* ---------- Jobs: a run, the mutations, every example's coverage, or Create's check ----------
    One at a time (`job`). Each begins by saying so, which every button and
    panel reads, and sends its message to the runtime, now or once it is ready.
    It settles when it ends; a profile whose worker is cheap (`fresh`) then
@@ -290,6 +282,7 @@ const ENDS = {
     failed: message => { print(message, 'bad'); finish(null, 'Did not run'); }
   },
   mutate: { stopped: () => endHunt('Stopped. The mutations not checked yet were left as they were.'), failed: message => endHunt(message) },
+  cover: { stopped: () => endRanking('Stopped. Choose All examples again to measure every example.'), failed: message => endRanking(message) },
   check: { stopped: () => endCheck({ note: 'Stopped before the check finished. Press Check to start again.' }), failed: message => endCheck({ note: message }) }
 };
 function fail(message){
@@ -450,13 +443,14 @@ function show(){
     resetMutation();
     resetSmells();
     if (view === 'smells' && smellView === 'all') scanAll();
+    listRanking();
     renderCreate();
     if (!job) runBtn.title = `Run tests (${KEY}+Enter)`;
   })();
 }
 // The picker, the stepper and a link all come here
 export function selectExample(id){
-  if (!active || !P().examples[id]) return;
+  if (!active || !isExample(active, id)) return;
   stopCodeTests();
   stash();
   setCodeExample(active, id);
@@ -493,7 +487,12 @@ export function enterCodeMode(mode){
   if (active === m && creating === create) return;
   if (active){ stopCodeTests(); stash(); }
   // From the other language, the same example, as both modes have the same ones
-  if (active && active !== m && CODE_MODES[m].examples[exampleOf(active)]) setCodeExample(m, exampleOf(active));
+  if (active && active !== m && isExample(m, exampleOf(active))) setCodeExample(m, exampleOf(active));
+  // Create writes tests to an example's names, and New has none
+  if (create && exampleOf(m) === NEW){
+    setCodeExample(m, CODE_MODES[m].ids[0]);
+    document.dispatchEvent(new CustomEvent('playlive:code-example'));
+  }
   setActive(m); setCreating(create);
   mutationBtn.hidden = !P().mutation;
   smellsBtn.hidden = !P().smells;

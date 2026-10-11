@@ -422,8 +422,21 @@ async function brief(data){
   finally { GUARD = null; }
 }
 
+/* ---------- Coverage of every example: one example's tests, quietly ----------
+   code/python/worker.js's measure, for JavaScript: what a run measures, and
+   nothing of how each test went. */
+async function measure(data){
+  FILES = data.files; COVER = data.cover; probed = null; branchesAt = null; GUARD = null;
+  for (const l of Object.keys(HITS)) delete HITS[l];
+  TAKEN.clear();
+  silence();
+  await failing(data.target);
+  tell('measured', { example: data.example, ...coverage() });
+}
+
 onmessage = async ({ data }) => {
   try { await ready; } catch { return; }       // already reported
+  if (data.measure) return measure(data);
   if (data.brief) return brief(data);
   if (data.mutate) return mutate(data);
   if (data.list) return tell('mutants', { mutants: mutantsOf(data.src).map(([meta]) => meta) });

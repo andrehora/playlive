@@ -316,10 +316,11 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .cat-badge svg.i{width:12px;height:12px}
 .cat-badge:empty{display:none}
 .site-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
-.picker{position:relative}
+.picker{position:relative;display:flex;align-items:center;gap:8px}
+.new-btn{flex:none}
 /* One size whatever is chosen: a long name or goal is cut short instead */
 /* One box: the arrows at its ends, the list's button between them */
-.picker-box{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:var(--btn-r);background:var(--panel)}
+.picker-box{flex:1 1 auto;min-width:0;display:flex;align-items:stretch;border:1px solid var(--line);border-radius:var(--btn-r);background:var(--panel)}
 .picker-box:hover{border-color:color-mix(in srgb,var(--ink) 25%,var(--line))}
 .picker-box > button{border:0;min-height:var(--tap)}
 .step-btn{padding:0;width:max(36px,var(--icon-tap));flex:none;color:var(--ink)}
@@ -497,13 +498,25 @@ svg.flow{display:block;max-width:none;overflow:visible}
    and the line it was made on */
 .code-mutation{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 .mut-head{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line)}
-:is(.mut-score, .smell-score){font-size:12px;color:var(--muted)}
+:is(.mut-score, .smell-score, .rank-score){font-size:12px;color:var(--muted)}
 .mut-score[data-band="ok"]{color:var(--pass)}
 .mut-score[data-band="warn"]{color:var(--running-ink)}
 .mut-score[data-band="bad"]{color:var(--fail)}
 .smell-score[data-band="warn"]{color:var(--running-ink)}
 .smell-score[data-band="ok"]{color:var(--pass)}
 .bug-group[data-state="unrun"] .bug-dot{border-style:dashed}
+/* Coverage of every example: one row per file, the most covered first */
+.rank-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rank-table th{position:sticky;top:0;padding:6px 12px;background:var(--panel);border-bottom:1px solid var(--line);font-size:var(--small-font);font-weight:600;color:var(--muted);text-align:right;white-space:nowrap}
+.rank-table th:first-child{text-align:left}
+.rank-table td{padding:0 12px;border-bottom:1px solid var(--line)}
+.rank-table td:first-child{padding:0 6px;width:100%}
+.rank-line{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:var(--small-tap);padding:4px 6px;border:0;border-radius:var(--small-r);background:transparent;font:inherit;font-family:"IBM Plex Mono",ui-monospace,monospace;color:inherit;text-align:left;overflow-wrap:anywhere;cursor:pointer}
+.rank-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent);text-decoration:underline}
+.rank-pct{text-align:right;white-space:nowrap;font-weight:600;color:var(--band-ink,var(--band,var(--muted)))}
+.rank-pct[data-band="ok"]{--band:var(--pass)}
+.rank-pct[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
+.rank-pct[data-band="bad"]{--band:var(--fail)}
 .mut-row{display:flex;align-items:baseline;justify-content:flex-start;gap:10px;flex:1;min-width:0;min-height:26px;padding:3px 0;border:0;background:transparent;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .mut-row:hover .mut-what{text-decoration:underline}
 .mut-at{flex:none;min-width:52px;font-size:11.5px;color:var(--muted)}
@@ -521,10 +534,7 @@ svg.flow{display:block;max-width:none;overflow:visible}
 .code-detail{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:0 12px 10px 50px}
 .code-detail .err{margin:0;font:12px/1.5 "IBM Plex Mono",ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
 .code-at{padding:2px 6px;min-height:0;margin-left:-6px;font-size:12px}
-.code-seg button{font-size:12.5px;font-weight:600}
-/* More only folds the graders into a menu on a phone */
-.code-extra{display:contents}
-.code-seg .code-more{display:none}
+.code-seg button{font-size:12px;font-weight:600;padding:5px 4px}
 .code-tests-panel .head-actions{flex-wrap:nowrap}
 .code-tests-panel .panel-head h2{flex:0 1 auto;overflow:hidden}
 .code-tests-panel .code-file{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -702,6 +712,13 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   /* On a phone it takes the whole screen but a sliver of the page around it */
   .cmp-dlg{width:calc(100vw - 16px);height:calc(100dvh - 16px)}
   .cmp-head{flex-wrap:wrap}
+  /* The name takes the first row and Close its top-right corner, wherever
+     Compare sits; the switches and Compare share the row below */
+  .cmp-head h2{flex-basis:100%;min-height:var(--icon-tap)}
+  #cmpMine .cmp-head h2{padding-right:calc(var(--icon-tap) + 4px)}
+  #cmpClose{position:absolute;top:10px;right:12px}
+  .cmp-head{column-gap:6px}
+  .cmp-head .cmp-fw button{padding:0 8px}
   /* Stacked, the two files read one above the other */
   .cmp-panes{grid-auto-flow:row;grid-auto-rows:minmax(0,1fr)}
   .cmp-pane + .cmp-pane{border-left:0;border-top:1px solid var(--line)}
@@ -747,9 +764,10 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      take the second row between them, 60/40 like the example's row below. */
   .appbar .area-seg{order:2;flex:1 1 100%;min-width:0}
   .appbar .area-seg button{flex:1 1 0;min-width:0;padding:0 4px}
-  /* The Results panels' heads: the tabs, Coverage and the fold fill the first
-     row, and what the run said takes the second, only while it has something
-     to say. The heading stops being a box of its own
+  /* The Results panels' heads: every tab fills the first row. In the code
+     modes what the run said shares the second with Coverage and the fold; in
+     Site the fold ends the tabs' row, and the second row is only there while
+     the run has something to say. The heading stops being a box of its own
      so its parts can sit in those rows. */
   :is(.results-panel,.console-panel) .panel-head{flex-wrap:wrap;row-gap:6px}
   :is(.results-panel,.console-panel) .panel-head h2{display:contents}
@@ -757,18 +775,9 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   :is(.res-seg,.code-seg) button{flex:1 1 0;min-width:0;padding:0 4px}
   .results-panel .head-actions{order:1}
   .results-panel .run-said{order:2;flex:1 1 100%}
-  .console-panel .head-actions{order:1;margin-left:auto}
-  .console-panel .run-said{order:2;flex:1 1 100%}
-  /* The code modes keep Results and Output beside Coverage; More opens the
-     graders as a menu below it, and the one open stays in the row. */
-  .console-panel{overflow:visible}
-  .console-panel .code-seg{position:relative}
-  .code-seg:has(.code-extra > :not([hidden])) .code-more{display:inline-flex;align-items:center;justify-content:center;gap:2px}
-  .code-more svg.i{width:15px;height:15px;transition:transform .15s}
-  .code-more[aria-expanded="true"] svg.i{transform:rotate(180deg)}
-  .code-seg:has(.code-more[aria-expanded="false"]) .code-extra > :not([aria-pressed="true"]){display:none}
-  .code-seg:has(.code-more[aria-expanded="true"]) .code-extra{display:flex;flex-direction:column;gap:2px;position:absolute;top:calc(100% + 4px);right:0;z-index:5;min-width:160px;padding:4px;border:1px solid var(--line);border-radius:var(--small-r);background:var(--panel);box-shadow:var(--shadow)}
-  .code-seg:has(.code-more[aria-expanded="true"]) .code-extra button{flex:none;justify-content:flex-start;padding:0 12px}
+  .console-panel .code-seg{flex-basis:100%}
+  .console-panel .run-said{flex:1 1 0}
+  .console-panel .head-actions{margin-left:auto}
   .run-said:not(:has(> :not(:empty))){display:none}
   .appbar .picker{order:3;flex:1 1 100%;min-width:0;margin-left:0}
   /* The site panel's head fills its rows the same way. Its controls stop being a

@@ -26,7 +26,7 @@ import { escH } from '../util.js';
    cannot be interrupted, and starts a new one.
 
    Every run also measures which lines of the code ran (the worker's job).
-   A check in the Results head shades the code by it and shows the scores.
+   The Coverage tab shades the code by it and shows the scores.
 
    The files ship in examples/<mode>/<id>/. Edits are kept while you move
    between examples, frameworks and languages, but not stored: Reset or a
@@ -60,8 +60,9 @@ export const session = (m = codeModeOf(mode)) => (sessions[m] ||= {
    Each with its setter, as state.js has it: code/code.js is what changes them. */
 export let active = null;           // the code mode these panels are showing
 export let creating = false;        // and whether it is its Create
-// What runs now: a run of the tests ('run'), of the mutations ('mutate'), or
-// Create's check ('check'); null when nothing does. One at a time.
+// What runs now: a run of the tests ('run'), of the mutations ('mutate'),
+// every example's coverage ('cover'), or Create's check ('check'); null when
+// nothing does. One at a time.
 export let job = null;
 export let view = 'results';        // the tab under the tests
 export const setActive = v => { active = v; };
@@ -73,6 +74,10 @@ export const S = () => session(active);
 // What runs the tests, with versions, once the runtime has said
 export const label = () => P().label(S().versions, S().framework, S().lang);
 export const rt = (m = active) => { const r = CODE_MODES[m].runtime; return typeof r === 'function' ? r(session(m).framework) : r; };
+// New: a blank code file and tests of your own, beside the examples but not one
+// of them, in whichever language the Tests panel picks
+export const NEW = 'new';
+export const isExample = (m, id) => !!CODE_MODES[m].examples[id] || id === NEW;
 export const exampleOf = (m = mode) => codeExample[codeModeOf(m)] ?? CODE_MODES[codeModeOf(m)].ids[0];
 export const files = () => P().files(exampleOf(active), S().framework, S().lang);
 
@@ -151,6 +156,7 @@ export const key = ({ id, lang, framework, create }, which) => (which === 'code'
 // Every code mode ships the same way: examples/<mode>/<id>/ holds the code,
 // and a folder per framework the tests
 export async function shipped(id, which){
+  if (id === NEW) return '';
   const s = S(), f = P().files(id, s.framework, s.lang);
   const r = await fetch(new URL(`../../examples/${active}/${id}/${which === 'code' ? f.code : `${s.framework}/${f.tests}`}`, import.meta.url));
   if (!r.ok) throw new Error(`${id}: ${r.status}`);

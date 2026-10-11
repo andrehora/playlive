@@ -116,9 +116,10 @@ test.describe('JS/TS mode', () => {
     await ready(page);
     const score = page.locator('#codeCov');
     const missed = () => page.locator('#codeEd .hl .l.cov-miss').evaluateAll(ls => ls.map(l => l.textContent.trim()));
-    await page.locator('#codeCovShow').check();
+    const tab = t => page.click(`.code-seg [data-codetab="${t}"]`);
 
     await run(page);
+    await tab('coverage');
     await expect(score).toHaveText(/^Line: 80%\s*\(8 of 10 lines\)$/);
     expect(await missed()).toEqual(['throw new Error("Deposit must be positive");', 'this.balance -= amount;']);
     await expect(page.locator('#codeEd .hl .l.cov-hit')).toHaveCount(8);
@@ -137,19 +138,23 @@ test.describe('JS/TS mode', () => {
     await page.click('.cov-seg [data-covby="lines"]');
 
     // TypeScript runs compiled, and the lines are mapped back to what was written
+    await tab('results');
     await page.click('.code-lang [data-lang="ts"]');
     await expect(page.locator('#codeFile')).toHaveText('bank-account.ts');
     await expect(score).toBeHidden();
     await ready(page, /^TypeScript/);
     await run(page);
+    await tab('coverage');
     await expect(score).toHaveText(/^Line: 77%\s*\(7 of 9 lines\)$/);
     expect(await missed()).toEqual(['throw new Error("Deposit must be positive");', 'this.balance -= amount;']);
     await expect(page.locator('#codeBranch')).toHaveText(/^Branch: 50%\s*\(2 of 4 branches\)$/);
 
     // Mocha measures the same lines as Jasmine
+    await tab('results');
     await page.click('.code-fw [data-fw="mocha"]');
     await ready(page, /Mocha/);
     await run(page);
+    await tab('coverage');
     await expect(score).toHaveText(/^Line: 77%\s*\(7 of 9 lines\)$/);
     expect(errors).toEqual([]);
   });
@@ -257,6 +262,24 @@ test.describe('JS/TS mode', () => {
     expect(errors).toEqual([]);
   });
 
+  test('the Coverage tab ranks every example, in JavaScript and TypeScript', async ({ page }) => {
+    test.setTimeout(4 * LOAD);
+    const { errors } = await openApp(page, { mode: 'javascript' });
+    const panel = page.locator('#codeRanking'), score = panel.locator('.rank-score');
+    await page.click('.code-seg [data-codetab="coverage"]');
+    await panel.locator('[data-codecov="all"]').click();
+    await expect(score).toHaveText(/^\d+ of 63 files fully covered$/, { timeout: 2 * LOAD });
+    await expect(panel.locator('.rank-row')).toHaveCount(63);
+    const pcts = (await panel.locator('.rank-lines').allTextContents()).map(parseFloat);
+    expect(pcts).toEqual([...pcts].sort((a, b) => b - a));
+    await expect(panel.locator('.rank-row', { hasText: 'water.js' }).locator('.rank-lines')).not.toHaveText('100%');
+    // Another language forgets the ranking, and is measured on its own files
+    await page.click('.code-lang [data-lang="ts"]');
+    await expect(score).toHaveText(/^\d+ of 63 files fully covered$/, { timeout: 2 * LOAD });
+    await expect(panel.locator('.rank-line').first()).toHaveText(/\.ts$/);
+    expect(errors).toEqual([]);
+  });
+
   test('the Smells tab finds the four smells in Jasmine and Mocha tests, as they are typed', async ({ page }) => {
     const { errors } = await openApp(page, { hash: '#javascript#bank-account' });
     const panel = page.locator('#codeSmells'), score = panel.locator('.smell-score');
@@ -288,7 +311,7 @@ test.describe('JS/TS mode', () => {
     await edit('  it("does nothing", () => {', '  it("does nothing", () => {{');
     await expect(panel).toContainText('Fix the tests first');
 
-    // All smells: Bank account and Cart repeat their setup, and Calculator's very bad test
+    // All examples: Bank account and Cart repeat their setup, and Calculator's very bad test
     // checks everything, on purpose, in Mocha and TypeScript too
     await page.evaluate(() => { window.playlive.code.framework('mocha'); window.playlive.code.lang('ts'); });
     await expect(page.locator('#codeTestsFile')).toHaveText('bank-account.test.ts');

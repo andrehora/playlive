@@ -31,14 +31,12 @@ async function measure(page, id){
 test('every example says the same in Python and in JS/TS', async ({ page }) => {
   test.setTimeout(6 * CODE_LOAD);
   const { errors } = await openApp(page, { hash: '#python' });
-  await page.locator('#codeCovShow').check();
   const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
   const python = {};
   for (const id of await steadyCodeIds(ids)) python[id] = await measure(page, id);
 
   await page.click('.code-lang [data-lang="js"]');
   await expect(page.locator('#codeFile')).toHaveText(/\.js$/);
-  await page.locator('#codeCovShow').check();
   const differ = [];
   for (const id of await steadyCodeIds(ids)){
     const js = await measure(page, id);
