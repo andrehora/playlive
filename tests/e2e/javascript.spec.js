@@ -403,10 +403,6 @@ describe("Mine", () => {
     await ready(page);
     await code.fill((await code.inputValue()).replace('100 - this.discount', '100 + this.discount'));
     expect(await run(page)).toMatch(/^1 of 4 tests failed \([\d.]+s\)$/);
-    // One circle per test in the head, in the file's order
-    await expect(page.locator('#codeDots i')).toHaveCount(4);
-    await expect(page.locator('#codeDots i.ok')).toHaveCount(3);
-    await expect(page.locator('#codeDots i').nth(2)).toHaveClass('bad');
     await expect(failed.locator('.err')).toHaveText('Expected 44 to be 36.');
     await failed.locator('.code-at').click();
     expect(await selected()).toBe('expect(cart.total()).toBe(36);');

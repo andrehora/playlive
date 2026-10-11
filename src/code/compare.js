@@ -2,6 +2,7 @@ import { $id } from '../dom.js';
 import { plural } from '../util.js';
 import { LOGOS } from './logos.js';
 import { diffLines, markHtml } from './diff.js';
+import { apisOf, linkApis } from './apis.js';
 import { CODE_MODES, LANGS, S, active, exampleOf, key, sessions, testsEd } from './core.js';
 
 /* ---------- The tests, large, and another framework's beside them ----------
@@ -97,10 +98,12 @@ function draw(pane){
   const [a, b] = panes;
   const marks = comparing() && diffBox.checked && typeof a.text === 'string' && typeof b.text === 'string'
     ? diffLines(a.text, b.text)[pane === a ? 0 : 1] : [];
-  code.innerHTML = CODE_MODES[shows.mode].highlight(text).map((l, i) => {
+  // The framework's own names link to a search for them, in a new tab
+  const mode = CODE_MODES[shows.mode], apis = apisOf(mode.snippets(shows.fw, shows.lang ?? undefined), shows.fw);
+  code.innerHTML = mode.highlight(text).map((l, i) => {
     const m = marks[i];
-    if (!m) return `<span class="l">${l || ' '}</span>`;
-    return `<span class="l diff">${m === true ? l : markHtml(l, m)}</span>`;
+    if (!m) return `<span class="l">${linkApis(l, apis) || ' '}</span>`;
+    return `<span class="l diff">${linkApis(m === true ? l : markHtml(l, m), apis)}</span>`;
   }).join('');
 }
 function setComparing(on){

@@ -28,23 +28,9 @@ resultsEl.innerHTML = '<p class="code-note" hidden></p><div class="code-list"></
 const noteEl = resultsEl.firstChild, listEl = resultsEl.lastChild;
 const countEl = $id('codeCount');
 let tests = [], collectError = null, runTarget = null;
-// The tests the last run covered, in order, for the circles in the panel head;
-// null until a run, and again once the file is edited
+// The tests the last run covered, in order, for its progress; null until a
+// run, and again once the file is edited
 let runIds = null;
-const dotsEl = $id('codeDots');
-const DOT = { running: 'run', passed: 'ok', failed: 'bad', error: 'bad', skipped: 'skip' };
-// Updated in place, so a circle pops in once, when it first appears, and not
-// on every redraw of the list
-function paintDots(){
-  const byId = new Map(tests.map(t => [t.id, t])), ids = runIds || [];
-  while (dotsEl.children.length > ids.length) dotsEl.lastChild.remove();
-  ids.forEach((id, i) => {
-    const dot = dotsEl.children[i] || dotsEl.appendChild(document.createElement('i'));
-    const t = byId.get(id);
-    dot.className = DOT[t?.state] || 'todo';
-    dot.title = t?.name || id;
-  });
-}
 // How each test ended in every repetition of the last run, for its row's bars
 // and the flaky badge; only drawn when that run was repeated
 const tally = new Map();
@@ -123,7 +109,6 @@ function renderResults(){
   }
   if (!tests.length && !collectError) listEl.innerHTML = `<p class="empty">No tests yet. ${P().emptyText(S().framework)}</p>`;
   for (const t of tests) listEl.append(row(t));
-  paintDots();
 }
 // What the file defines now, keeping what the last run said about each test
 function readTests(){
@@ -137,7 +122,7 @@ function readTests(){
 }
 let readTimer;
 testsEd.ta.addEventListener('input', () => {
-  runIds = null;                      // the circles were about that run, of that file
+  runIds = null;                      // that run was of that file
   clearTimeout(readTimer); readTimer = setTimeout(readTests, 300);
 });
 // `line` is where a test is defined; `fail` is where and why it did not pass.
@@ -189,7 +174,19 @@ export function setCodeView(v){
   listMutations();
   listSmells();
 }
-document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => setCodeView(b.dataset.codetab)));
+document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => { setCodeView(b.dataset.codetab); setMore(false); }));
+// On a phone, More opens the graders' tabs as a menu; a pick, Escape or a tap elsewhere closes it
+const moreBtn = document.querySelector('.code-seg .code-more'), extraEl = $id('codeExtra');
+const moreOpen = () => moreBtn.getAttribute('aria-expanded') === 'true';
+function setMore(open){ moreBtn.setAttribute('aria-expanded', String(open)); }
+moreBtn.addEventListener('click', () => {
+  setMore(!moreOpen());
+  if (moreOpen()) extraEl.querySelector('button:not([hidden])')?.focus();
+});
+document.addEventListener('click', e => { if (moreOpen() && !e.target.closest('.code-seg')) setMore(false); });
+document.querySelector('.code-seg').addEventListener('keydown', e => {
+  if (e.key === 'Escape' && moreOpen()){ e.stopPropagation(); setMore(false); moreBtn.focus(); }
+});
 
 
 /* ---------- The console ---------- */
@@ -216,14 +213,14 @@ function setState(text, bad = false){ stateEl.textContent = text; stateEl.classL
 function idle(){
   if (!active) return;
   const { worker, ready } = S();
-  const waiting = `Downloading ${rt()}. This takes a few seconds the first time; after that your browser keeps it.`;
+  const waiting = `Downloading ${rt()}. This takes a few seconds the first time...`;
   const down = `${rt()} is not running. Press Run to try again.`;
-  // Results says so too, above the tests, until the runtime is ready. A fresh
-  // worker starting for the next run downloads nothing it has not already.
+  // Results says so only when the runtime is down; a download it leaves to
+  // Output and the toolbar. A fresh worker starting for the next run
+  // downloads nothing it has not already.
   const known = ready || !!S().versions;
-  noteEl.hidden = known;
-  noteEl.textContent = worker ? waiting : down;
-  noteEl.classList.toggle('loading', !!worker && !ready);
+  noteEl.hidden = known || !!worker;
+  noteEl.textContent = down;
   const el = consoleEl.querySelector('.empty');
   if (!el) return;
   el.textContent = known ? 'Press Run to run the tests.' : worker ? waiting : down;
@@ -545,19 +542,27 @@ const resetBtns = { tests: $id('codeTestsReset'), code: $id('codeReset') };
 for (const [which, b] of Object.entries(resetBtns)) b.addEventListener('click', () => resetFile(which));
 document.addEventListener('playlive:code-job', () => { for (const b of Object.values(resetBtns)) b.disabled = !!job; });
 
-// Results and Output fold to their head, which still carries the summary and
-// the circles, and the code takes the room
-let codeFolded = false;
-function setCodeFolded(f){
-  codeFolded = f;
-  $id('left').dataset.code = f ? 'collapsed' : 'open';
-  const b = $id('foldCode');
+// Each panel folds to its head. Results and Output keep the summary and the
+// circles; Tests keeps Run; the source keeps its switches. The layout reads
+// the folds off #left and the source panel, and gives the room to the others.
+const FOLDS = {
+  results: { btn: 'foldCode', what: 'panel', on: f => { $id('left').dataset.code = f ? 'collapsed' : 'open'; } },
+  tests: { btn: 'foldTests', what: 'tests', on: f => { $id('left').dataset.codetests = f ? 'collapsed' : 'open'; } },
+  source: { btn: 'foldSource', what: 'code', on: f => { document.querySelector('.code-module-panel').dataset.fold = f ? 'collapsed' : 'open'; } }
+};
+function setFolded(which, f){
+  const { btn, what, on } = FOLDS[which], b = $id(btn);
+  on(f);
   b.setAttribute('aria-expanded', String(!f));
-  b.setAttribute('aria-label', f ? 'Expand the panel' : 'Collapse the panel');
+  b.setAttribute('aria-label', `${f ? 'Expand' : 'Collapse'} the ${what}`);
   b.title = f ? 'Expand' : 'Collapse';
-  $id('foldCodeIcon').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
+  b.querySelector('path').setAttribute('d', f ? 'M7 9l5-5 5 5M7 15l5 5 5-5' : 'M7 4l5 5 5-5M7 20l5-5 5 5');
 }
-$id('foldCode').addEventListener('click', () => setCodeFolded(!codeFolded));
+for (const [which, { btn }] of Object.entries(FOLDS))
+  $id(btn).addEventListener('click', e => setFolded(which, e.currentTarget.getAttribute('aria-expanded') === 'true'));
+// Going to a line opens the panel it is in
+$id('codeTestsEd').addEventListener('playlive:jump', () => setFolded('tests', false));
+$id('codeEd').addEventListener('playlive:jump', () => setFolded('source', false));
 document.querySelector('.code-fw').addEventListener('click', e => { const b = e.target.closest('[data-fw]'); if (b) setFramework(b.dataset.fw); });
 runBtn.addEventListener('click', () => (job ? stopCodeTests() : runCodeTests()));
 document.addEventListener('keydown', e => {

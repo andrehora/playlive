@@ -17,8 +17,9 @@ test.describe('Python mode', () => {
   test('has its own panels, its own examples, and pytest first', async ({ page }) => {
     const { errors } = await openApp(page);
     await setMode(page, 'python');
-    // Choosing the mode is what starts the download, and Results says so
-    await expect(page.locator('#codeResults .code-note')).toContainText('Downloading Python');
+    // Choosing the mode is what starts the download; the toolbar says so, and Results keeps quiet
+    await expect(page.locator('#codeState')).toContainText('Downloading Python');
+    await expect(page.locator('#codeResults .code-note')).toBeHidden();
     for (const p of ['.code-tests-panel', '.console-panel', '.code-module-panel']) await expect(page.locator(p)).toBeVisible();
     for (const p of ['.tests-panel', '.results-panel', '.browser']) await expect(page.locator(p)).toBeHidden();
     expect(await overflow(page)).toBeLessThanOrEqual(0);
@@ -96,6 +97,86 @@ test.describe('Python mode', () => {
     expect(errors).toEqual([]);
   });
 
+  test('a phone shows Results and Output beside Coverage, and More the graders', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await openApp(page);
+    await setMode(page, 'python');
+    const tab = name => page.locator(`.code-seg [data-codetab="${name}"]`), more = page.locator('.code-seg .code-more');
+    for (const t of ['results', 'console']) await expect(tab(t)).toBeVisible();
+    for (const t of ['mutation', 'smells', 'create']) await expect(tab(t)).toBeHidden();
+    // One row: the tabs, More, Coverage and the fold
+    const y = async sel => (await page.locator(sel).boundingBox()).y;
+    const row = await y('.code-seg [data-codetab="results"]');
+    for (const sel of ['.code-seg .code-more', '.console-panel .cov-toggle', '#foldCode'])
+      expect(Math.abs(await y(sel) - row), `${sel} is not on the tabs' row`).toBeLessThan(20);
+
+    // More opens the graders as a menu over the results, not a row of its own
+    const head = (await page.locator('.console-panel .panel-head').boundingBox()).height;
+    await more.click();
+    await expect(more).toHaveAttribute('aria-expanded', 'true');
+    for (const t of ['mutation', 'smells', 'create']) await expect(tab(t)).toBeVisible();
+    expect((await page.locator('.console-panel .panel-head').boundingBox()).height).toBe(head);
+    await expect(tab('mutation')).toBeFocused();
+    // Escape closes it and gives the focus back
+    await page.keyboard.press('Escape');
+    await expect(more).toHaveAttribute('aria-expanded', 'false');
+    await expect(more).toBeFocused();
+    // Picking one closes it, and the one open stays in the row
+    await more.click();
+    await tab('smells').click();
+    await expect(more).toHaveAttribute('aria-expanded', 'false');
+    await expect(tab('smells')).toBeVisible();
+    await expect(tab('mutation')).toBeHidden();
+    await expect(page.locator('#codeSmells')).toBeVisible();
+    // A tap elsewhere closes it too
+    await more.click();
+    await page.locator('#codeTestsFile').click();
+    await expect(more).toHaveAttribute('aria-expanded', 'false');
+
+    // A wide screen has no More: every tab shows
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(more).toBeHidden();
+    for (const t of ['results', 'console', 'mutation', 'smells', 'create']) await expect(tab(t)).toBeVisible();
+  });
+
+  test('the tests, large, link the framework\'s names to a search in a new tab, and close by an icon', async ({ page }) => {
+    await openApp(page);
+    await setMode(page, 'python');
+    await page.click('.code-fw [data-fw="unittest"]');
+    await page.click('#codeTestsOpen');
+    const link = page.locator('#cmpMine .cmp-code a.api', { hasText: /^assertEqual$/ }).first();
+    await expect(link).toHaveAttribute('href', 'https://www.google.com/search?btnI=1&q=assertEqual%20unittest');
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', /noopener/);
+    // Close is an icon, named for screen readers
+    const close = page.locator('#cmpClose');
+    await expect(close).toHaveAttribute('aria-label', 'Close');
+    await expect(close).toHaveText('');
+    await close.click();
+    await expect(page.locator('#cmp')).toBeHidden();
+  });
+
+  test('Tests and the source fold to their head, and going to a line opens them', async ({ page }) => {
+    await openApp(page);
+    await setMode(page, 'python');
+    for (const [btn, ed, what] of [['#foldTests', '#codeTestsEd', 'tests'], ['#foldSource', '#codeEd', 'code']]){
+      const b = page.locator(btn);
+      await expect(b).toHaveAttribute('aria-label', `Collapse the ${what}`);
+      await b.click();
+      await expect(page.locator(ed)).toBeHidden();
+      await expect(b).toHaveAttribute('aria-expanded', 'false');
+      await expect(b).toHaveAttribute('aria-label', `Expand the ${what}`);
+    }
+    // Run stays, folded
+    await expect(page.locator('#codeRun')).toBeVisible();
+    // A test's name goes to its line, so the tests open again
+    await page.locator('#codeResults .code-name').first().click();
+    await expect(page.locator('#codeTestsEd')).toBeVisible();
+    await expect(page.locator('#foldTests')).toHaveAttribute('aria-expanded', 'true');
+    await page.click('#foldSource');
+    await expect(page.locator('#codeEd')).toBeVisible();
+  });
+
   test('each panel\'s Reset puts its own file back as it ships, and undo takes it back', async ({ page }) => {
     const { errors } = await openApp(page, { mode: 'python' });
     const tests = page.locator('#codeTestsEd textarea'), code = page.locator('#codeEd textarea');
@@ -165,14 +246,9 @@ test.describe('Python mode', () => {
     await expect(page.locator('#codeConsole')).toContainText('test session starts');
     await page.click('.code-seg [data-codetab="results"]');
 
-    await expect(page.locator('#codeDots i')).toHaveCount(4);
-    await expect(page.locator('#codeDots i.bad')).toHaveCount(1);
-    // One test runs on its own, and the others keep what they had; the head
-    // counts that run, so it has one circle
+    // One test runs on its own, and the others keep what they had
     await rows.first().locator('.run-one').click();
     await expect(summary).toHaveText(/^The test passed in [\d.]+s$/, { timeout: PYTHON });
-    await expect(page.locator('#codeDots i')).toHaveCount(1);
-    await expect(page.locator('#codeDots i.ok')).toHaveCount(1);
     await expect(failed).toHaveCount(1);
 
     // A test that never ends is stopped, and Python comes back for the next run

@@ -143,8 +143,7 @@
                 title="Find smells in the tests">Smells</button>
               <button type="button" data-resview="create" aria-pressed="false"
                 title="Write tests from their titles">Create</button>
-            </span><span class="run-said"><span id="summary" aria-live="polite"></span><span id="runDots"
-                class="sdots" aria-hidden="true"></span></span></h2>
+            </span><span class="run-said"><span id="summary" aria-live="polite"></span></span></h2>
           <div class="head-actions">
             <button id="foldAll" type="button" class="ghost icon-btn" aria-label="Collapse the panel"><svg class="i"
                 viewBox="0 0 24 24" aria-hidden="true">
@@ -192,6 +191,9 @@
               <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
               <path d="M3 3v5h5" />
             </svg></button>
+            <button id="foldTests" type="button" class="ghost icon-btn" aria-label="Collapse the tests"
+              aria-expanded="true" aria-controls="codeTestsEd" title="Collapse"><svg class="i" viewBox="0 0 24 24"
+                aria-hidden="true"><path d="M7 4l5 5 5-5M7 20l5-5 5 5" /></svg></button>
           </div>
         </div>
         <div class="code-ed" id="codeTestsEd">
@@ -226,21 +228,25 @@
                 title="Test results">Results</button>
               <button type="button" data-codetab="console" aria-pressed="false"
                 title="Test output">Output</button>
-              <button type="button" data-codetab="mutation" aria-pressed="false" hidden
-                title="Mutation testing">Mutation</button>
-              <button type="button" data-codetab="smells" aria-pressed="false" hidden
-                title="Smells in these tests">Smells</button>
-              <button type="button" data-codetab="create" aria-pressed="false" hidden
-                title="Write tests from their names">Create</button>
-            </span><span class="run-said"><span id="codeSummary" aria-live="polite"></span><span id="codeDots"
-                class="sdots" aria-hidden="true"></span></span></h2>
+              <span class="code-extra" id="codeExtra">
+                <button type="button" data-codetab="mutation" aria-pressed="false" hidden
+                  title="Mutation testing">Mutation</button>
+                <button type="button" data-codetab="smells" aria-pressed="false" hidden
+                  title="Smells in these tests">Smells</button>
+                <button type="button" data-codetab="create" aria-pressed="false" hidden
+                  title="Write tests from their names">Create</button>
+              </span>
+              <button type="button" class="code-more" aria-haspopup="true" aria-expanded="false"
+                aria-controls="codeExtra" title="More tabs">More<svg class="i" viewBox="0 0 24 24"
+                  aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
+            </span><span class="run-said"><span id="codeSummary" aria-live="polite"></span></span></h2>
           <div class="head-actions">
             <label class="cov-toggle" title="Show coverage in the code"><input type="checkbox"
                 id="codeCovShow">Coverage</label>
             <button id="foldCode" type="button" class="ghost icon-btn" aria-label="Collapse the panel"
               aria-expanded="true" aria-controls="codeCreate codeResults codeConsole codeMutation codeSmells" title="Collapse"><svg class="i"
                 viewBox="0 0 24 24" aria-hidden="true">
-                <path id="foldCodeIcon" d="M7 4l5 5 5-5M7 20l5-5 5 5" />
+                <path d="M7 4l5 5 5-5M7 20l5-5 5 5" />
               </svg></button>
           </div>
           <div class="progress" id="codeProgress" hidden><span></span></div>
@@ -339,6 +345,9 @@
               <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
               <path d="M3 3v5h5" />
             </svg></button>
+          <button id="foldSource" type="button" class="ghost icon-btn" aria-label="Collapse the code"
+            aria-expanded="true" aria-controls="codeEd codeFlow" title="Collapse"><svg class="i" viewBox="0 0 24 24"
+              aria-hidden="true"><path d="M7 4l5 5 5-5M7 20l5-5 5 5" /></svg></button>
         </div>
       </div>
       <div id="codeFlow" class="code-flow" hidden></div>
@@ -356,7 +365,7 @@
 
   <dialog id="dlg" aria-labelledby="dlgTitle">
     <div class="dlg-head">
-      <h2 id="dlgTitle"></h2><button id="dlgClose" type="button" class="ghost small">Close</button>
+      <h2 id="dlgTitle"></h2><button id="dlgClose" type="button" class="ghost icon-btn" aria-label="Close" title="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
     </div>
     <div class="dlg-tabs" id="dlgTabs" role="tablist" aria-label="Framework" hidden></div>
     <p id="dlgNote"></p>
@@ -389,7 +398,7 @@
     <div class="cmp-actions">
       <button id="cmpCompare" type="button" class="small" aria-pressed="false"
         title="Show another framework beside these">Compare</button>
-      <button id="cmpClose" type="button" class="ghost small">Close</button>
+      <button id="cmpClose" type="button" class="ghost icon-btn" aria-label="Close" title="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
     </div>
   </dialog>
   <script type="module" src="src/main.js"></script>

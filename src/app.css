@@ -175,15 +175,9 @@ body.resizing iframe{pointer-events:none}
 .hist i{width:4px;height:12px;border-radius:2px;background:var(--line)}
 .hist i.h-pass{background:var(--pass)} .hist i.h-fail{background:var(--fail)}
 .sdots{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px;margin-left:8px;vertical-align:1px;max-width:100%}
-/* What the run says, and its circles under it rather than beside it, so the
-   head keeps its width for the tabs */
-.run-said{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-width:0;overflow:hidden;line-height:1.15}
-.run-said .sdots{margin-left:0;max-width:100%;overflow:hidden;flex-wrap:nowrap;line-height:1}
+/* What the run says, beside the tabs */
+.run-said{display:flex;align-items:center;min-width:0;overflow:hidden;line-height:1.15}
 .run-said #summary,.run-said #codeSummary{max-width:100%}
-/* The head's row says what it is. It is drawn here rather than in the markup
-   because the row goes when the circles do, and :empty is what takes it. */
-#runDots::before,#codeDots::before{content:"Tests:";margin-right:4px;font-size:11.5px;font-weight:400;color:var(--muted)}
-#runDots:empty,#codeDots:empty{display:none}
 .sdots i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--line);animation:dot-in .18s ease-out}
 /* A step or test the run has not reached yet: there from the start, so the row
    shows how long the run is, and hollow, so it does not read as a result. */
@@ -445,6 +439,9 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 .left[data-code="collapsed"] .console-panel{flex:0 0 auto;min-height:0}
 .left[data-code="collapsed"] :is(#codeCreate, #codeResults, #codeConsole, #codeMutation, #codeSmells){display:none!important}
 .code-module-panel{min-height:0}
+/* Collapsed, Tests keep their head and Run, and the source its head */
+.left[data-codetests="collapsed"] #codeTestsEd,.code-module-panel[data-fold="collapsed"] :is(#codeEd, #codeFlow){display:none!important}
+.code-module-panel[data-fold="collapsed"]{align-self:start}
 .code-ed{flex:1;min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
 .code-ed:focus-within{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--run) 55%,transparent)}
 .code-ed .hl,.code-ed textarea{position:absolute;inset:0;margin:0;padding:12px 14px;font:inherit;white-space:pre;tab-size:4;border:0;letter-spacing:0}
@@ -525,6 +522,9 @@ svg.flow{display:block;max-width:none;overflow:visible}
 .code-detail .err{margin:0;font:12px/1.5 "IBM Plex Mono",ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
 .code-at{padding:2px 6px;min-height:0;margin-left:-6px;font-size:12px}
 .code-seg button{font-size:12.5px;font-weight:600}
+/* More only folds the graders into a menu on a phone */
+.code-extra{display:contents}
+.code-seg .code-more{display:none}
 .code-tests-panel .head-actions{flex-wrap:nowrap}
 .code-tests-panel .panel-head h2{flex:0 1 auto;overflow:hidden}
 .code-tests-panel .code-file{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -580,6 +580,10 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 .cmp-code{flex:1;min-height:0;margin:0;overflow:auto;padding:12px 16px 12px 0;background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;white-space:pre;tab-size:4;counter-reset:ln;outline:none}
 .cmp-code:focus-visible{box-shadow:inset 0 0 0 2px var(--run)}
 .cmp-code .l{display:block;min-height:var(--code-line)}
+/* The framework's own names open a search for them */
+.cmp-code a.api{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+.cmp-code a.api:hover{text-decoration-style:solid}
+.cmp-code a.api:focus-visible{outline:2px solid var(--run);outline-offset:1px;border-radius:2px}
 .cmp-code .l::before{counter-increment:ln;content:counter(ln);display:inline-block;width:4.5ch;margin-right:16px;padding-right:8px;text-align:right;color:var(--muted);opacity:.55;border-right:1px solid var(--line)}
 .cmp-none{display:block;padding-left:16px;color:var(--muted)}
 /* Compare's Diff: a changed line tinted, what differs in it stronger */
@@ -630,6 +634,10 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .left[data-code="collapsed"] .code-tests-panel{flex:1 1 auto}
   .left[data-code="collapsed"] .code-tests-panel .code-ed{flex:1 1 auto;height:auto}
   .left[data-code="collapsed"] #codeResizer{visibility:hidden}
+  /* With the tests folded, Results and Output take the room; folded too, the
+     column ends rather than stretch Tests over a hidden editor */
+  .left[data-codetests="collapsed"] #codeResizer{visibility:hidden}
+  .left[data-codetests="collapsed"][data-code="collapsed"] .code-tests-panel{flex:0 1 auto}
   /* One width whatever the example and the window: a long name is cut short */
   .site-btn{padding:7px 10px;flex:none;width:344px}
   .site-name{flex-shrink:0}
@@ -684,10 +692,10 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .code-lang button,.cmp-lang button{padding:0 6px}
   /* On a phone the frameworks are told apart by name; the languages keep their logos, their only label */
   :is(.code-fw,.cmp-fw) button svg{display:none}
-  /* The tests' switches share a row of their own; Open large and Reset end
+  /* The tests' switches share a row of their own; Open large, Reset and the fold end
      the name's row above it */
   .code-tests-panel .head-actions{display:contents}
-  .code-tests-panel .panel-head h2{flex:1 1 calc(100% - 2 * var(--icon-tap) - 16px);min-width:0}
+  .code-tests-panel .panel-head h2{flex:1 1 calc(100% - 3 * var(--icon-tap) - 24px);min-width:0}
   .code-tests-panel .head-actions>.icon-btn{order:1}
   .code-tests-panel .head-actions>.seg{order:2;flex:1}
   .code-tests-panel .head-actions>.seg button{flex:1;justify-content:center}
@@ -739,20 +747,28 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      take the second row between them, 60/40 like the example's row below. */
   .appbar .area-seg{order:2;flex:1 1 100%;min-width:0}
   .appbar .area-seg button{flex:1 1 0;min-width:0;padding:0 4px}
-  /* The Results panels' heads: the tabs fill the first row, and what the run
-     said (with its circles) shares the second with Coverage and the fold. In
-     Site the fold ends the tabs' row, and the second row is only there while
-     the run has something to say. The heading stops being a box of its own
+  /* The Results panels' heads: the tabs, Coverage and the fold fill the first
+     row, and what the run said takes the second, only while it has something
+     to say. The heading stops being a box of its own
      so its parts can sit in those rows. */
   :is(.results-panel,.console-panel) .panel-head{flex-wrap:wrap;row-gap:6px}
   :is(.results-panel,.console-panel) .panel-head h2{display:contents}
   :is(.res-seg,.code-seg){flex:1 1 auto;min-width:0}
   :is(.res-seg,.code-seg) button{flex:1 1 0;min-width:0;padding:0 4px}
-  .console-panel .code-seg{flex-basis:100%}
   .results-panel .head-actions{order:1}
   .results-panel .run-said{order:2;flex:1 1 100%}
-  .console-panel .run-said{flex:1 1 0}
-  .console-panel .head-actions{margin-left:auto}
+  .console-panel .head-actions{order:1;margin-left:auto}
+  .console-panel .run-said{order:2;flex:1 1 100%}
+  /* The code modes keep Results and Output beside Coverage; More opens the
+     graders as a menu below it, and the one open stays in the row. */
+  .console-panel{overflow:visible}
+  .console-panel .code-seg{position:relative}
+  .code-seg:has(.code-extra > :not([hidden])) .code-more{display:inline-flex;align-items:center;justify-content:center;gap:2px}
+  .code-more svg.i{width:15px;height:15px;transition:transform .15s}
+  .code-more[aria-expanded="true"] svg.i{transform:rotate(180deg)}
+  .code-seg:has(.code-more[aria-expanded="false"]) .code-extra > :not([aria-pressed="true"]){display:none}
+  .code-seg:has(.code-more[aria-expanded="true"]) .code-extra{display:flex;flex-direction:column;gap:2px;position:absolute;top:calc(100% + 4px);right:0;z-index:5;min-width:160px;padding:4px;border:1px solid var(--line);border-radius:var(--small-r);background:var(--panel);box-shadow:var(--shadow)}
+  .code-seg:has(.code-more[aria-expanded="true"]) .code-extra button{flex:none;justify-content:flex-start;padding:0 12px}
   .run-said:not(:has(> :not(:empty))){display:none}
   .appbar .picker{order:3;flex:1 1 100%;min-width:0;margin-left:0}
   /* The site panel's head fills its rows the same way. Its controls stop being a
@@ -774,7 +790,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .toolbar .opts .field{flex:1 1 150px;justify-content:space-between}
   .toolbar .opts select{flex:1 1 auto;min-width:0}
   /* The code modes': Run tests and Repeat share a row. What runs the tests is
-     left out (Results says when it is downloading); only a failure takes a row */
+     left out; only a failure takes a row */
   .code-tests-panel .toolbar{display:grid;grid-template-columns:1fr auto}
   .code-tests-panel .toolbar > button{min-width:0;justify-content:center}
   .code-tests-panel .code-state{grid-column:1/-1;margin-left:0}

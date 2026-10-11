@@ -132,6 +132,8 @@ function makeEditor(root){
     jump(line){
       const lines = ta.value.split('\n');
       if (!(line >= 0 && line < lines.length)) return;
+      // A folded panel opens to show it (code/code.js)
+      ta.dispatchEvent(new CustomEvent('playlive:jump', { bubbles: true }));
       const pos = lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0);
       ta.focus({ preventScroll: true });
       ta.setSelectionRange(pos + lines[line].search(/\S|$/), pos + lines[line].length);

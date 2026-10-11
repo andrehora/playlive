@@ -221,28 +221,6 @@ test.describe('Running', () => {
     expect(await page.evaluate(() => localStorage.getItem('live-test-runner:status'))).toContain('contact-form');
   });
 
-  test('the head counts the run in circles, one per test, and keeps them', async ({ page }) => {
-    await openApp(page, { site: 'contact-form' });
-    await setSpeed(page, 'fast');
-    const tests = await page.locator('#results .test').count();
-
-    // Collapsed to one row, the head is all there is to watch: the summary says
-    // how far the run has got and the circles say the rest, over the whole run
-    // rather than the test running now.
-    await page.click('#foldAll');                     // folded -> collapsed
-    await expect(page.locator('#results')).toBeHidden();
-    const res = await runAll(page);
-    expect(res.state, describeFailures(res)).toBe('ok');
-    await expect(page.locator('#runDots i')).toHaveCount(tests);
-    await expect(page.locator('#runDots i.ok')).toHaveCount(tests);
-    // The summary names no test: the circles are the detail.
-    expect(res.summary).not.toContain('“');
-
-    // They describe that run, so an edit clears them with the summary.
-    await page.fill('#spec', await page.inputValue('#spec') + '\n');
-    await expect(page.locator('#runDots i')).toHaveCount(0);
-  });
-
   test('a step carries its value inside the target', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     await setSpeed(page, 'fast');
@@ -399,27 +377,18 @@ test.describe('Running', () => {
     await expect(page.locator('#run .lbl')).toHaveText('Run tests');
   });
 
-  test('the head lays out a circle for every test and fills them as the run goes', async ({ page }) => {
+  test('the head says how the run went in words alone, and an edit clears it', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
-    const all = await page.locator('#results .test').count();      // every test of the run
-    expect(all).toBeGreaterThan(1);
-    expect(await page.evaluate(() => getComputedStyle(document.getElementById('runDots'), '::before').content)).toContain('Tests:');
-    await setSpeed(page, 'step');
-    await page.click('#run');
-
-    // They are all there from the start, hollow until the run reaches them, so
-    // the row says how long the run is as well as how far it has got. The test
-    // running is the one circle that is not hollow.
-    await expect(page.locator('#runDots i')).toHaveCount(all);
-    await expect(page.locator('#runDots i.run')).toHaveCount(1);
-    await expect(page.locator('#runDots i.todo')).toHaveCount(all - 1);
-    await expect(page.locator('#runDots i').first()).toHaveAttribute('title', await page.locator('#results .test .ttl').first().textContent());
-
-    // Stopped part way, the test stopped and the ones not reached stay hollow
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#run .lbl')).toHaveText('Run tests', { timeout: 60_000 });
-    await expect(page.locator('#runDots i')).toHaveCount(all);
-    await expect(page.locator('#runDots i.todo')).toHaveCount(all);
+    await setSpeed(page, 'fast');
+    await page.click('#foldAll');                     // folded -> collapsed
+    await expect(page.locator('#results')).toBeHidden();
+    const res = await runAll(page);
+    expect(res.state, describeFailures(res)).toBe('ok');
+    // No circles in the head: the summary is all it says, and names no test
+    await expect(page.locator('.results-panel .panel-head .sdots')).toHaveCount(0);
+    expect(res.summary).not.toContain('“');
+    await page.fill('#spec', await page.inputValue('#spec') + '\n');
+    await expect(page.locator('#summary')).toHaveText('');
   });
 
   test('Repeat runs the tests several times and reports every run', async ({ page }) => {

@@ -118,10 +118,6 @@ export async function run(only){
   let done = 0;
   setProgress(0);
   for (let rep = 1; rep <= reps && !stopRequested; rep++){
-    // One circle per test this repetition runs, in order
-    const head = $id('runDots');
-    dots(head, only !== undefined ? 1 : spec.tests.length);
-    let k = 0;
     renderResults(spec.tests);
     resultsEl.scrollTop = 0;
     syncUI();
@@ -132,11 +128,7 @@ export async function run(only){
       if (stopRequested){ sections[i].dataset.state = 'notrun'; continue; }
       summaryEl.className = '';
       summaryEl.textContent = `Running ${done + 1} of ${total}` + (reps > 1 ? ` · repetition ${rep} of ${reps}` : '');
-      const hdot = head.children[k++];
-      hdot.className = 'run'; hdot.title = spec.tests[i].title;
       const r = await runTest(spec.tests[i], sections[i], spec);
-      // A test stopped part way never finished: hollow, like the ones not reached
-      hdot.className = stopRequested ? 'todo' : r.ok ? 'ok' : 'bad';
       setProgress(++done / total);
       if (!stopRequested){ tally[i].runs++; if (r.ok) tally[i].pass++; }
       records.push({ ...r, tally: tally[i] });
@@ -207,5 +199,4 @@ export function preview(){
   renderSmells();                   // the smells are read from the file itself
   renderCreate();                   // as is how much of this example you have written
   summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
-  $id('runDots').innerHTML = '';
 }
