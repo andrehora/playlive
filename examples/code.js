@@ -22,6 +22,7 @@ const GROUPS = [
       ["calculator", "A first example"],
       ["password-check", "Checking true or false"],
       ["cart", "Testing a class"],
+      ["shopping-list", "Comparing lists and objects"],
       ["grades", "Testing boundaries"],
       ["palindrome", "Parametrized tests"],
       ["bank-account", "Testing exceptions"],
