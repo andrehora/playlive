@@ -117,6 +117,7 @@ function builtins(){
     writeFileSync: (p, data) => { files.set(String(p), String(data)); },
     readFileSync: p => { if (!files.has(String(p))) throw missing(p); return files.get(String(p)); },
     existsSync: p => files.has(String(p)) || dirs.has(String(p)),
+    readdirSync: p => { p = String(p) + '/'; return [...files.keys()].filter(f => f.startsWith(p) && !f.slice(p.length).includes('/')).map(f => f.slice(p.length)); },
     mkdtempSync: prefix => { const d = `${prefix}${(++n).toString(36).padStart(6, '0')}`; dirs.add(d); return d; },
     rmSync: p => { p = String(p); dirs.delete(p); for (const f of [...files.keys()]) if (f === p || f.startsWith(p + '/')) files.delete(f); },
     unlinkSync: p => { if (!files.delete(String(p))) throw missing(p); }

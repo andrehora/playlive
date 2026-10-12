@@ -700,7 +700,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 @media (max-width:900px){
   main{grid-template-columns:minmax(0,1fr);gap:12px;padding:10px max(10px,env(safe-area-inset-right,0px)) 14px max(10px,env(safe-area-inset-left,0px))}
   .left{display:contents}
-  .tests-panel{order:1} .browser{order:2} .results-panel{order:3}
+  .tests-panel{order:1} .results-panel{order:2} .browser{order:3}
   .code-tests-panel{order:1} .console-panel{order:2} .code-module-panel{order:3}
   .code-tests-panel .code-ed{flex:none;height:clamp(220px,42dvh,380px)}
   .code-module-panel .code-ed{flex:none;height:clamp(300px,60dvh,560px)}

@@ -820,16 +820,25 @@ test.describe('Layout and theming', () => {
     }
   });
 
-  test('a phone opens with the code folded, and the button brings it back', async ({ page }) => {
+  test('a phone opens with the code showing, and the button folds it', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openApp(page);
-    await expect(page.locator('#editor')).toBeHidden();
-    await expect(page.locator('#foldSpec')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#editor')).toBeVisible();
+    await expect(page.locator('#foldSpec')).toHaveAttribute('aria-expanded', 'true');
     // Folding only hides the code: the tests are still there to run.
+    await page.click('#foldSpec');
+    await expect(page.locator('#editor')).toBeHidden();
     await expect(page.locator('#run')).toBeEnabled();
     await expect(page.locator('#results .test').first()).toBeVisible();
-    await page.click('#foldSpec');
-    await expect(page.locator('#editor')).toBeVisible();
+  });
+
+  test('a phone shows the site last, below the tests and their results', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openApp(page);
+    const y = async sel => (await page.locator(sel).boundingBox()).y;
+    const [tests, results, site] = [await y('.tests-panel'), await y('.results-panel'), await y('.browser')];
+    expect(results).toBeGreaterThan(tests);
+    expect(site).toBeGreaterThan(results);
   });
 
   test('a wide screen opens with the code showing', async ({ page }) => {

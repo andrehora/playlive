@@ -35,6 +35,8 @@ const GROUPS = [
       ["stack", "Setup 1"],
       ["notes-file", "Setup 2"],
       ["language", "Teardown"],
+      ["dictionary", "Setup once"],
+      ["photos", "Teardown once"],
     ]
   },
   {
