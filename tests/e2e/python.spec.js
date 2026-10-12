@@ -183,7 +183,7 @@ test.describe('Python mode', () => {
     await page.click('.code-fw [data-fw="unittest"]');
     await page.click('#codeTestsOpen');
     const link = page.locator('#cmpMine .cmp-code a.api', { hasText: /^assertEqual$/ }).first();
-    await expect(link).toHaveAttribute('href', 'https://www.google.com/search?btnI=1&q=assertEqual%20unittest');
+    await expect(link).toHaveAttribute('href', 'https://www.google.com/search?btnI=1&q=assertEqual%20site%3Adocs.python.org');
     await expect(link).toHaveAttribute('target', '_blank');
     await expect(link).toHaveAttribute('rel', /noopener/);
     // Close is an icon, named for screen readers
