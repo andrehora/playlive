@@ -37,7 +37,7 @@ test.describe('JS/TS mode', () => {
     await other.locator('[data-lang="ts"]').click();
     await pressed(other, '[data-fw="jasmine"]');
     await other.locator('[data-fw="mocha"]').click();
-    await expect(other.locator('.code-file')).toHaveText('calculator.test.ts');
+    await expect(other.locator('.code-file, .cmp-count')).toHaveCount(0);
     await expect(other.locator('.cmp-code')).toContainText('from "chai"');
     await mine.locator('[data-fw="unittest"]').click();
     await expect(mine.locator('.cmp-code')).toContainText('import unittest');

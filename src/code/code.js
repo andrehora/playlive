@@ -513,11 +513,17 @@ export function leaveCodeMode(){
   setActive(null); setCreating(false);
   codeEd.paint(null);
 }
-// Reset: every example of every code mode back as it ships
+// Reset: every example of every code mode back as it ships. New is only your
+// own files, so with them gone a mode on it is back on its first example, as
+// it opens.
 export async function resetCodeModes(){
   stopCodeTests();
   for (const s of Object.values(sessions)){ s.edits.clear(); s.shown = null; }
-  if (active) await show();
+  for (const m of Object.keys(CODE_MODES)) if (exampleOf(m) === NEW) setCodeExample(m, CODE_MODES[m].ids[0]);
+  if (!active) return;
+  syncUrl();
+  document.dispatchEvent(new CustomEvent('playlive:code-example'));
+  await show();
 }
 
 // One file back as it ships (in Create, the tests back to the names), written

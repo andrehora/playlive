@@ -85,10 +85,10 @@
         <div class="panel-head">
           <h2>Tests <span id="fileStatus" class="file-status" aria-live="polite"></span></h2>
           <div class="head-actions">
-            <button id="export" type="button" class="ghost small"
+            <button id="export" type="button" class="ghost small" aria-label="Export"
               title="Export to Playwright or Cypress"><svg class="i" viewBox="0 0 24 24">
                 <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
-              </svg>Export</button>
+              </svg><span class="lbl">Export</span></button>
             <button id="foldSpec" type="button" class="ghost icon-btn" aria-label="Collapse all" aria-expanded="true"
               aria-controls="editor" title="Collapse all tests"><svg class="i" viewBox="0 0 24 24"
                 aria-hidden="true">
@@ -386,7 +386,6 @@
       </section>
       <section class="cmp-pane" id="cmpOther" hidden>
         <div class="cmp-head">
-          <h2>Tests <span class="code-file"></span> <span class="file-status cmp-count"></span></h2>
           <div class="seg cmp-lang" role="group" aria-label="Language to compare with"></div>
           <div class="seg cmp-fw" role="group" aria-label="Test framework to compare with"></div>
           <label class="cov-toggle" title="Mark what differs"><input type="checkbox" id="cmpDiff">Diff</label>

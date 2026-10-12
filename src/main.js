@@ -75,7 +75,9 @@ async function resetAll(){
   specEl.value = mode === 'create' ? await createSkeleton(site) : await exampleTests(site);
   errorEl.textContent = ''; summaryEl.textContent = ''; summaryEl.className = ''; setProgress(null);
   // deliberately no persist(): after Reset nothing of ours is in storage until you type
-  setView(site); paintTabs(); preview(); renderBugs(); loadApp(); syncUI();
+  // the picker is the code mode's while one is showing
+  if (!isCodeMode(mode)) setView(site);
+  paintTabs(); preview(); renderBugs(); loadApp(); syncUI();
   toast('Reset done');
 }
 resetBtn.addEventListener('click', () => {

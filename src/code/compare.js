@@ -74,15 +74,19 @@ async function show(pane, c){
   pane.shows = c;
   drawSwitches(pane);
   const id = exampleOf(active), code = pane.el.querySelector('.cmp-code');
+  // Only the first side names its file and counts its tests
   const file = CODE_MODES[c.mode].files(id, c.fw, c.lang ?? undefined).tests, count = pane.el.querySelector('.cmp-count');
-  Object.assign(pane.el.querySelector('.code-file'), { textContent: file, title: file });
-  count.textContent = '';
+  const name = pane.el.querySelector('.code-file');
+  if (name) Object.assign(name, { textContent: file, title: file });
+  if (count) count.textContent = '';
   pane.text = undefined;
   code.setAttribute('aria-label', `Tests in ${langOf(c).label} with ${fwOf(c).label}`);
   const text = await textOf(c, id);
   if (pane.shows !== c || !dlg.open) return;          // another was chosen meanwhile
-  const n = text == null ? 0 : CODE_MODES[c.mode].testsIn(text, file, c.fw).length;
-  count.textContent = n ? plural(n, 'test') : 'No tests';
+  if (count){
+    const n = text == null ? 0 : CODE_MODES[c.mode].testsIn(text, file, c.fw).length;
+    count.textContent = n ? plural(n, 'test') : 'No tests';
+  }
   pane.text = text;
   if (comparing()) panes.forEach(draw);
   else draw(pane);

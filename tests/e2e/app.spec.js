@@ -879,8 +879,8 @@ test.describe('Layout and theming', () => {
     }
   });
 
-  test('the site panel head fills two rows on a phone', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+  for (const width of [390, 700]) test(`the site panel head fills two rows at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
     await openApp(page);
     const head = await page.locator('.site-head').boundingBox();
     const title = await page.locator('.site-head h2').boundingBox();
@@ -894,6 +894,40 @@ test.describe('Layout and theming', () => {
     // Site/HTML has the whole second row.
     expect(seg.y).toBeGreaterThanOrEqual(reload.y + reload.height - 1);
     expect(seg.width / head.width, 'Site/HTML does not fill its row').toBeGreaterThan(0.9);
+  });
+});
+
+test.describe('Panel heads on small screens', () => {
+  // Every head keeps its parts inside it, whatever the mode and the tab
+  for (const width of [320, 390, 700]) test(`no panel head spills over at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    for (const mode of ['html', 'python']){
+      await openApp(page, mode === 'html' ? {} : { mode });
+      const tabs = mode === 'html' ? '.res-seg button' : '.code-seg button:visible';
+      for (const tab of await page.locator(tabs).all()){
+        await tab.click();
+        const spill = await page.$$eval('.appbar, .panel-head, .site-head, .mut-head', heads => heads
+          .filter(h => h.offsetParent)
+          .flatMap(h => { const r = h.getBoundingClientRect();
+            return [...h.querySelectorAll('*')].filter(e => { const q = e.getBoundingClientRect();
+              return q.width && (q.right > r.right + 1 || q.left < r.left - 1); }).map(e => e.id || e.className); }));
+        expect(spill, `${mode}, ${await tab.textContent()}: spills over at ${width}px`).toEqual([]);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('a tablet gives the Results tabs and the fold one row, and the summary the next', async ({ page }) => {
+    await page.setViewportSize({ width: 700, height: 900 });
+    await openApp(page);
+    await page.click('#run');
+    await expect(page.locator('#summary')).toHaveText(/passed/, { timeout: 20000 });
+    const box = sel => page.locator(sel).boundingBox();
+    const [head, seg, fold, said] = await Promise.all(['.results-panel .panel-head', '.res-seg', '#foldAll', '.results-panel .run-said'].map(box));
+    expect(Math.abs(fold.y + fold.height / 2 - (seg.y + seg.height / 2))).toBeLessThan(8);
+    expect(seg.width / head.width, 'the tabs do not fill their row').toBeGreaterThan(0.8);
+    expect(said.y).toBeGreaterThanOrEqual(seg.y + seg.height - 1);
+    expect(await page.locator('#summary').evaluate(e => e.scrollWidth <= e.clientWidth), 'the summary is cut short').toBe(true);
   });
 });
 

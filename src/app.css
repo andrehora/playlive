@@ -460,7 +460,7 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 .console-panel{flex:1 1 0;min-height:130px}
 /* Collapsed, Results and Output are their head and nothing else */
 .left[data-code="collapsed"] .console-panel{flex:0 0 auto;min-height:0}
-.left[data-code="collapsed"] :is(#codeCreate, #codeResults, #codeConsole, #codeMutation, #codeSmells){display:none!important}
+.left[data-code="collapsed"] :is(#codeCreate, #codeResults, #codeConsole, #codeRanking, #codeMutation, #codeSmells){display:none!important}
 .code-module-panel{min-height:0}
 /* Collapsed, Tests keep their head and Run, and the source its head */
 .left[data-codetests="collapsed"] #codeTestsEd,.code-module-panel[data-fold="collapsed"] :is(#codeEd, #codeFlow){display:none!important}
@@ -629,6 +629,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 .cmp-head .code-file{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .cmp-head .cmp-count{flex:none}
 .cmp-actions{display:flex;align-items:center;gap:6px}
+/* The second side has no heading: its switches start the row, Diff and the actions end it */
+#cmpOther .cmp-head .cov-toggle{margin-left:auto}
 .cmp-code{flex:1;min-height:0;margin:0;overflow:auto;padding:12px 16px 12px 0;background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;white-space:pre;tab-size:4;counter-reset:ln;outline:none}
 .cmp-code:focus-visible{box-shadow:inset 0 0 0 2px var(--run)}
 .cmp-code .l{display:block;min-height:var(--code-line)}
@@ -699,7 +701,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   main{grid-template-columns:minmax(0,1fr);gap:12px;padding:10px max(10px,env(safe-area-inset-right,0px)) 14px max(10px,env(safe-area-inset-left,0px))}
   .left{display:contents}
   .tests-panel{order:1} .browser{order:2} .results-panel{order:3}
-  .code-tests-panel{order:1} .code-module-panel{order:2} .console-panel{order:3}
+  .code-tests-panel{order:1} .console-panel{order:2} .code-module-panel{order:3}
   .code-tests-panel .code-ed{flex:none;height:clamp(220px,42dvh,380px)}
   .code-module-panel .code-ed{flex:none;height:clamp(300px,60dvh,560px)}
   .code-console,.code-results,.code-mutation{max-height:60dvh;min-height:160px}
@@ -729,10 +731,17 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 
   /* Site panel */
   .browser{height:clamp(360px,70dvh,640px)}
-  /* The head reads as two rows: what this page is, then what to do with it */
-  .site-head{flex-direction:column;align-items:center;gap:8px;padding:10px}
-  .site-head h2{justify-content:center;flex-wrap:wrap;row-gap:4px}
-  .addr{margin-left:0;width:100%;justify-content:center}
+  /* The head reads as two rows that each fill: the page, its category and the
+     reload, then Site/HTML across the whole second. Its controls stop being a
+     row of their own (`display:contents`) so the reload can end the first. */
+  .site-head{flex-flow:row wrap;align-items:center;gap:8px;padding:10px}
+  .site-head h2{flex:1 1 auto;flex-wrap:nowrap;justify-content:flex-start;row-gap:0}
+  .site-head .head-sub{flex:1 1 auto;max-width:none}
+  .site-head .cat-badge{margin-left:auto}
+  .addr{display:contents}
+  .site-head #reload{flex:0 0 auto}
+  .site-head .view-seg{flex:1 1 100%}
+  .site-head .view-seg button{flex:1 1 0;min-width:0}
   /* The example takes a row of its own, the whole width: its button measures
      nothing of its own (it is a size container), so it needs a width to be given */
   .appbar{flex-wrap:wrap}
@@ -762,6 +771,16 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .code-module-panel :is(.cov-seg, .code-flowseg) button{min-height:var(--small-tap)}
   .code-module-panel .cov-seg button{flex:1 1 0;min-width:0;justify-content:center;align-items:center}
   .code-module-panel .cov-note{flex:1 1 100%}
+  /* The Results panels' heads: every tab and the fold fill the first row,
+     and the second is only there while the run has something to say. The
+     heading stops being a box of its own so its parts can sit in those rows. */
+  :is(.results-panel,.console-panel) .panel-head{flex-wrap:wrap;row-gap:6px}
+  :is(.results-panel,.console-panel) .panel-head h2{display:contents}
+  :is(.res-seg,.code-seg){flex:1 1 0;min-width:0}
+  :is(.res-seg,.code-seg) button{flex:1 1 auto;min-width:0;padding:0 4px}
+  :is(.results-panel,.console-panel) .head-actions{order:1}
+  :is(.results-panel,.console-panel) .run-said{order:2;flex:1 1 100%}
+  .run-said:not(:has(> :not(:empty))){display:none}
   /* On a phone it takes the whole screen but a sliver of the page around it */
   .cmp-dlg{width:calc(100vw - 16px);height:calc(100dvh - 16px)}
   .cmp-head{flex-wrap:wrap}
@@ -817,19 +836,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      take the second row between them, 60/40 like the example's row below. */
   .appbar .area-seg{order:2;flex:1 1 100%;min-width:0}
   .appbar .area-seg button{flex:1 1 0;min-width:0;padding:0 4px}
-  /* The Results panels' heads: every tab and the fold fill the first row,
-     and the second is only there while the run has something to say. The
-     heading stops being a box of its own so its parts can sit in those rows. */
-  :is(.results-panel,.console-panel) .panel-head{flex-wrap:wrap;row-gap:6px}
-  :is(.results-panel,.console-panel) .panel-head h2{display:contents}
-  :is(.res-seg,.code-seg){flex:1 1 auto;min-width:0}
-  :is(.res-seg,.code-seg) button{flex:1 1 0;min-width:0;padding:0 4px}
-  .results-panel .head-actions{order:1}
-  .results-panel .run-said{order:2;flex:1 1 100%}
   /* The code modes' tabs share one row with the fold, in smaller type so
-     all six fit; what the run said takes the row below */
-  .console-panel .head-actions{order:1}
-  .console-panel .run-said{order:2;flex:1 1 100%}
+     all six fit */
   .console-panel .panel-head{column-gap:4px;padding-inline:8px}
   .console-panel .code-seg{gap:0}
   .console-panel .code-seg button{flex:1 1 auto;padding:0 2px;font-size:var(--tab-font)}
@@ -840,19 +848,23 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .code-module-panel .code-flowseg button{padding:0 8px}
   /* The Mutation tab's switch takes a row above the run and its score */
   .mut-head{flex-wrap:wrap;row-gap:8px}
-  .run-said:not(:has(> :not(:empty))){display:none}
+  /* A file's name gives way before its panel's name or actions do */
+  .panel-head h2{white-space:nowrap}
+  .panel-head h2 .code-file{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .panel-head .file-status{flex:none}
+  .tests-panel .panel-head{flex-wrap:nowrap}
+  .tests-panel .panel-head h2{flex:1 1 auto}
+  .tests-panel .head-actions{flex:none;flex-wrap:nowrap}
+  /* The large tests' switches share their row between them, and Compare
+     fills what Diff leaves of its own */
+  .cmp-head .seg{flex:1 1 45%}
+  .cmp-head .seg button{flex:1 1 0;min-width:0}
+  .cmp-head .cmp-actions{flex:1 1 auto;display:flex}
+  #cmpCompare{flex:1 1 auto}
+  /* Its buttons fill their rows: the run beside its score, the guide below */
+  .mut-head > button{flex:1 1 auto}
+  .mut-head .mut-view{margin-left:0}
   .appbar .picker{order:3;flex:1 1 100%;min-width:0;margin-left:0}
-  /* The site panel's head fills its rows the same way. Its controls stop being a
-     row of their own (`display:contents`) so the reload can end the first row
-     beside the page and its category, leaving the whole second to Site/HTML. */
-  .site-head{flex-flow:row wrap;align-items:center}
-  .site-head h2{flex:1 1 auto;flex-wrap:nowrap;justify-content:flex-start;row-gap:0}
-  .site-head .head-sub{flex:1 1 auto;max-width:none}
-  .site-head .cat-badge{margin-left:auto}
-  .addr{display:contents}
-  .site-head #reload{flex:0 0 auto}
-  .site-head .view-seg{flex:1 1 100%}
-  .site-head .view-seg button{flex:1 1 0;min-width:0}
 
   /* Run tests (Stop while running) is the primary target, so it takes whatever
      room the row has spare */
@@ -866,5 +878,14 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .code-tests-panel .toolbar > button{min-width:0;justify-content:center}
   .code-tests-panel .code-state{grid-column:1/-1;margin-left:0}
   .code-tests-panel .code-state:not(.bad){display:none}
+}
+/* The narrowest phones: the repository keeps its mark, so the bar's first row holds */
+@media (max-width:359px){
+  .appbar .repo-label,#export .lbl{display:none}
+  /* Six tabs and the fold are too many for one row: the tabs take it all,
+     and the fold ends the row of what the run said */
+  .console-panel .code-seg{flex:1 1 100%}
+  .console-panel .head-actions{order:3;margin-left:auto}
+  .console-panel .run-said{flex:1 1 0}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}

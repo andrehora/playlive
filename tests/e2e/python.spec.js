@@ -103,6 +103,26 @@ test.describe('Python mode', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Reset after New is back where the page opens: the first example, as it ships', async ({ page }) => {
+    const { errors } = await openApp(page, { mode: 'python' });
+    const code = page.locator('#codeEd textarea'), tests = page.locator('#codeTestsEd textarea');
+    const [shipCode, shipTests] = [await code.inputValue(), await tests.inputValue()];
+    await page.click('#newCode');
+    await code.fill('def double(n):\n    return n * 2\n');
+    await page.click('#reset');
+    await expect(page.locator('#siteName')).toHaveText('Calculator');
+    await expect(page.locator('#siteCount')).toHaveText(/^1 of /);
+    await expect(code).toHaveValue(shipCode);
+    await expect(tests).toHaveValue(shipTests);
+    expect(new URL(page.url()).hash).not.toContain('new');
+    // Any other example stays where it is, named as itself
+    await page.click('#nextSite');
+    const name = await page.locator('#siteName').textContent();
+    await page.click('#reset');
+    await expect(page.locator('#siteName')).toHaveText(name);
+    expect(errors).toEqual([]);
+  });
+
   test('the tests resize, and Results and Console collapse to their head', async ({ page }) => {
     const { errors } = await openApp(page, { mode: 'python' });
     const h = sel => page.locator(sel).boundingBox().then(b => Math.round(b.height));
@@ -137,6 +157,27 @@ test.describe('Python mode', () => {
     await expect(page.locator('#codeResults')).toBeVisible();
     expect(Math.abs(await h('#codeTestsEd') - was)).toBeLessThanOrEqual(2);
     expect(errors).toEqual([]);
+  });
+
+  test('Coverage folds with the rest of the panel', async ({ page }) => {
+    await openApp(page);
+    await setMode(page, 'python');
+    await page.click('.code-seg [data-codetab="coverage"]');
+    await expect(page.locator('#codeRanking')).toBeVisible();
+    await page.click('#foldCode');
+    await expect(page.locator('#codeRanking')).toBeHidden();
+    await page.click('#foldCode');
+    await expect(page.locator('#codeRanking')).toBeVisible();
+  });
+
+  test('a phone shows the source last, below the tests and their results', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openApp(page);
+    await setMode(page, 'python');
+    const y = async sel => (await page.locator(sel).boundingBox()).y;
+    const [tests, results, source] = [await y('.code-tests-panel'), await y('.console-panel'), await y('.code-module-panel')];
+    expect(results).toBeGreaterThan(tests);
+    expect(source).toBeGreaterThan(results);
   });
 
   test('a phone shows every tab and the fold on one row', async ({ page }) => {
