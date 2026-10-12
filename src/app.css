@@ -635,15 +635,26 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 .cmp-code:focus-visible{box-shadow:inset 0 0 0 2px var(--run)}
 .cmp-code .l{display:block;min-height:var(--code-line)}
 /* The framework's own names open a search for them */
-.cmp-code a.api{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
-.cmp-code a.api:hover{text-decoration-style:solid}
-.cmp-code a.api:focus-visible{outline:2px solid var(--run);outline-offset:1px;border-radius:2px}
+.cmp-terms a.api:focus-visible{outline:2px solid var(--run);outline-offset:1px;border-radius:2px}
 .cmp-code .l::before{counter-increment:ln;content:counter(ln);display:inline-block;width:4.5ch;margin-right:16px;padding-right:8px;text-align:right;color:var(--muted);opacity:.55;border-right:1px solid var(--line)}
 .cmp-none{display:block;padding-left:16px;color:var(--muted)}
 /* Compare's Diff: a changed line tinted, what differs in it stronger */
 .cmp-code .l.diff{background:color-mix(in srgb,var(--diff) 11%,transparent)}
 .cmp-code .l.diff mark{color:inherit;background:color-mix(in srgb,var(--diff) 30%,transparent);border-radius:2px}
 .cmp-code .l.diff::before{border-right-color:var(--diff)}
+/* The test pointed at or focused, and the same test on the other side */
+.cmp-code .l.pair{background-image:linear-gradient(color-mix(in srgb,var(--running) 20%,transparent),color-mix(in srgb,var(--running) 20%,transparent));box-shadow:inset 3px 0 var(--running)}
+.cmp-code .l[tabindex]:focus-visible{outline:2px solid var(--run);outline-offset:-2px}
+/* Under each head, the framework's names that side uses, or that the other does not */
+.cmp-terms{margin:0;padding:6px 16px;border-bottom:1px solid var(--line);font-size:var(--small-font);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp-terms[hidden]{display:none}
+.cmp-role{color:var(--ink);font-weight:600}
+.cmp-terms :is(a,span:not(.cmp-part,.cmp-role)){font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;color:var(--ink)}
+.cmp-terms a.api{text-decoration:underline dotted;text-underline-offset:3px}
+.cmp-terms a.api:hover{text-decoration-style:solid}
+/* The app bar's picker, lent to the head while one side shows; New stays home */
+.cmp-head .picker{flex:0 1 auto;min-width:0}
+.cmp-head #newCode{display:none}
 .toast{position:fixed;left:50%;max-width:calc(100vw - 32px);text-align:center;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
@@ -774,19 +785,29 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   /* The Results panels' heads: every tab and the fold fill the first row,
      and the second is only there while the run has something to say. The
      heading stops being a box of its own so its parts can sit in those rows. */
-  :is(.results-panel,.console-panel) .panel-head{flex-wrap:wrap;row-gap:6px}
+  :is(.results-panel,.console-panel) .panel-head{flex-wrap:wrap;row-gap:0}
   :is(.results-panel,.console-panel) .panel-head h2{display:contents}
   :is(.res-seg,.code-seg){flex:1 1 0;min-width:0}
   :is(.res-seg,.code-seg) button{flex:1 1 auto;min-width:0;padding:0 4px}
   :is(.results-panel,.console-panel) .head-actions{order:1}
   :is(.results-panel,.console-panel) .run-said{order:2;flex:1 1 100%}
-  .run-said:not(:has(> :not(:empty))){display:none}
+  /* The gap above the summary is its own, so an empty one takes no room. Not
+     :has(:empty) on the row: Safari does not always notice the text arrive,
+     and the summary stays hidden. */
+  :is(#summary,#codeSummary){margin-top:6px}
+  /* On its own row the summary reads as a status line: from the left edge,
+     at a readable size, and whole rather than cut short. Said outright, not
+     left to the heading the row came from, which some Safaris still lay out. */
+  :is(.results-panel,.console-panel) .run-said{width:100%;justify-content:flex-start;text-align:left;line-height:1.3}
+  :is(.results-panel,.console-panel) :is(#summary,#codeSummary){flex:1 1 auto;font-size:var(--small-font);font-weight:600;white-space:normal}
   /* On a phone it takes the whole screen but a sliver of the page around it */
   .cmp-dlg{width:calc(100vw - 16px);height:calc(100dvh - 16px)}
   .cmp-head{flex-wrap:wrap}
   /* The name takes the first row and Close its top-right corner, wherever
      Compare sits; the switches and Compare share the row below */
   .cmp-head h2{flex-basis:100%;min-height:var(--icon-tap)}
+  .cmp-head .picker{flex:1 1 100%}
+  .cmp-terms{white-space:normal}
   #cmpMine .cmp-head h2{padding-right:calc(var(--icon-tap) + 4px)}
   #cmpClose{position:absolute;top:10px;right:12px}
   .cmp-head{column-gap:6px}
@@ -802,7 +823,6 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   /* Text that is comfortable at arm's length rather than at desk distance */
   .panel-head h2,.site-head h2{font-size:15px}
   .file-status{font-size:13px}
-  #summary{font-size:13px}
   .empty,.pop-empty{font-size:14px}
   .desc{font-size:14.5px}
   .err,.warn,#error{font-size:13.5px}
@@ -887,5 +907,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .console-panel .code-seg{flex:1 1 100%}
   .console-panel .head-actions{order:3;margin-left:auto}
   .console-panel .run-said{flex:1 1 0}
+  .console-panel .panel-head{row-gap:6px}
+  .console-panel #codeSummary{margin-top:0}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}

@@ -218,12 +218,12 @@ test.describe('Python mode', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   });
 
-  test('the tests, large, link the framework\'s names to a search in a new tab, and close by an icon', async ({ page }) => {
+  test('the tests, large, link the framework\'s names they use to a search in a new tab, and close by an icon', async ({ page }) => {
     await openApp(page);
     await setMode(page, 'python');
     await page.click('.code-fw [data-fw="unittest"]');
     await page.click('#codeTestsOpen');
-    const link = page.locator('#cmpMine .cmp-code a.api', { hasText: /^assertEqual$/ }).first();
+    const link = page.locator('#cmpMine .cmp-terms a.api', { hasText: /^assertEqual$/ });
     await expect(link).toHaveAttribute('href', 'https://www.google.com/search?btnI=1&q=assertEqual%20site%3Adocs.python.org');
     await expect(link).toHaveAttribute('target', '_blank');
     await expect(link).toHaveAttribute('rel', /noopener/);

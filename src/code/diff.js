@@ -16,7 +16,7 @@ const TOKEN = /\w+|[=!<>]=+|=>|&&|\|\||[^\w\s]/g;
 const ALIKE = 0.5;
 
 // The pairs [i, j] of a longest common subsequence of a and b
-function common(a, b){
+export function common(a, b){
   const n = a.length, m = b.length, len = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
   for (let i = n - 1; i >= 0; i--)
     for (let j = m - 1; j >= 0; j--)

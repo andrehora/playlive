@@ -77,7 +77,7 @@ async function resetAll(){
   // the picker is the code mode's while one is showing
   if (!isCodeMode(mode)) setView(site);
   paintTabs(); preview(); renderBugs(); loadApp(); syncUI();
-  toast('Reset done');
+  toast('Code reset and cache cleared');
 }
 resetBtn.addEventListener('click', () => {
   if (running || recording) return;

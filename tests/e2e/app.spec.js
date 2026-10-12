@@ -640,7 +640,7 @@ test.describe('Reset', () => {
 
     await page.click('#reset');
     expect(await page.inputValue('#spec')).toBe(example);
-    await expect(page.locator('#toast')).toContainText('Reset');
+    await expect(page.locator('#toast')).toHaveText('Code reset and cache cleared');
   });
 
   test('clears every example, not only the one showing', async ({ page }) => {

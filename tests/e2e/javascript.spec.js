@@ -60,6 +60,54 @@ test.describe('JS/TS mode', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Compare keeps the same tests level, says what differs, and swaps; alone, the head picks the example', async ({ page }) => {
+    const { errors } = await openApp(page, { mode: 'python' });
+    await page.setViewportSize({ width: 1280, height: 480 });
+    const dlg = page.locator('#cmp'), mine = page.locator('#cmpMine'), other = page.locator('#cmpOther');
+    await page.click('#codeTestsOpen');
+    // Alone, the head holds the app bar's own picker, arrows and all
+    await expect(dlg.locator('.picker #prevSite')).toBeVisible();
+    await expect(dlg.locator('.picker #nextSite')).toBeVisible();
+    await dlg.locator('#siteBtn').click();
+    await page.fill('#siteSearch', 'stack');
+    await page.keyboard.press('Enter');
+    await expect(mine.locator('.code-file')).toHaveText('test_stack.py');
+    await expect(mine.locator('.cmp-code')).toContainText('@pytest.fixture');
+    await expect(page.locator('#siteName')).toHaveText('Stack');
+    // Alone, it names every framework name it uses, each a link; the code itself links nothing
+    await expect(mine.locator('.cmp-terms')).toHaveText('Setup @pytest.fixture · Check assert · Errors pytest.raises');
+    await expect(mine.locator('.cmp-terms a.api', { hasText: 'pytest.raises' })).toHaveAttribute('href', /q=pytest\.raises%20site%3Adocs\.pytest\.org/);
+    await expect(dlg.locator('.cmp-code a')).toHaveCount(0);
+
+    // Comparing gives the picker back, and names what each side writes
+    await page.click('#cmpCompare');
+    await expect(dlg.locator('.picker')).toHaveCount(0);
+    await expect(page.locator('.appbar .picker')).toHaveCount(1);
+    await expect(mine.locator('.cmp-terms')).toHaveText('Setup @pytest.fixture · Check assert · Errors pytest.raises');
+    await expect(other.locator('.cmp-terms')).toHaveText('Setup setUp · Check assertEqual · Errors assertRaises');
+
+    // Pointing at a test lights it and the same test beside it, level with it
+    const last = mine.locator('.cmp-code .l', { hasText: 'def test_pop_on_an_empty_stack_is_refused' });
+    await last.hover();
+    await expect(mine.locator('.l.pair').first()).toContainText('test_pop_on_an_empty_stack_is_refused');
+    const match = other.locator('.l.pair').first();
+    await expect(match).toContainText('test_pop_on_an_empty_stack_is_refused');
+    const level = async () => Math.abs((await last.boundingBox()).y - (await match.boundingBox()).y);
+    await expect.poll(level).toBeLessThan(4);
+    // Scrolling one side scrolls the other by the same tests
+    await mine.locator('.cmp-code').evaluate(c => { c.scrollTop = 0; });
+    await expect.poll(() => other.locator('.cmp-code').evaluate(c => c.scrollTop)).toBe(0);
+
+    // Swap trades the sides
+    await page.click('#cmpSwap');
+    await expect(mine.locator('[data-fw="unittest"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(other.locator('[data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(mine.locator('.cmp-terms')).toContainText('Setup setUp');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.appbar .picker')).toHaveCount(1);
+    expect(errors).toEqual([]);
+  });
+
   test('has the code panels, its own examples, and Jasmine on JavaScript first', async ({ page }) => {
     const { errors } = await openApp(page);
     await setMode(page, 'javascript');
