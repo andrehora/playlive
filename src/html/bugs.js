@@ -6,7 +6,7 @@ import { setView } from '../picker.js';
 import { run, syncUI } from './run.js';
 import { loadApp, pageSource } from './sites.js';
 import { clearBugHtml, editorSite, hunting, recording, running, setBugHtml, setHunting } from '../state.js';
-import { listGroup, listNote } from '../lists.js';
+import { listGroup, listNote, playLabel } from '../lists.js';
 import { toast } from '../ui.js';
 import { band } from '../util.js';
 
@@ -138,7 +138,7 @@ export async function hunt(){
     await loadApp();
     syncUI();
     const r = report(site);
-    summaryEl.textContent = `Mutation: ${r.caught} of ${r.scored} caught` + (r.escaped ? `, ${r.escaped} through` : '');
+    summaryEl.textContent = `Mutation: ${r.caught} of ${r.scored} killed` + (r.escaped ? `, ${r.escaped} survived` : '');
     summaryEl.className = r.escaped ? 'bad' : 'ok';
     renderBugs();
   }
@@ -164,10 +164,10 @@ const bugsEl = $id('bugs'), bugScore = $id('bugScore'), bugBar = $id('bugbar');
 const bugPanel = $id('bugTab');   // the band is the tab's, its head included
 const huntBtn = $id('hunt');
 const GROUPS = [
-  ['escaped', 'Escaped', 'Every test still passed'],
+  ['escaped', 'Survived', 'Every test still passed'],
   ['stale', 'No longer applies', 'The page has changed'],
   ['unchecked', 'Not checked yet', 'Not tried yet'],
-  ['caught', 'Caught', 'A test failed']
+  ['caught', 'Killed', 'A test failed']
 ];
 
 export function renderBugs(){
@@ -185,10 +185,10 @@ export function renderBugs(){
   const r = report();
   const pct = percent(r);
   bugPanel.dataset.band = r.scored ? band(pct) : '';
-  bugScore.textContent = r.scored ? `${r.caught} of ${r.scored} mutations caught (${pct}%)` : r.total ? `${r.total} mutations` : '';
+  bugScore.textContent = r.scored ? `${r.caught} of ${r.scored} mutations killed (${pct}%)` : r.total ? `${r.total} mutations` : '';
   bugScore.dataset.band = r.scored ? band(pct) : '';
   huntBtn.disabled = running || recording || hunting || !r.total;
-  huntBtn.textContent = hunting ? 'Running…' : r.scored ? 'Run again' : 'Run mutations';
+  playLabel(huntBtn, 'Run mutations', hunting ? 'Running…' : null);
   // Something always says the page is broken on purpose, so a run nobody meant
   // to make against a broken page cannot be mistaken for the real thing. The
   // markup view already has a row of its own, so the message goes there rather

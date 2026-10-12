@@ -1,7 +1,7 @@
 import { $id } from '../dom.js';
 import { boot, selectExample } from './code.js';
 import { P, S, active, creating, exampleOf, key, onWorker, shipped, testsEd, view } from './core.js';
-import { lineRow, listGroup, listNote } from '../lists.js';
+import { lineRow, listGroup, listNote, smellTable } from '../lists.js';
 import { plural } from '../util.js';
 
 /* ---------- Smells: what is wrong with the tests themselves ----------
@@ -10,25 +10,32 @@ import { plural } from '../util.js';
    and a row per finding that goes to its line. Read again as the tests are
    typed; nothing runs. `smells` is { src, report } for the file it read.
 
-   Two tabs, as in the site modes' panel: **This example** is what the tests on
-   screen smell of, **All examples** every smell with the examples that have it,
-   in the framework (and language) on screen. `all` is { key, found }: each
+   As in the site modes' panel: this example by default, what the tests on
+   screen smell of; **Measure all examples**, pressed, every smell with the examples that have it,
+   in the framework (and language) on screen. **See smells** lists only the
+   smells looked for, each with its sentence. `all` is { key, found }: each
    example's report, read again each time the tab opens, and the example on
    screen followed as it is typed. Never stored. */
 export const smellsEl = $id('codeSmells'), smellsBtn = document.querySelector('.code-seg [data-codetab="smells"]');
-smellsEl.innerHTML = `<div class="mut-head"><div class="seg smell-seg" role="group" aria-label="What to list">
-  <button type="button" data-codesmells="file" aria-pressed="true" title="Smells in this example">This example</button>
-  <button type="button" data-codesmells="all" aria-pressed="false" title="Smells in all examples">All examples</button>
-  </div><span class="smell-score" aria-live="polite"></span></div><div class="code-smells"></div>`;
+smellsEl.innerHTML = `<div class="mut-head"><button type="button" class="small ghost help-toggle" data-codesmells="all" aria-pressed="false" title="List smells in every example"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>Measure all examples</button><span class="smell-score" aria-live="polite"></span>
+  <button type="button" class="small ghost help-toggle mut-view" data-codesmells="catalog" aria-pressed="false" title="What each smell means"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2.3-2.4 3.8M12 17h.01"/></svg>See smells</button></div><div class="code-smells"></div>`;
 const smellScoreEl = smellsEl.querySelector('.smell-score'), smellList = smellsEl.querySelector('.code-smells');
 export let smells = null, smellsAsked = null, smellView = 'file', all = null;
 function setSmellView(v){
   smellView = v === 'all' ? 'all' : 'file';
-  smellsEl.querySelectorAll('[data-codesmells]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.codesmells === smellView)));
+  allBox.setAttribute('aria-pressed', String(smellView === 'all'));
   if (smellView === 'all') scanAll();
   renderSmells();
 }
-smellsEl.querySelectorAll('[data-codesmells]').forEach(b => b.addEventListener('click', () => setSmellView(b.dataset.codesmells)));
+const allBox = smellsEl.querySelector('[data-codesmells="all"]');
+allBox.addEventListener('click', () => setSmellView(smellView === 'all' ? 'file' : 'all'));
+const seeBox = smellsEl.querySelector('[data-codesmells="catalog"]');
+seeBox.addEventListener('click', () => {
+  const on = seeBox.getAttribute('aria-pressed') !== 'true';
+  seeBox.setAttribute('aria-pressed', String(on));
+  allBox.hidden = on;
+  renderSmells();
+});
 // Another example, framework or language: read again
 export function resetSmells(){ smells = null; renderSmells(); listSmells(); }
 export function listSmells(){
@@ -85,7 +92,8 @@ export function renderSmells(){
   const top = smellsEl.scrollTop;
   smellList.innerHTML = '';
   smellScoreEl.textContent = ''; delete smellScoreEl.dataset.band;
-  if (smellView === 'all') renderAllSmells(); else renderFileSmells();
+  if (seeBox.getAttribute('aria-pressed') === 'true') smellList.append(smellTable(P().smells(S().framework)));
+  else if (smellView === 'all') renderAllSmells(); else renderFileSmells();
   smellsEl.scrollTop = top;
 }
 function renderFileSmells(){
@@ -121,7 +129,7 @@ function renderAllSmells(){
     const g = smellGroup(sm, new Set(rows.map(x => x.id)).size);
     if (!rows.length){
       g.dataset.none = '';
-      g.lastChild.replaceWith(listNote(scanned ? 'No example has this one.' : 'Reading the examples…'));
+      if (scanned) g.lastChild.remove(); else g.lastChild.replaceWith(listNote('Reading the examples…'));
     }
     for (const { id, item } of rows){
       const name = P().examples[id].name;

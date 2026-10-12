@@ -97,14 +97,19 @@ export const request = extra => {
 /* ---------- The two editors ---------- */
 function makeEditor(root){
   const ta = root.querySelector('textarea'), hl = root.querySelector('.hl'), gutter = root.querySelector('.gutter');
-  // `painted`, while set, colours lines by its own classes instead of `bad`
-  let bad = new Set(), painted = null;
+  // `painted`, while set, colours lines by its own classes instead of `bad`;
+  // `mutants` are the lines a mutation survived on (shaded red, a bug) and was
+  // killed on (a check), the icons in a lane the gutter makes left of the
+  // numbers while there are any
+  let bad = new Set(), painted = null, mutants = { survived: new Set(), killed: new Set() };
   const sync = () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; gutter.scrollTop = ta.scrollTop; };
   const render = () => {
     const lines = active ? P().highlight(ta.value) : ta.value.split('\n').map(escH);
     const cls = i => (painted ? painted.get(i) || '' : bad.has(i) ? 'bad' : '');
-    hl.innerHTML = lines.map((l, i) => `<span class="l ${cls(i)}">${l || ' '}</span>`).join('');
-    gutter.innerHTML = lines.map((_, i) => `<div class="${cls(i)}">${i + 1}</div>`).join('');
+    const { survived, killed } = mutants, also = i => (survived.has(i) ? ' survived' : '') + (killed.has(i) ? ' killed' : '');
+    hl.innerHTML = lines.map((l, i) => `<span class="l ${cls(i)}${also(i)}">${l || ' '}</span>`).join('');
+    gutter.innerHTML = lines.map((_, i) => `<div class="${cls(i)}${also(i)}">${i + 1}</div>`).join('');
+    root.classList.toggle('has-mutants', survived.size + killed.size > 0);
     sync();
   };
   ta.addEventListener('scroll', sync);
@@ -133,6 +138,7 @@ function makeEditor(root){
     set value(v){ ta.value = v; bad = new Set(); ta.scrollTop = 0; render(); },
     mark(lines){ bad = lines; render(); },
     paint(classes){ painted = classes; render(); },
+    mutants(lines){ mutants = lines; render(); },
     // Select a line, counted from 0, and scroll it a third of the way down
     jump(line){
       const lines = ta.value.split('\n');

@@ -139,6 +139,21 @@ export const PYTHON = {
   worker: () => new Worker(new URL('./worker.js', import.meta.url), { type: 'module' }),
   fresh: false,
   mutation: true,
+  // What a mutation can change (code/python/worker.js's mutants_of), each
+  // with an example: [name, before, after]
+  operators: [
+    ['Relational', 'x < 10', 'x <= 10'],
+    ['Equality', 'x == y', 'x != y'],
+    ['Membership', 'x in items', 'x not in items'],
+    ['Identity', 'x is None', 'x is not None'],
+    ['Arithmetic', 'a + b', 'a - b'],
+    ['Assignment', 'total += n', 'total -= n'],
+    ['Logical', 'a and b', 'a or b'],
+    ['Negation removed', 'not done', 'done'],
+    ['Number', 'size = 8', 'size = 9'],
+    ['Boolean', 'return True', 'return False'],
+    ['Return value', 'return total', 'return None']
+  ],
   // Create: the tests are named by their function, whatever class they are in
   create: true,
   skeleton: skeletonOf,

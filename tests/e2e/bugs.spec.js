@@ -46,12 +46,12 @@ test.describe('Bugs', () => {
       rate: 'caught', freeship: 'caught', total: 'caught', case: 'caught',
       expired: 'caught', unknown: 'caught', stale: 'escaped', banner: 'escaped'
     });
-    await expect(page.locator('#bugScore')).toHaveText('6 of 8 mutations caught (75%)');
+    await expect(page.locator('#bugScore')).toHaveText('6 of 8 mutations killed (75%)');
     await expect(page.locator('#bugTab')).toHaveAttribute('data-band', 'warn');
-    await expect(page.locator('#summary')).toHaveText('Mutation: 6 of 8 caught, 2 through');
-    await expect(page.locator('#hunt')).toHaveText('Run again');
+    await expect(page.locator('#summary')).toHaveText('Mutation: 6 of 8 killed, 2 survived');
+    await expect(page.locator('#hunt')).toHaveText('Run mutations');
 
-    // Escaped is the group that leads the list: it is the work left to do.
+    // Survived is the group that leads the list: it is the work left to do.
     const escaped = page.locator('.bug-group[data-state="escaped"]');
     await expect(escaped.locator('.bug-row')).toHaveCount(2);
     await expect(page.locator('.bug-group').first()).toHaveAttribute('data-state', 'escaped');

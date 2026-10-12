@@ -58,7 +58,7 @@ test.describe('Test smells', () => {
   // does — a smell you have just written names your example straight away.
   test('the All examples tab follows a smell typed into the editor', async ({ page }) => {
     await openApp(page, { site: SITE, tab: 'smells' });
-    await page.click('.smell-seg [data-smellview="all"]');
+    await page.click('[data-smellview="all"]');
     await expect(score(page)).toHaveText('8 of 100 examples have one');
     const unknown = page.locator('.smell-group[data-smell="unknown-test"]');
     await expect(unknown.locator('.list-n')).toHaveText('2');
@@ -89,8 +89,8 @@ test.describe('Test smells', () => {
     const { errors } = await openApp(page, { site: SITE, tab: 'smells' });
     await expect(page.locator('#smells .list-note')).toHaveText('Nothing to report.');
 
-    await page.click('.smell-seg [data-smellview="all"]');
-    await expect(page.locator('.smell-seg [data-smellview="all"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.click('[data-smellview="all"]');
+    await expect(page.locator('[data-smellview="all"]')).toHaveAttribute('aria-pressed', 'true');
     // Every smell is named and explained, the most common first.
     await expect(score(page)).toHaveText('8 of 100 examples have one');
     const names = await page.$$eval('.smell-group .list-title', t => t.map(x => x.textContent));
@@ -107,11 +107,27 @@ test.describe('Test smells', () => {
     // A row opens that example, in the file tab, at the line it is about.
     await group.locator('.smell-line').first().click();
     await expect(page.locator('#siteName')).toHaveText('Status page');
-    await expect(page.locator('.smell-seg [data-smellview="file"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-smellview="all"]')).toHaveAttribute('aria-pressed', 'false');
     expect(await page.evaluate(() => {
       const t = document.getElementById('spec');
       return t.value.slice(t.selectionStart, t.selectionEnd);
     })).toBe('test: Reads the whole page in one go');
+    expect(errors).toEqual([]);
+  });
+
+  // See smells lists only the smells looked for, each with what it means
+  test('See smells lists every smell and what it means', async ({ page }) => {
+    const { errors } = await openApp(page, { site: SITE, tab: 'smells' });
+    await page.click('[data-smellview="catalog"]');
+    await expect(page.locator('[data-smellview="catalog"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#smells .smell-cat tbody tr')).toHaveCount(4);
+    await expect(page.locator('#smells .smell-cat tr[data-smell="unknown-test"] td').first()).toHaveText('Unknown Test');
+    await expect(page.locator('[data-smellview="all"]')).toBeHidden();
+    await expect(score(page)).toHaveText('');
+    await page.click('[data-smellview="catalog"]');
+    await expect(page.locator('[data-smellview="catalog"]')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#smells .list-note')).toHaveText('Nothing to report.');
+    await expect(page.locator('[data-smellview="all"]')).toBeVisible();
     expect(errors).toEqual([]);
   });
 
@@ -124,7 +140,7 @@ test.describe('Test smells', () => {
     const was = [await h('.tests-panel'), await h('.results-panel')];
 
     await setTab(page, 'smells');
-    await page.click('.smell-seg [data-smellview="all"]');
+    await page.click('[data-smellview="all"]');
     await expect(page.locator('.smell-group').first()).toBeVisible();
     expect([await h('.tests-panel'), await h('.results-panel')]).toEqual(was);
     await setTab(page, 'mutation');
@@ -142,8 +158,7 @@ test.describe('Test smells', () => {
     const state = k => page.evaluate(k => document.getElementById('left').dataset[k] || 'open', k);
 
     for (const view of ['all', 'file', 'all']){
-      await page.click(`.smell-seg [data-smellview="${view}"]`);
-      await expect(page.locator(`.smell-seg [data-smellview="${view}"]`)).toHaveAttribute('aria-pressed', 'true');
+      await page.click('[data-smellview="all"]');
       // Results all the way down to its one row, and the code folded with it.
       if (await state('results') !== 'collapsed') await page.click('#foldAll');
       if (await state('spec') !== 'collapsed') await page.click('#foldSpec');

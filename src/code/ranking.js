@@ -7,16 +7,17 @@ import { setProgress } from '../ui.js';
 import { band } from '../util.js';
 
 /* ---------- Coverage: this example's, or every example's, ranked ----------
-   Two tabs, as in the Smells panel. **This example** is the file on screen:
+   This example by default, as in the Smells panel. It is the file on screen:
    its two scores, and the lines its tests never ran and the branches they
    took only one way, each going to its line, and the code shaded by them
    (code/coverage.js). It is what the last run measured: opening the tab
    runs the tests, unless that is still up to date.
 
-   **All examples** runs every example's tests: on its code, as you left
+   **Measure all examples**, pressed, runs every example's tests: on its code, as you left
    them, in the framework and language on screen, quietly, one at a time (the
    job is 'cover'). Each file is ranked by the lines its tests ran, then by
-   the branches, the most covered first. Choosing the view runs it, unless
+   the branches, the most covered first, or as its Lines or Branches head
+   sorts it (`sortBy`, again the other way). Pressing it runs it, unless
    what it shows is still up to date. A row opens
    that example's source. `ranked` is { key, sig, found, done, note,
    stale }: the framework and language it was for (key), what the files were
@@ -24,20 +25,41 @@ import { band } from '../util.js';
    branches } or lines null), whether every
    one was measured, and why not. Never stored. */
 export const rankEl = $id('codeRanking');
-rankEl.innerHTML = `<div class="mut-head"><div class="seg smell-seg" role="group" aria-label="What to measure">
-  <button type="button" data-codecov="file" aria-pressed="true" title="Coverage of this example">This example</button>
-  <button type="button" data-codecov="all" aria-pressed="false" title="Coverage of all examples">All examples</button>
-  </div><span class="rank-score" aria-live="polite"></span></div>
-  <table class="rank-table" hidden><thead><tr><th scope="col">File</th><th scope="col">Lines</th><th scope="col">Branches</th></tr></thead><tbody></tbody></table><div class="rank-missed"></div>`;
+rankEl.innerHTML = `<div class="mut-head"><button type="button" class="small ghost help-toggle" data-codecov="all" aria-pressed="false" title="Rank every example"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>Measure all examples</button><span class="rank-score" aria-live="polite"></span></div>
+  <table class="rank-table" hidden><thead><tr><th scope="col">File</th><th scope="col" data-col="lines"></th><th scope="col" data-col="branches"></th></tr></thead><tbody></tbody></table><div class="rank-missed"></div>`;
 const scoreEl = rankEl.querySelector('.rank-score'), tableEl = rankEl.querySelector('.rank-table'), listEl = tableEl.tBodies[0];
 const missedEl = rankEl.querySelector('.rank-missed');
+// What All examples is sorted by, and which way: the most covered first, or the least
+let sortBy = 'lines', sortDir = 'desc';
+const NAMES = { lines: 'Lines', branches: 'Branches' };
+// The Lines and Branches heads: buttons that sort All examples; plain on This example's one row
+function renderHeads(){
+  for (const th of tableEl.querySelectorAll('th[data-col]')){
+    const col = th.dataset.col, all = rankView === 'all', on = col === sortBy;
+    if (th.dataset.view !== rankView){
+      th.dataset.view = rankView;
+      th.innerHTML = all ? `<button type="button" class="rank-sort" data-sort="${col}">${NAMES[col]}<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>` : NAMES[col];
+    }
+    if (!all){ th.removeAttribute('aria-sort'); continue; }
+    th.setAttribute('aria-sort', on ? (sortDir === 'desc' ? 'descending' : 'ascending') : 'none');
+    th.firstChild.title = on && sortDir === 'desc' ? 'Least covered first' : 'Most covered first';
+  }
+}
+tableEl.tHead.addEventListener('click', e => {
+  const b = e.target.closest('[data-sort]');
+  if (!b) return;
+  if (b.dataset.sort === sortBy) sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+  else { sortBy = b.dataset.sort; sortDir = 'desc'; }
+  renderRanking();
+});
 export let rankView = 'file';
 function setRankView(v){
   rankView = v === 'all' ? 'all' : 'file';
-  rankEl.querySelectorAll('[data-codecov]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.codecov === rankView)));
+  allBox.setAttribute('aria-pressed', String(rankView === 'all'));
   listRanking();
 }
-rankEl.querySelectorAll('[data-codecov]').forEach(b => b.addEventListener('click', () => setRankView(b.dataset.codecov)));
+const allBox = rankEl.querySelector('[data-codecov="all"]');
+allBox.addEventListener('click', () => setRankView(rankView === 'all' ? 'file' : 'all'));
 export let ranked = null;
 let queue = [], asking = null;      // the examples still to measure, and the files this job measures
 
@@ -132,6 +154,7 @@ export function renderRanking(){
   rankEl.querySelectorAll(':scope > .list-note').forEach(n => n.remove());
   scoreEl.textContent = '';
   if (rankView === 'all') renderAll(); else renderFile();
+  renderHeads();
   tableEl.hidden = !listEl.rows.length;
   rankEl.scrollTop = top;
 }
@@ -157,14 +180,14 @@ function renderFile(){
     if (last && c.lines.filter(x => x > last.to && x < l).length === 0) last.to = l; else runs.push({ from: l, to: l });
   }
   if (runs.length){
-    const g = listGroup('bug', { state: 'escaped', title: 'Not run', n: runs.length, why: 'No test runs these lines' });
+    const g = listGroup('bug', { state: 'uncovered', title: 'Uncovered', n: runs.length, why: 'No test runs these lines' });
     for (const { from, to } of runs) g.lastChild.append(lineRow('smell', { what: from === to ? `line ${from + 1}` : `lines ${from + 1}–${to + 1}`,
       detail: code[from]?.trim() ?? '', title: 'Go to the line', label: `Go to line ${from + 1}`, go: go(from) }));
     missedEl.append(g);
   }
   const part = (c.branches || []).filter(([l, of, taken]) => taken < of && hit.has(l));
   if (part.length){
-    const g = listGroup('bug', { state: 'stale', title: 'Taken one way', n: part.length, why: 'No test takes the other way' });
+    const g = listGroup('bug', { state: 'stale', title: 'Branch partially covered', n: part.length, why: 'No test takes the other way' });
     for (const [l, of, taken] of part) g.lastChild.append(lineRow('smell', { what: `line ${l + 1}`,
       detail: `${taken} of ${of} ways · ${code[l]?.trim() ?? ''}`, title: 'Go to the line', label: `Go to line ${l + 1}`, go: go(l) }));
     missedEl.append(g);
@@ -179,8 +202,16 @@ function renderAll(){
     : measured.length ? `${measured.filter(r => r.s.lines === 100).length} of ${measured.length} files fully covered` : '';
   if (waiting) note('Measuring every example once the run ends…');
   if (ranked?.note) note(ranked.note);
-  // The most covered first: lines, then branches; a tie keeps the catalogue's order
-  measured.sort((a, b) => b.s.lines - a.s.lines || (b.s.branches ?? 100) - (a.s.branches ?? 100) || a.i - b.i);
+  // By the column chosen, then the other, the most covered first; a tie keeps the
+  // catalogue's order. A file with no branch counts as all of them for Lines,
+  // and goes last for Branches, whichever way.
+  const other = sortBy === 'lines' ? 'branches' : 'lines', dir = sortDir === 'desc' ? 1 : -1;
+  const at = (r, col) => r.s[col] ?? (col === 'branches' && sortBy === 'branches' ? null : 100);
+  measured.sort((a, b) => {
+    const x = at(a, sortBy), y = at(b, sortBy);
+    if ((x == null) !== (y == null)) return x == null ? 1 : -1;
+    return dir * (y - x) || at(b, other) - at(a, other) || a.i - b.i;
+  });
   const unmeasured = rows.filter(r => !r.s && r.c);
   for (const r of [...measured, ...unmeasured]) listEl.append(row(r));
 }

@@ -2,7 +2,7 @@ import { SITES, SITE_IDS } from '../../examples/html/examples.js';
 import { $id, specEl } from '../dom.js';
 import { jumpToLine, lineForStep } from './editor.js';
 import { describeStep } from './find.js';
-import { lineRow, listGroup, listNote } from '../lists.js';
+import { lineRow, listGroup, listNote, smellTable } from '../lists.js';
 import { ASSERTIONS, validate } from './parse.js';
 import { selectSite } from '../picker.js';
 import { testsFor } from './sites.js';
@@ -203,8 +203,8 @@ function rescanEditor(r){
    The Smells tab of the Results panel. It has no run behind it, so it redraws
    from the file as it is typed.
 
-   Two tabs, because the panel answers two questions and they are not the same
-   one. **This example** is what the tests on screen smell of. **All examples** is
+   Two views, because the panel answers two questions and they are not the same
+   one. By default, it is what the tests on screen smell of. **Measure all examples**, pressed, is
    the catalogue: every smell the app looks for, named and explained whether or
    not anything has it, with the examples that do underneath. A student who has
    never met Assertion Roulette should be able to find out that it exists without first
@@ -212,7 +212,7 @@ function rescanEditor(r){
    catalogue is a way into the hundred examples rather than a glossary.       */
 export const smellsEl = $id('smells'), smellScore = $id('smellScore');
 const smellPanel = $id('smellTab');
-const smellSeg = document.querySelector('.smell-seg');
+const allBox = document.querySelector('[data-smellview="all"]');
 
 // Which tab is showing. It is about this browser rather than the examples and
 // it costs nothing to choose again, so like the catalog it is never stored.
@@ -220,12 +220,18 @@ let view = 'file';
 export const smellView = () => view;
 export function setSmellView(v){
   view = v === 'all' ? 'all' : 'file';
-  smellSeg.querySelectorAll('button').forEach(b =>
-    b.setAttribute('aria-pressed', String(b.dataset.smellview === view)));
+  allBox.setAttribute('aria-pressed', String(view === 'all'));
   renderSmells();
 }
-smellSeg.querySelectorAll('button').forEach(b =>
-  b.addEventListener('click', () => setSmellView(b.dataset.smellview)));
+allBox.addEventListener('click', () => setSmellView(view === 'all' ? 'file' : 'all'));
+// See smells: only the smells looked for, each with its sentence
+const seeBox = document.querySelector('[data-smellview="catalog"]');
+seeBox.addEventListener('click', () => {
+  const on = seeBox.getAttribute('aria-pressed') !== 'true';
+  seeBox.setAttribute('aria-pressed', String(on));
+  allBox.hidden = on;
+  renderSmells();
+});
 // The scan is what the All examples tab lists, and it finishes after the tab has
 // opened. It says so rather than being reached into from here.
 document.addEventListener('playlive:smelly', () => { if (view === 'all') renderSmells(); });
@@ -235,7 +241,10 @@ export function renderSmells(){
   rescanEditor(r);
   const top = smellsEl.scrollTop;
   smellsEl.innerHTML = '';
-  if (view === 'all') renderAll(); else renderFile(r);
+  if (seeBox.getAttribute('aria-pressed') === 'true'){
+    smellPanel.dataset.band = ''; smellScore.textContent = '';
+    smellsEl.appendChild(smellTable(SMELLS));
+  } else if (view === 'all') renderAll(); else renderFile(r);
   smellsEl.scrollTop = top;
 }
 
@@ -285,7 +294,7 @@ function renderAll(){
       // The smell is still named and still explained: a catalogue that only
       // listed what is broken today would teach half of what it knows.
       g.dataset.none = '';
-      g.lastChild.replaceWith(listNote(scanned ? 'No example has this one.' : 'Reading the examples…'));
+      if (scanned) g.lastChild.remove(); else g.lastChild.replaceWith(listNote('Reading the examples…'));
     } else for (const x of rows) g.lastChild.appendChild(siteRow(x.id, x.item));
     smellsEl.appendChild(g);
   }
@@ -312,5 +321,3 @@ const siteRow = (id, i) => lineRow('smell', { what: SITES[id].name, detail: i.wh
 
 // The catalogue is read the first time the tab is opened, not at boot.
 document.addEventListener('playlive:restab', () => { if (!$id('smellTab').hidden) scanSites(); });
-smellSeg.querySelectorAll('button').forEach(b =>
-  b.setAttribute('aria-pressed', String(b.dataset.smellview === view)));

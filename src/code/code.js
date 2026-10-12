@@ -8,7 +8,7 @@ import { CODE_MODES, LANGS, P, S, active, codeEd, creating, exampleOf, files, ha
   request, rt, session, sessions, setActive, setCreating, setCurrentView, setJob, shipped, testsEd, NEW, view } from './core.js';
 import { coverage, renderCoverage, setCoverage } from './coverage.js';
 import { createBtn, createEl, endCheck, renderCreate, resetCreate } from './create.js';
-import { endHunt, listMutations, mutationBtn, mutationEl, resetMutation } from './mutation.js';
+import { endHunt, listMutations, markMutants, mutationBtn, mutationEl, resetMutation } from './mutation.js';
 import { endRanking, listRanking, rankEl } from './ranking.js';
 import { listSmells, resetSmells, scanAll, smellView, smellsBtn, smellsEl } from './smells.js';
 
@@ -95,7 +95,7 @@ function row(t){
       if (c) folded.add(t.id); else folded.delete(t.id);
       fold(c);
     });
-  } else chev.style.visibility = 'hidden';
+  } else chev.classList.add('blank');
   return sec;
 }
 function renderResults(){
@@ -103,7 +103,7 @@ function renderResults(){
   if (collectError){
     const sec = document.createElement('section');
     sec.className = 'test'; sec.dataset.state = 'error';
-    sec.innerHTML = '<div class="test-head"><span></span><span class="tstate" aria-hidden="true"></span><h3></h3></div>';
+    sec.innerHTML = '<div class="test-head"><span class="chev blank"></span><span class="tstate" aria-hidden="true"></span><h3></h3></div>';
     sec.querySelector('h3').textContent = `${files().tests} did not load. The Output tab has the whole error.`;
     detail(sec, collectError);
     listEl.append(sec);
@@ -177,6 +177,7 @@ export function setCodeView(v){
   listSmells();
   listRanking();
   renderCoverage();
+  markMutants();
 }
 document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => setCodeView(b.dataset.codetab)));
 

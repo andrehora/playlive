@@ -22,7 +22,7 @@ async function measure(page, id){
   const run = page.locator('.mut-run');
   await expect(page.locator('.mut-score')).toHaveText(/ mutations$/, { timeout: CODE_LOAD });
   await run.click();
-  await expect(run).toHaveText('Run again', { timeout: CODE_LOAD });
+  await expect(run).toHaveText('Run mutations', { timeout: CODE_LOAD });
   const mutations = Object.fromEntries(await page.locator('#codeMutation .bug-group')
     .evaluateAll(gs => gs.map(g => [g.dataset.state, g.querySelectorAll('.mut-row').length])));
   return { branch, mutations, smells };

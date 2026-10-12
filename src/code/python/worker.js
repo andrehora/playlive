@@ -28,7 +28,7 @@
    below): { type: 'measured', example, file, lines, hit, branches }.
    With `mutate`, the same files are mutated instead (see mutate below):
    { type: 'mutants', mutants: [{ id, line, what, text, after }] } (after:
-   the line with the change, when it fits on it), then
+   the changed node's lines from `line`, as many as it had, with the change), then
    { type: 'mutant', id, outcome, timeout } for each (caught, escaped, or
    unrun when no test runs its line), or { type: 'mutation-refused', reason }
    when the tests do not all pass first, and { type: 'mutation-done' }.     */
@@ -428,7 +428,8 @@ def mutants_of(src):
         old = getattr(obj, field)
         setattr(obj, field, new)
         return lambda: setattr(obj, field, old)
-    # Each change: where, what it does, and how to make it (which returns how to undo it)
+    # Each change: where, what it does, how to make it (which returns how to
+    # undo it), and for a swapped operator, the operands it sits between
     changes = []
     for n in ast.walk(tree):
         if id(n) in skip:
@@ -441,11 +442,16 @@ def mutants_of(src):
                         old = n.ops[i]
                         n.ops[i] = new()
                         return lambda: n.ops.__setitem__(i, old)
-                    changes.append((n, SYMBOLS[type(op)] + ' → ' + SYMBOLS[new], make))
+                    left = n.left if i == 0 else n.comparators[i - 1]
+                    changes.append((n, SYMBOLS[type(op)] + ' → ' + SYMBOLS[new], make,
+                                    [(left, n.comparators[i], SYMBOLS[type(op)], SYMBOLS[new])]))
         elif isinstance(n, (ast.BinOp, ast.AugAssign, ast.BoolOp)) and type(n.op) in SWAPS:
             new = SWAPS[type(n.op)]
             eq = '=' if isinstance(n, ast.AugAssign) else ''
-            changes.append((n, SYMBOLS[type(n.op)] + eq + ' → ' + SYMBOLS[new] + eq, lambda n=n, new=new: swap(n, 'op', new())))
+            pairs = (list(zip(n.values, n.values[1:])) if isinstance(n, ast.BoolOp)
+                     else [(n.target, n.value)] if isinstance(n, ast.AugAssign) else [(n.left, n.right)])
+            changes.append((n, SYMBOLS[type(n.op)] + eq + ' → ' + SYMBOLS[new] + eq, lambda n=n, new=new: swap(n, 'op', new()),
+                            [(a, b, SYMBOLS[type(n.op)] + eq, SYMBOLS[new] + eq) for a, b in pairs]))
         elif isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.Not) and id(n) in parents:
             changes.append((n, 'not removed', lambda n=n: replace(n, n.operand)))
         elif isinstance(n, ast.Constant) and id(n) in parents:
@@ -455,30 +461,65 @@ def mutants_of(src):
                 changes.append((n, str(n.value) + ' → ' + str(n.value + 1), lambda n=n: swap(n, 'value', n.value + 1)))
         elif isinstance(n, ast.Return) and n.value is not None and not (isinstance(n.value, ast.Constant) and n.value.value is None):
             changes.append((n, 'returns None', lambda n=n: swap(n, 'value', ast.Constant(None))))
-    # The change written into its own line, the rest of the file as it is, so
-    # the code can show it (and a traceback names the lines as written): kept
-    # only when it reads back as the very same mutant
+    # The change written into the node's own lines, the rest of the file as it
+    # is, so the code can show it (and a traceback names the lines as written):
+    # kept only when it reads back as the very same mutant. A node over several
+    # lines keeps them: a swapped operator is changed where it is written, and
+    # anything else is written on the first, the others left blank.
     def chars(line, col):
         return len(line.encode()[:col].decode(errors='ignore'))
-    def patched(node, piece, want):
-        if node.lineno != node.end_lineno:
+    starts = [0]
+    for line in text:
+        starts.append(starts[-1] + len(line) + 1)
+    def at(lineno, col):
+        return starts[lineno - 1] + chars(text[lineno - 1], col)
+    def find_op(gap, sym):
+        i = gap.find(sym)
+        while i >= 0:
+            before, after = gap[i - 1:i], gap[i + len(sym):i + len(sym) + 1]
+            if sym[0].isalpha():
+                ok = not any(c and (c.isalnum() or c == '_') for c in (before, after))
+            else:
+                ok = (not before or before not in '<>=!*/%+-') and (not after or after not in '<>=*/')
+            if ok:
+                return i
+            i = gap.find(sym, i + 1)
+        return -1
+    def patched(node, edits, want):
+        a0, b0, n = starts[node.lineno - 1], starts[node.end_lineno] - 1, node.end_lineno - node.lineno + 1
+        region = src[a0:b0]
+        for a, b, piece in reversed(edits):
+            region = region[:a - a0] + piece + region[b - a0:]
+        rows = region.split(chr(10))
+        rows += [''] * (n - len(rows))
+        if len(rows) != n:
             return None
-        line = text[node.lineno - 1]
-        a, b = chars(line, node.col_offset), chars(line, node.end_col_offset)
-        new = line[:a] + piece + line[b:]
-        src2 = chr(10).join(text[:node.lineno - 1] + [new] + text[node.lineno:])
+        src2 = chr(10).join(text[:node.lineno - 1] + rows + text[node.end_lineno:])
         try:
             same = ast.dump(ast.parse(src2)) == want
         except SyntaxError:
             same = False
-        return (new, src2) if same else None
+        return (chr(10).join(rows), src2) if same else None
+    def edits_of(node, what, ops):
+        if ops and node.lineno != node.end_lineno:
+            out = []
+            for left, right, old, new in ops:
+                a, b = at(left.end_lineno, left.end_col_offset), at(right.lineno, right.col_offset)
+                i = find_op(src[a:b], old)
+                if i < 0:
+                    break
+                out.append((a + i, a + i + len(old), new))
+            else:
+                return out
+        piece = ast.unparse(node.operand if what == 'not removed' else node)
+        return [(at(node.lineno, node.col_offset), at(node.end_lineno, node.end_col_offset), piece)]
     original, seen, out = ast.unparse(tree), set(), []
-    for node, what, make in sorted(changes, key=lambda c: (c[0].lineno, c[0].col_offset)):
+    for node, what, make, *ops in sorted(changes, key=lambda c: (c[0].lineno, c[0].col_offset)):
         undo = make()
         try:
             ast.fix_missing_locations(tree)
             mutated, want = ast.unparse(tree), ast.dump(tree)
-            patch = patched(node, ast.unparse(node.operand if what == 'not removed' else node), want)
+            patch = patched(node, edits_of(node, what, ops and ops[0]), want)
         finally:
             undo()
         if mutated == original or mutated in seen:

@@ -120,11 +120,11 @@ test.describe('JS/TS mode', () => {
 
     await run(page);
     await tab('coverage');
-    await expect(score).toHaveText(/^Line: 80%\s*\(8 of 10 lines\)$/);
+    await expect(score).toHaveText(/^Line: 80%\s*\(8 of 10\)$/);
     expect(await missed()).toEqual(['throw new Error("Deposit must be positive");', 'this.balance -= amount;']);
     await expect(page.locator('#codeEd .hl .l.cov-hit')).toHaveCount(8);
     // Each if goes only one way: a deposit is never refused, a withdrawal always is
-    await expect(page.locator('#codeBranch')).toHaveText(/^Branch: 50%\s*\(2 of 4 branches\)$/);
+    await expect(page.locator('#codeBranch')).toHaveText(/^Branch: 50%\s*\(2 of 4\)$/);
     await page.click('.cov-seg [data-covby="branches"]');
     await expect(page.locator('#codeEd .hl .l.cov-part')).toHaveCount(2);
     // and each method with a branch has a flow, a box taking you to its line
@@ -145,9 +145,9 @@ test.describe('JS/TS mode', () => {
     await ready(page, /^TypeScript/);
     await run(page);
     await tab('coverage');
-    await expect(score).toHaveText(/^Line: 77%\s*\(7 of 9 lines\)$/);
+    await expect(score).toHaveText(/^Line: 77%\s*\(7 of 9\)$/);
     expect(await missed()).toEqual(['throw new Error("Deposit must be positive");', 'this.balance -= amount;']);
-    await expect(page.locator('#codeBranch')).toHaveText(/^Branch: 50%\s*\(2 of 4 branches\)$/);
+    await expect(page.locator('#codeBranch')).toHaveText(/^Branch: 50%\s*\(2 of 4\)$/);
 
     // Mocha measures the same lines as Jasmine
     await tab('results');
@@ -155,7 +155,7 @@ test.describe('JS/TS mode', () => {
     await ready(page, /Mocha/);
     await run(page);
     await tab('coverage');
-    await expect(score).toHaveText(/^Line: 77%\s*\(7 of 9 lines\)$/);
+    await expect(score).toHaveText(/^Line: 77%\s*\(7 of 9\)$/);
     expect(errors).toEqual([]);
   });
 
@@ -215,8 +215,8 @@ test.describe('JS/TS mode', () => {
     await expect(codeTa).toHaveValue(/this\.balance \+= amount;\n {2}\}\n\n {2}withdraw/);
 
     await runBtn.click();
-    await expect(runBtn).toHaveText('Run again', { timeout: LOAD });
-    await expect(score).toHaveText('1 of 6 mutations caught (16%)');
+    await expect(runBtn).toHaveText('Run mutations', { timeout: LOAD });
+    await expect(score).toHaveText('1 of 6 mutations killed (16%)');
     await expect(group('caught').locator('.mut-what')).toHaveText(['+= → -=']);
     await expect(group('escaped').locator('.mut-row')).toHaveCount(4);
     // No test withdraws successfully, so nothing could catch a change there
@@ -230,7 +230,7 @@ test.describe('JS/TS mode', () => {
     });
     await expect(panel).toContainText('changed after this run');
     await runBtn.click();
-    await expect(runBtn).toHaveText('Run again', { timeout: LOAD });
+    await expect(runBtn).toHaveText('Run mutations', { timeout: LOAD });
     await expect(group('caught').locator('.mut-what')).toHaveText(['<= → <', '+= → -=']);
 
     // A failing test leaves nothing to judge by, so the run refuses
@@ -253,9 +253,9 @@ test.describe('JS/TS mode', () => {
         await expect(page.locator('#codeFile')).toHaveText(`${id}.${lang}`);
         await expect(page.locator('.mut-score')).toHaveText(/ mutations$/, { timeout: LOAD });
         await runBtn.click();
-        await expect(runBtn).toHaveText('Run again', { timeout: LOAD });
+        await expect(runBtn).toHaveText('Run mutations', { timeout: LOAD });
         const said = await page.locator('.mut-score').textContent();
-        if (!/^\d+ of \d+ mutations caught/.test(said)) problems.push(`${lang} ${fw} ${id}: ${await page.locator('#codeMutation').innerText()}`);
+        if (!/^\d+ of \d+ mutations killed/.test(said)) problems.push(`${lang} ${fw} ${id}: ${await page.locator('#codeMutation').innerText()}`);
       }
     }
     expect(problems).toEqual([]);

@@ -161,6 +161,19 @@ export const JAVASCRIPT = {
   worker: (fw, lang) => new Worker(new URL(`./worker.js?fw=${fw}&lang=${lang}`, import.meta.url), { type: 'module' }),
   fresh: true,
   mutation: true,
+  // What a mutation can change (code/js/mutate.js), each with an example:
+  // [name, before, after]
+  operators: [
+    ['Relational', 'x < 10', 'x <= 10'],
+    ['Equality', 'x === y', 'x !== y'],
+    ['Arithmetic', 'a + b', 'a - b'],
+    ['Assignment', 'total += n', 'total -= n'],
+    ['Logical', 'a && b', 'a || b'],
+    ['Negation removed', '!done', 'done'],
+    ['Number', 'size = 8', 'size = 9'],
+    ['Boolean', 'return true', 'return false'],
+    ['Return value', 'return total;', 'return undefined;']
+  ],
   // The site modes' four smells, said for Jasmine and Mocha, read here on the
   // page (code/js/smells.js) rather than by the worker
   smells: () => [

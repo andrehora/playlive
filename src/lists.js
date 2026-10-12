@@ -22,6 +22,28 @@ export function listGroup(kind, { title, n, why, state, smell, sentence }){
   return g;
 }
 
+// Every smell looked for, named and explained, nothing more
+export function smellTable(smells){
+  const table = document.createElement('table');
+  table.className = 'rank-table mut-ops smell-cat';
+  table.innerHTML = '<thead><tr><th scope="col">Smell</th><th scope="col">What it means</th></tr></thead><tbody></tbody>';
+  for (const s of smells){
+    const tr = table.tBodies[0].insertRow();
+    tr.dataset.smell = s.id;
+    tr.innerHTML = '<td></td><td></td>';
+    tr.cells[0].textContent = s.name;
+    tr.cells[1].textContent = s.why;
+  }
+  return table;
+}
+
+// A grader's run button (Run mutations, Check): its label after the play icon
+// Run tests has, or `busy` alone while it runs
+export function playLabel(btn, label, busy = null){
+  btn.textContent = busy ?? label;
+  if (!busy) btn.insertAdjacentHTML('afterbegin', '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></svg>');
+}
+
 export const listNote = text => Object.assign(document.createElement('p'), { className: 'list-note', textContent: text });
 
 // A row naming something, with a word on how it stands; a button when it

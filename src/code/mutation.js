@@ -2,7 +2,7 @@ import { $id } from '../dom.js';
 import { begin, boot, send, settle } from './code.js';
 import { P, S, active, codeEd, job, onWorker, progressEl, request, testsEd, view } from './core.js';
 import { showCode } from './coverage.js';
-import { listGroup, listNote } from '../lists.js';
+import { listGroup, listNote, playLabel } from '../lists.js';
 import { setProgress } from '../ui.js';
 import { band } from '../util.js';
 
@@ -19,32 +19,43 @@ import { band } from '../util.js';
 export const mutationEl = $id('codeMutation'), mutationBtn = document.querySelector('.code-seg [data-codetab="mutation"]');
 export let mutation = null, huntOne = null;   // huntOne: the id of a mutant run alone
 // A mutation put into the code, as the site modes inject one into the page, to
-// look at or run by hand: { id, line, before, code } while the code is that
+// look at or run by hand: { id, line, before, code } while the code is that;
+// a change over several lines puts back as many as it took (`after` and `before`)
 export let injected = null, injecting = false;
+// What the tab lists: the mutations of the code, or the operators that make them
+let showing = 'mutations';
 const MUT_GROUPS = [
-  ['escaped', 'Escaped', 'Every test still passed'],
+  ['escaped', 'Survived', 'Every test still passed'],
   ['unrun', 'Never run', 'No test runs these lines'],
   ['unchecked', 'Not checked yet', 'Not tried yet'],
-  ['caught', 'Caught', 'A test failed']
+  ['caught', 'Killed', 'A test failed']
 ];
 const REFUSED = {
-  failing: 'The tests must all pass first: a mutation is caught when a test fails, so a test that already fails says nothing. Fix it, then run mutations.',
+  failing: 'The tests must all pass first: a mutation is killed when a test fails, so a test that already fails says nothing. Fix it, then run mutations.',
   none: 'There are no tests to run yet. Write one, then run mutations.',
   unsupported: 'This Python cannot run mutations.'
 };
 export function renderMutation(){
   const ms = mutation?.mutants || [];
+  markMutants();
   const caught = ms.filter(m => m.outcome === 'caught').length;
   const scored = ms.filter(m => m.outcome !== 'unchecked').length;
   const pct = scored ? Math.floor(caught / scored * 100) : 0;
-  mutationEl.innerHTML = '<div class="mut-head"><button type="button" class="small mut-run"></button><span class="mut-score" aria-live="polite"></span></div>';
+  mutationEl.innerHTML = `<div class="mut-head"><button type="button" class="small mut-run"></button><span class="mut-score" aria-live="polite"></span>
+    <button type="button" class="small ghost help-toggle mut-view" data-mutview="operators" aria-pressed="false" title="What a mutation changes"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2.3-2.4 3.8M12 17h.01"/></svg>See operators</button></div>`;
   const btn = mutationEl.querySelector('.mut-run'), scoreEl = mutationEl.querySelector('.mut-score');
-  btn.textContent = job === 'mutate' ? 'Running…' : mutation?.ran ? 'Run again' : 'Run mutations';
+  const ops = mutationEl.querySelector('[data-mutview="operators"]');
+  ops.setAttribute('aria-pressed', String(showing === 'operators'));
+  ops.addEventListener('click', () => { showing = showing === 'operators' ? 'mutations' : 'operators'; renderMutation(); mutationEl.querySelector('[data-mutview="operators"]').focus(); });
+  playLabel(btn, 'Run mutations', job === 'mutate' ? 'Running…' : null);
   btn.disabled = !!job;
   btn.addEventListener('click', runMutations);
-  scoreEl.textContent = scored ? `${caught} of ${scored} mutations caught (${pct}%)` : ms.length ? `${ms.length} mutations` : '';
+  scoreEl.textContent = scored ? `${caught} of ${scored} mutations killed (${pct}%)` : ms.length ? `${ms.length} mutations` : '';
   scoreEl.dataset.band = scored && job !== 'mutate' ? band(pct) : '';
+  // The operators are a list to read: nothing to run or score
+  btn.hidden = scoreEl.hidden = showing === 'operators';
   const say = text => mutationEl.append(listNote(text));
+  if (showing === 'operators') return renderOperators();
   if (!mutation) return;
   if (mutation.refused) return say(REFUSED[mutation.refused]);
   if (mutation.stale) say('The code or the tests changed after this run. Run mutations again.');
@@ -93,33 +104,55 @@ export function renderMutation(){
     mutationEl.append(g);
   }
 }
+// Beside the code, a bug on each line a mutation survived on and a check on
+// each one was killed on, while the tab is open and the run still says so
+export function markMutants(){
+  const done = view === 'mutation' && mutation?.ran && !mutation.stale && job !== 'mutate';
+  const on = outcome => new Set(done ? mutation.mutants.filter(m => m.outcome === outcome).map(m => m.line) : []);
+  codeEd.mutants({ survived: on('escaped'), killed: on('caught') });
+}
+// One line per operator: its name, and a line before and after it changes it
+function renderOperators(){
+  const table = document.createElement('table');
+  table.className = 'rank-table mut-ops';
+  table.innerHTML = '<thead><tr><th scope="col">Operator</th><th scope="col">Example</th></tr></thead><tbody></tbody>';
+  for (const [name, before, after] of P().operators){
+    const tr = table.tBodies[0].insertRow();
+    tr.innerHTML = '<td></td><td><code></code> <span class="mut-arrow">→</span> <code></code></td>';
+    tr.cells[0].textContent = name;
+    const [a, b] = tr.querySelectorAll('code');
+    a.textContent = before; b.textContent = after;
+  }
+  mutationEl.append(table);
+}
 // What a run would try, for the code as it is now: asked for when the tab
 // shows, and again when the code changes, unless a run already says
 let listing = null;                 // the code a list was asked for
-// Change one line of the code, as an edit would, so undo takes it back too
-function setLine(line, text){
-  const lines = codeEd.value.split('\n');
-  const from = lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0);
+// Change the lines of the code from `line`, as many as `text` has, as an edit
+// would, so undo takes it back too
+function setLines(line, text){
+  const lines = codeEd.value.split('\n'), n = text.split('\n').length;
+  const from = lines.slice(0, line).reduce((k, l) => k + l.length + 1, 0);
   injecting = true;
-  codeEd.ta.setRangeText(text, from, from + lines[line].length, 'end');
+  codeEd.ta.setRangeText(text, from, from + lines.slice(line, line + n).join('\n').length, 'end');
   codeEd.ta.dispatchEvent(new Event('input'));
   injecting = false;
 }
 function inject(m){
   if (job || (mutation?.code !== codeEd.value && !injected)) return;
   repair();
-  const before = codeEd.value.split('\n')[m.line];
-  setLine(m.line, m.after);
-  injected = { id: m.id, line: m.line, before, code: codeEd.value };
+  const after = m.after.split('\n'), before = codeEd.value.split('\n').slice(m.line, m.line + after.length);
+  setLines(m.line, m.after);
+  injected = { id: m.id, line: m.line, before: before.join('\n'), code: codeEd.value };
   showCode();
-  codeEd.mark(new Set([m.line]));
+  codeEd.mark(new Set(after.flatMap((l, i) => (l === before[i] ? [] : [m.line + i]))));
   renderMutation();
 }
 function repair(){
   if (!injected) return;
   const { line, before, code } = injected;
   injected = null;
-  if (codeEd.value === code) setLine(line, before);
+  if (codeEd.value === code) setLines(line, before);
   renderMutation();
 }
 // Any other edit to the code ends it: the line is the person's now

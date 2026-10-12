@@ -139,7 +139,7 @@ test.describe('Python mode', () => {
     expect(errors).toEqual([]);
   });
 
-  test('a phone shows every tab on the first row, and Coverage and the fold below', async ({ page }) => {
+  test('a phone shows every tab and the fold on one row', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await openApp(page);
     await setMode(page, 'python');
@@ -149,8 +149,31 @@ test.describe('Python mode', () => {
       await expect(page.locator(`.code-seg [data-codetab="${t}"]`)).toBeVisible();
       expect(Math.abs(await y(`.code-seg [data-codetab="${t}"]`) - row), `${t} is not on the first row`).toBeLessThan(5);
     }
-    for (const sel of ['#foldCode'])
-      expect(await y(sel), `${sel} is not below the tabs`).toBeGreaterThan(row + 20);
+    const fold = await page.locator('#foldCode').boundingBox(), tabs = await page.locator('.code-seg').boundingBox();
+    expect(Math.abs(fold.y + fold.height / 2 - (tabs.y + tabs.height / 2)), 'the fold left the tabs\' row').toBeLessThan(8);
+    for (const b of await page.locator('.code-seg button:visible').all())
+      expect(await b.evaluate(el => el.scrollWidth <= el.clientWidth), `${await b.textContent()} is cut short`).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  });
+
+  test('a phone keeps the source\'s Reset and fold beside its name, and the scores in a row below', async ({ page }) => {
+    test.setTimeout(3 * PYTHON);
+    await page.setViewportSize({ width: 360, height: 800 });
+    await openApp(page, { mode: 'python' });
+    await choose(page, 'Water');
+    await ready(page);
+    await page.click('.code-seg [data-codetab="coverage"]');
+    await expect(page.locator('#codeBranch')).toBeVisible({ timeout: PYTHON });
+    const box = sel => page.locator(sel).boundingBox();
+    const name = await box('.code-module-panel h2'), head = await box('.code-module-panel .panel-head');
+    for (const sel of ['#codeReset', '#foldSource'])
+      expect(Math.abs((await box(sel)).y + (await box(sel)).height / 2 - (name.y + name.height / 2)), `${sel} left the name's row`).toBeLessThan(8);
+    const flow = await box('.code-flowseg [data-codeview="code"]');
+    for (const sel of ['#codeCov', '#codeBranch']){
+      const b = await box(sel);
+      expect(Math.abs(b.y - flow.y), `${sel} is not beside Code/Flow`).toBeLessThan(8);
+      expect(b.x + b.width).toBeLessThanOrEqual(head.x + head.width);
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   });
 
@@ -324,17 +347,17 @@ test.describe('Python mode', () => {
     const texts = cls => lines(cls).evaluateAll(ls => ls.map(l => l.textContent.trim()));
     const code = page.locator('#codeEd textarea');
     await expect(page.locator('#codeConsole')).toHaveText('Press Run to run the tests.');
-    // There is no check: the Coverage tab is what shows it
-    await expect(page.locator('#codeCovShow')).toHaveCount(0);
+    // The check is the Mutation tab's alone: the Coverage tab shows it anyway
+    await expect(page.locator('#codeCovShow')).toBeHidden();
 
     // Measured on every run, and the code stays plain until the tab is open
     await codeRun(page);
     await expect(score).toBeHidden();
     await expect(lines('cov-hit')).toHaveCount(0);
     await tab('coverage');
-    await expect(score).toHaveText(/^Line: 84%\s*\(11 of 13 lines\)$/);
+    await expect(score).toHaveText(/^Line: 84%\s*\(11 of 13\)$/);
     await expect(score).toHaveAttribute('data-band', 'warn');
-    await expect(branch).toHaveText(/^Branch: 50%\s*\(2 of 4 branches\)$/);
+    await expect(branch).toHaveText(/^Branch: 50%\s*\(2 of 4\)$/);
     await expect(branch).toHaveAttribute('data-band', 'bad');
     // By lines: each ran or did not
     await expect(score).toHaveAttribute('aria-pressed', 'true');
@@ -428,19 +451,61 @@ test.describe('Python mode', () => {
     await expect(plus.locator('.mut-inject')).toHaveText('Inject');
 
     await runBtn.click();
-    await expect(runBtn).toHaveText('Run again', { timeout: PYTHON });
-    await expect(score).toHaveText('1 of 6 mutations caught (16%)');
+    await expect(runBtn).toHaveText('Run mutations', { timeout: PYTHON });
+    await expect(score).toHaveText('1 of 6 mutations killed (16%)');
     await expect(score).toHaveAttribute('data-band', 'bad');
     await expect(group('escaped').locator('.mut-row')).toHaveCount(4);
     await expect(group('caught').locator('.mut-what')).toHaveText(['+= → -=']);
+    // A bug before the number of each line a mutation survived on, and a red edge at the line's start, unshaded
+    await expect(page.locator('#codeEd .gutter div.survived')).toHaveText(['6', '10', '15']);
+    expect(await page.locator('#codeEd .gutter div.survived').first().evaluate(l => getComputedStyle(l, '::before').maskImage)).toMatch(/svg/);
+    expect(await page.locator('#codeEd .hl .l.survived').first().evaluate(l => getComputedStyle(l).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+    await expect(page.locator('#codeEd .hl .l.survived')).toHaveCount(3);
+    // and a check, just the icon, on the line one was killed on
+    await expect(page.locator('#codeEd .hl .l.killed')).toHaveText(['        self.balance += amount']);
+    expect(await page.locator('#codeEd .gutter div.killed').evaluate(l => getComputedStyle(l, '::before').maskImage)).toMatch(/svg/);
+    // The Coverage check shades the code by lines, and off takes it away
+    const covShow = page.locator('#codeCovShow');
+    await expect(covShow).toBeVisible();
+    await expect(covShow).not.toBeChecked();
+    await expect(page.locator('#codeEd .hl .l.cov-hit')).toHaveCount(0);
+    await covShow.check();
+    await expect(page.locator('#codeCovNote')).toHaveText(/Run the tests again/);
+    await page.click('#codeRun');
+    await expect(page.locator('#codeEd .hl .l.cov-miss')).toHaveText([/raise ValueError/, /self\.balance -= amount/], { timeout: PYTHON });
+    // A survived line covered reads green, with its red edge and its bug
+    const six = page.locator('#codeEd .hl .l').nth(5);
+    await expect(six).toHaveClass(/survived/);
+    await expect(six).toHaveClass(/cov-hit/);
+    expect(await six.evaluate(l => getComputedStyle(l).boxShadow)).toMatch(/inset/);
+    await expect(page.locator('#codeEd .hl .l.survived')).toHaveCount(3);
+    // Only while the tab is open
+    await page.click('.code-seg [data-codetab="results"]');
+    await expect(page.locator('#codeEd .hl .l.survived')).toHaveCount(0);
+    await expect(page.locator('#codeEd .hl .l.survived')).toHaveCount(0);
+    await page.click('.code-seg [data-codetab="mutation"]');
+    await expect(page.locator('#codeEd .hl .l.survived')).toHaveCount(3);
+    await expect(page.locator('#codeEd .hl .l.cov-hit').first()).toBeVisible();
+    await expect(page.locator('#codeCov')).toBeHidden();
+    await covShow.uncheck();
+    await expect(page.locator('#codeEd .hl .l.cov-hit')).toHaveCount(0);
+    // Operators lists what a mutation can change, one per row with an example, and Mutations comes back
+    await panel.locator('[data-mutview="operators"]').click();
+    await expect(panel.locator('[data-mutview="operators"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(panel.locator('.mut-run')).toBeHidden();
+    await expect(panel.locator('.mut-ops tbody tr')).toHaveCount(11);
+    await expect(panel.locator('.mut-ops tbody tr').first()).toHaveText('Relationalx < 10 → x <= 10');
+    await panel.locator('[data-mutview="operators"]').click();
+    await expect(panel.locator('[data-mutview="operators"]')).toHaveAttribute('aria-pressed', 'false');
+    await expect(group('escaped').locator('.mut-row')).toHaveCount(4);
     // No test withdraws successfully, so nothing could catch a change there
     await expect(group('unrun').locator('.mut-text')).toHaveText(['self.balance -= amount']);
     // One mutation can be run alone, and the others keep what they said
     const boundary = group('escaped').locator('.bug-row', { hasText: '> → >=' });
     await boundary.locator('.mut-one').click();
-    await expect(runBtn).toHaveText('Run again', { timeout: PYTHON });
+    await expect(runBtn).toHaveText('Run mutations', { timeout: PYTHON });
     await expect(group('escaped').locator('.mut-row')).toHaveCount(4);
-    await expect(score).toHaveText('1 of 6 mutations caught (16%)');
+    await expect(score).toHaveText('1 of 6 mutations killed (16%)');
     // A row takes you to the line it changed
     await group('escaped').locator('.mut-row', { hasText: '<= → <' }).click();
     const code = page.locator('#codeEd textarea');
@@ -453,9 +518,15 @@ test.describe('Python mode', () => {
       t.dispatchEvent(new Event('input'));
     });
     await expect(panel).toContainText('changed after this run');
+    await expect(page.locator('#codeEd .hl .l.survived')).toHaveCount(0);
     await runBtn.click();
-    await expect(runBtn).toHaveText('Run again', { timeout: PYTHON });
+    await expect(runBtn).toHaveText('Run mutations', { timeout: PYTHON });
     await expect(group('caught').locator('.mut-what')).toHaveText(['<= → <', '+= → -=']);
+    // Line 10 has one of each now: a check and a bug
+    const ten = page.locator('#codeEd .gutter div').nth(9);
+    await expect(ten).toHaveClass(/killed/);
+    await expect(ten).toHaveClass(/survived/);
+    expect(await ten.evaluate(l => [getComputedStyle(l, '::before').maskImage, getComputedStyle(l, '::after').maskImage].every(m => /svg/.test(m)))).toBe(true);
 
     // A failing test leaves nothing to judge by, so the run refuses
     await tests.evaluate(t => { t.value = t.value.replace('150)', '151)'); t.dispatchEvent(new Event('input')); });
@@ -463,6 +534,36 @@ test.describe('Python mode', () => {
     await expect(panel).toContainText('The tests must all pass first', { timeout: PYTHON });
     await expect(runBtn).toBeEnabled();
 
+    expect(errors).toEqual([]);
+  });
+
+  test('a mutation over several lines is injected in place, and Repair puts every line back', async ({ page }) => {
+    test.setTimeout(3 * PYTHON);
+    const { errors } = await openApp(page, { mode: 'python' });
+    await choose(page, 'Password check');
+    await ready(page);
+    const panel = page.locator('#codeMutation'), rows = panel.locator('.bug-group[data-state="unchecked"] .bug-row');
+    await page.click('.code-seg [data-codetab="mutation"]');
+    await expect(rows.first()).toBeVisible({ timeout: PYTHON });
+    // Every mutation can be injected, the ones on the return over several lines too
+    await expect(rows.locator('.mut-inject')).toHaveCount(await rows.count());
+    const code = page.locator('#codeEd textarea'), was = await code.inputValue();
+    // and → or swaps both, where they are written, keeping the lines
+    const or = rows.filter({ hasText: 'and → or' });
+    await or.locator('.mut-inject').click();
+    await expect(code).toHaveValue(/>= 8\n {8}or any\(c\.isdigit\(\) for c in password\)\n {8}or any\(/);
+    expect((await code.inputValue()).split('\n')).toHaveLength(was.split('\n').length);
+    await expect(page.locator('#codeEd .hl .l.bad')).toHaveCount(2);
+    await or.locator('.mut-inject').click();
+    await expect(code).toHaveValue(was);
+    // returns None takes the whole return, and leaves its other lines blank
+    const none = rows.filter({ hasText: 'returns None' });
+    await none.locator('.mut-inject').click();
+    await expect(code).toHaveValue(/^def is_strong\(password\):\n {4}return None\n\n\n\n\n/);
+    await page.click('#codeRun');
+    await expect(page.locator('#codeSummary')).toHaveText(/failed/, { timeout: PYTHON });
+    await none.locator('.mut-inject').click();
+    await expect(code).toHaveValue(was);
     expect(errors).toEqual([]);
   });
 
@@ -534,9 +635,17 @@ test.describe('Python mode', () => {
     // A row opens the example at its line, on This example
     await group('duplication-of-setup').locator('.smell-line', { hasText: 'Bank account' }).click();
     await expect(page.locator('#codeTestsFile')).toHaveText('test_bank_account.py');
-    await expect(panel.locator('[data-codesmells="file"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(panel.locator('[data-codesmells="all"]')).toHaveAttribute('aria-pressed', 'false');
     const tests = page.locator('#codeTestsEd textarea');
     expect(await tests.evaluate(t => t.value.slice(t.selectionStart, t.selectionEnd))).toBe('account = Account(100)');
+
+    // See smells lists only the smells, each with what it means
+    await panel.locator('[data-codesmells="catalog"]').click();
+    await expect(panel.locator('[data-codesmells="catalog"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(panel.locator('.smell-cat tbody tr')).toHaveCount(4);
+    await expect(panel.locator('[data-codesmells="all"]')).toBeHidden();
+    await panel.locator('[data-codesmells="catalog"]').click();
+    await expect(panel.locator('[data-codesmells="catalog"]')).toHaveAttribute('aria-pressed', 'false');
 
     // pytest has its own list
     await page.click('.code-fw [data-fw="pytest"]');
@@ -556,7 +665,7 @@ test.describe('Python mode', () => {
     expect(tabs.indexOf('coverage')).toBe(tabs.indexOf('mutation') - 1);
     await page.click('.code-seg [data-codetab="coverage"]');
     // This example first, measured by running its tests as the tab opens
-    await expect(panel.locator('[data-codecov="file"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(panel.locator('[data-codecov="all"]')).toHaveAttribute('aria-pressed', 'false');
     await expect(rows).toHaveCount(1, { timeout: PYTHON });
     await expect(rows.locator('.rank-line')).toHaveText('calculator.py');
     await expect(rows.locator('.rank-lines')).toHaveText('100%');
@@ -579,9 +688,9 @@ test.describe('Python mode', () => {
     await water.locator('.rank-line').click();
     await expect(page.locator('#codeFile')).toHaveText('water.py');
     await expect(page.locator('#codeEd textarea')).toBeFocused();
-    await expect(panel.locator('[data-codecov="file"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(panel.locator('[data-codecov="all"]')).toHaveAttribute('aria-pressed', 'false');
     await expect(rows.locator('.rank-line')).toHaveText('water.py');
-    const unrun = panel.locator('.bug-group[data-state="escaped"] .smell-line');
+    const unrun = panel.locator('.bug-group[data-state="uncovered"] .smell-line');
     await expect(unrun.first()).toContainText('line');
     const at = Number((await unrun.first().locator('.smell-what').textContent()).match(/\d+/)[0]);
     await unrun.first().click();
@@ -592,15 +701,50 @@ test.describe('Python mode', () => {
     await expect(rows).toHaveCount(63);
     await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 63 files fully covered$/);
     // An edit makes it stale, so choosing it again measures again
-    await panel.locator('[data-codecov="file"]').click();
+    await panel.locator('[data-codecov="all"]').click();
     await ed.evaluate(t => { t.value += '\n'; t.dispatchEvent(new Event('input')); });
     await expect(panel.locator('.list-note')).toHaveText('The code changed after the last run. Run the tests to measure it again.');
     await panel.locator('[data-codecov="all"]').click();
     await expect(panel.locator('.rank-score')).toHaveText(/^Measuring/);
     await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 63 files fully covered$/, { timeout: PYTHON });
     await expect(panel.locator('.list-note')).toHaveCount(0);
-    // The tab has no buttons of its own: choosing a view is what measures it
-    await expect(panel.locator('.mut-head > button')).toHaveCount(0);
+    // The tab has no Run button: Measure all examples is what measures it
+    await expect(panel.locator('.mut-head > button')).toHaveCount(1);
+    expect(errors).toEqual([]);
+  });
+
+  test('All examples sorts by Lines or Branches, the most covered first, and again the other way', async ({ page }) => {
+    test.setTimeout(3 * PYTHON);
+    const { errors } = await openApp(page, { mode: 'python' });
+    await ready(page);
+    const panel = page.locator('#codeRanking'), head = col => panel.locator(`th[data-col="${col}"]`);
+    await page.click('.code-seg [data-codetab="coverage"]');
+    // This example's one row has nothing to sort
+    await expect(panel.locator('.rank-row')).toHaveCount(1, { timeout: PYTHON });
+    await expect(panel.locator('.rank-sort')).toHaveCount(0);
+    await panel.locator('[data-codecov="all"]').click();
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 63 files fully covered$/, { timeout: PYTHON });
+    const pcts = col => panel.locator(`.rank-${col}`).allTextContents();
+    const nums = list => list.filter(t => t.endsWith('%')).map(parseFloat);
+    const desc = list => [...list].sort((a, b) => b - a), asc = list => [...list].sort((a, b) => a - b);
+    // Lines, the most covered first, to begin with
+    await expect(head('lines')).toHaveAttribute('aria-sort', 'descending');
+    await expect(head('branches')).toHaveAttribute('aria-sort', 'none');
+    expect(nums(await pcts('lines'))).toEqual(desc(nums(await pcts('lines'))));
+    // Lines again: the least covered first
+    await head('lines').getByRole('button').click();
+    await expect(head('lines')).toHaveAttribute('aria-sort', 'ascending');
+    expect(nums(await pcts('lines'))).toEqual(asc(nums(await pcts('lines'))));
+    // Branches: the most covered first, and a file with none last, whichever way
+    for (const [way, order] of [['descending', desc], ['ascending', asc]]){
+      await head('branches').getByRole('button').click();
+      await expect(head('branches')).toHaveAttribute('aria-sort', way);
+      await expect(head('lines')).toHaveAttribute('aria-sort', 'none');
+      const br = await pcts('branches'), n = nums(br);
+      expect(n).toEqual(order(n));
+      expect(br.slice(n.length).every(t => t === '–'), 'a file with no branch is not last').toBe(true);
+    }
+    await expect(panel.locator('.rank-row')).toHaveCount(63);
     expect(errors).toEqual([]);
   });
 
@@ -617,9 +761,9 @@ test.describe('Python mode', () => {
         await page.evaluate(id => window.playlive.code.select(id), id);
         await expect(page.locator('#codeFile')).toHaveText(`${id.replace(/-/g, '_')}.py`);
         await runBtn.click();
-        await expect(runBtn).toHaveText('Run again', { timeout: PYTHON });
+        await expect(runBtn).toHaveText('Run mutations', { timeout: PYTHON });
         const said = await page.locator('.mut-score').textContent();
-        if (!/^\d+ of \d+ mutations caught/.test(said)) problems.push(`${fw} ${id}: ${await page.locator('#codeMutation').innerText()}`);
+        if (!/^\d+ of \d+ mutations killed/.test(said)) problems.push(`${fw} ${id}: ${await page.locator('#codeMutation').innerText()}`);
       }
     }
     expect(problems).toEqual([]);

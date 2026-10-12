@@ -1,7 +1,7 @@
 import { $id } from '../dom.js';
 import { begin, send, settle } from './code.js';
 import { P, S, active, codeEd, creating, files, job, onWorker, progressEl, request, testsEd } from './core.js';
-import { lineRow, listGroup, listNote } from '../lists.js';
+import { lineRow, listGroup, listNote, playLabel } from '../lists.js';
 import { setProgress } from '../ui.js';
 import { band, escRe, plural } from '../util.js';
 
@@ -68,7 +68,7 @@ export function renderCreate(){
   const top = createEl.scrollTop;
   createEl.innerHTML = '<div class="mut-head"><button type="button" class="small brief-run"></button><span class="mut-score brief-score" aria-live="polite"></span></div>';
   const btn = createEl.querySelector('.brief-run'), scoreEl = createEl.querySelector('.brief-score');
-  btn.textContent = job === 'check' ? 'Checking…' : 'Check';
+  playLabel(btn, 'Check', job === 'check' ? 'Checking…' : null);
   btn.title = 'Check your tests against the original';
   btn.disabled = !!job;
   btn.addEventListener('click', runBrief);

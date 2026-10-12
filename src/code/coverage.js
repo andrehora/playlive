@@ -13,8 +13,10 @@ import { band, escH } from '../util.js';
    with a branch (code/flow.js draws them). The code is coloured by lines or by
    branches, as chosen on top of it. An edit to the code moves its
    lines, so it makes the measure stale until the next run. `note` says why
-   there is none, on top of the code while the tab is open. */
+   there is none, on top of the code while the tab is open. While the
+   Mutation tab is, a Coverage check on top of the code shades it by lines. */
 const codeCov = $id('codeCov'), codeBranch = $id('codeBranch'), covNote = $id('codeCovNote');
+const covShow = $id('codeCovShow'), covToggle = covShow.closest('label');
 const covSeg = document.querySelector('.cov-seg'), viewSeg = document.querySelector('.code-flowseg'), flowEl = $id('codeFlow');
 export let coverage = null, coverageNote = '';
 let covBy = 'lines', codeView = 'code';    // what colours the code, and code or flow
@@ -27,18 +29,18 @@ onWorker(['coverage'], data => (data.lines
     branches: data.branches && new Map(data.branches.map(([l, of, taken]) => [l, [of, taken]])), flows: data.flows || [] })
   : setCoverage(null, `${data.file} could not be measured, so it ran as written.`)));
 // One score on top of the code: `of` 0 when there is nothing to count
-function score(el, done, of, noun){
+function score(el, done, of){
   const pct = of ? Math.floor(done / of * 100) : 100;
   el.dataset.band = band(pct);
   el.firstElementChild.textContent = `${pct}%`;
-  el.lastElementChild.textContent = `(${done} of ${of} ${noun})`;
+  el.lastElementChild.textContent = `(${done} of ${of})`;
 }
 // How a line, or a box of the flow, is coloured: by whether its lines ran,
 // or, by branches, a decision by the ways it went (a line with no branch is
 // left plain in the code)
-function lineClass(l){
+function lineClass(l, by = covBy){
   const br = coverage.branches?.get(l);
-  if (covBy === 'branches') return !br ? '' : br[1] === br[0] ? 'cov-hit' : br[1] ? 'cov-part' : 'cov-miss';
+  if (by === 'branches') return !br ? '' : br[1] === br[0] ? 'cov-hit' : br[1] ? 'cov-part' : 'cov-miss';
   return coverage.hit.has(l) ? 'cov-hit' : 'cov-miss';
 }
 function boxClass(lines, decision){
@@ -48,26 +50,30 @@ function boxClass(lines, decision){
   return !code.length ? 'none' : ran === code.length ? 'hit' : ran ? 'part' : 'miss';
 }
 export function renderCoverage(){
-  const shown = view === 'coverage', live = coverage && !coverage.stale, on = live && shown, br = live && coverage.branches;
+  // The Coverage tab, or the Mutation tab with its check on, which shades by lines alone
+  const tab = view === 'coverage', checked = view === 'mutation' && covShow.checked, shown = tab || checked;
+  const live = coverage && !coverage.stale, on = live && shown, br = live && coverage.branches;
   if (live){
-    score(codeCov, coverage.lines.filter(l => coverage.hit.has(l)).length, coverage.lines.length, 'lines');
+    score(codeCov, coverage.lines.filter(l => coverage.hit.has(l)).length, coverage.lines.length);
     if (br){
       const ways = [...br.values()];
-      score(codeBranch, ways.reduce((n, w) => n + w[1], 0), ways.reduce((n, w) => n + w[0], 0), 'branches');
+      score(codeBranch, ways.reduce((n, w) => n + w[1], 0), ways.reduce((n, w) => n + w[0], 0));
     }
   }
   if (!br) covBy = 'lines';
-  covSeg.hidden = !on;
+  covSeg.hidden = !(on && tab);
+  covToggle.hidden = view !== 'mutation';
   codeBranch.hidden = !br;
   for (const b of covSeg.querySelectorAll('[data-covby]')) b.setAttribute('aria-pressed', String(b.dataset.covby === covBy));
   // Open with nothing to show: why
-  const why = coverage?.stale ? `${coverage.file} changed after the run. Run the tests again to measure it.` : coverageNote;
+  const why = coverage?.stale ? `${coverage.file} changed after the run. Run the tests again to measure it.`
+    : coverageNote || (checked ? 'Run the tests to see coverage.' : '');
   covNote.textContent = why;
   covNote.hidden = !(shown && !live && why);
-  codeEd.paint(on ? new Map(coverage.lines.map(l => [l, lineClass(l)])) : null);
+  codeEd.paint(on ? new Map(coverage.lines.map(l => [l, lineClass(l, tab ? covBy : 'lines')])) : null);
   document.dispatchEvent(new CustomEvent('playlive:code-coverage'));
   // The flow is there while coverage is shown, for the methods with a branch
-  viewSeg.hidden = !(on && coverage.flows?.length);
+  viewSeg.hidden = !(on && tab && coverage.flows?.length);
   if (viewSeg.hidden) codeView = 'code';
   renderFlow();
 }
@@ -89,6 +95,7 @@ function goToBox(e){
 }
 flowEl.addEventListener('click', goToBox);
 flowEl.addEventListener('keydown', goToBox);
+covShow.addEventListener('change', renderCoverage);
 covSeg.addEventListener('click', e => { const b = e.target.closest('[data-covby]'); if (b){ covBy = b.dataset.covby; renderCoverage(); } });
 viewSeg.addEventListener('click', e => { const b = e.target.closest('[data-codeview]'); if (b){ codeView = b.dataset.codeview; renderFlow(); } });
 codeEd.ta.addEventListener('input', () => { if (coverage && !coverage.stale){ coverage.stale = true; renderCoverage(); } });
