@@ -247,6 +247,9 @@ export function openTests(){
   setComparing(false);
 }
 compareBtn.addEventListener('click', () => setComparing(!comparing()));
+// A phone has no room for two sides (app.css hides Compare there), so one turned upright mid-comparison shows one
+const phone = matchMedia('(max-width:600px)');
+phone.addEventListener('change', () => { if (phone.matches && dlg.open && comparing()) setComparing(false); });
 // An example picked in the head shows on its side, in the language and framework the side had
 document.addEventListener('playlive:code-example', () => { if (dlg.open && !comparing()) show(panes[0], panes[0].shows); });
 dlg.addEventListener('close', () => home.after(picker));

@@ -1,4 +1,5 @@
 import { $id } from './dom.js';
+import { hunting, running } from './state.js';
 
 /* ---------- Layout: resizable panels and screen sizes, remembered ---------- */
 const LAYOUT = 'live-test-runner:layout';
@@ -84,3 +85,37 @@ document.querySelectorAll('.seg [data-vp]').forEach(b => b.addEventListener('cli
 // The shortcut is shown in the Run button's tooltip (set in syncUI)
 applyLayout();
 setViewport(layout.vp || 'desktop');
+// A phone has no Speed or Repeat (app.css hides them), so a run there is one
+// repetition at Normal speed. The change lets a step-by-step run go on.
+const phone = matchMedia('(max-width:600px)');
+const phoneRun = () => {
+  if (!phone.matches) return;
+  for (const id of ['repeat', 'codeRepeat']) $id(id).value = '1';
+  const speed = $id('speed');
+  if (speed.value !== 'normal'){ speed.value = 'normal'; speed.dispatchEvent(new Event('change')); }
+};
+phone.addEventListener('change', phoneRun);
+phoneRun();
+// Nor Create (app.css hides its tabs): a phone in it goes to Results, as its tab
+// would. After the mode has finished settling, which may have been into Create.
+const leaveCreate = () => {
+  const m = document.documentElement.dataset.mode;
+  if (!phone.matches || !/(^|-)create$/.test(m)) return;
+  document.querySelector(m === 'create' ? '[data-resview="results"]' : '[data-codetab="results"]').click();
+};
+phone.addEventListener('change', leaveCreate);
+document.addEventListener('playlive:mode', () => setTimeout(leaveCreate));
+// A phone shows the site below the tests and Results: a run brings it into
+// view, to watch the tests use it, and its end goes back to Results. A bug
+// hunt's many runs leave the page where it is.
+let wasRunning = false;
+document.addEventListener('playlive:busy', () => {
+  if (running === wasRunning) return;
+  wasRunning = running;
+  if (!phone.matches || hunting) return;
+  const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  // The site whole if it fits, its top if not; Results from its head. A
+  // frame later, once Results has grown its line for the run.
+  const el = document.querySelector(running ? '.browser' : '.results-panel'), block = running ? 'nearest' : 'start';
+  requestAnimationFrame(() => el.scrollIntoView({ behavior, block }));
+});

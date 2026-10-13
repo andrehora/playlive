@@ -4,7 +4,7 @@ import { $id, errorEl, specEl } from '../dom.js';
 import { completionOpen } from '../state.js';
 import { toast } from '../ui.js';
 import { commentKey, undoable } from '../editkeys.js';
-import { escH, plural } from '../util.js';
+import { escH, fitGutter, lineTop, plural } from '../util.js';
 
 /* ---------- Editor: syntax highlighting, line numbers, error lines ---------- */
 const hlEl = $id('hl'), gutterEl = $id('gutter');
@@ -114,7 +114,7 @@ export function setCurrentLine(n){
   if (n === curLine) return;
   curLine = n; renderEditor(true);
   if (n >= 0){
-    const lh = lineH(), top = n * lh, h = specEl.clientHeight;
+    const lh = lineH(), top = lineTop(hlEl, n, lh), h = specEl.clientHeight;
     if (top < specEl.scrollTop + lh || top > specEl.scrollTop + h - lh - 30) specEl.scrollTop = Math.max(0, top - h / 3);
   }
 }
@@ -126,10 +126,12 @@ function renderEditor(force){
   const cls = i => (errLines.has(i) ? ' bad' : '') + (i === curLine ? ' cur' : '');
   hlEl.innerHTML = lines.map((l, i) => `<span class="l${cls(i)}">${hlLine(l) || ' '}</span>`).join('');
   gutterEl.innerHTML = lines.map((_, i) => `<div class="${cls(i).trim()}">${i + 1}</div>`).join('');
+  fitGutter(hlEl, gutterEl);
   syncEditorScroll();
 }
 function syncEditorScroll(){ hlEl.scrollTop = specEl.scrollTop; hlEl.scrollLeft = specEl.scrollLeft; gutterEl.scrollTop = specEl.scrollTop; }
 specEl.addEventListener('scroll', syncEditorScroll);
+new ResizeObserver(() => { fitGutter(hlEl, gutterEl); syncEditorScroll(); }).observe(hlEl);
 
 /* ---------- Folding: one button hides the code, leaving the panel's controls ---------- */
 // The textarea holds the whole file either way, so running, recording and exporting are untouched
@@ -187,7 +189,7 @@ export function jumpToLine(line){
   const pos = lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0);
   specEl.focus({ preventScroll: true });
   specEl.setSelectionRange(pos + lines[line].search(/\S|$/), pos + lines[line].length);
-  specEl.scrollTop = Math.max(0, line * lineH() - specEl.clientHeight / 3);
+  specEl.scrollTop = Math.max(0, lineTop(hlEl, line, lineH()) - specEl.clientHeight / 3);
 }
 // Clicking a problem jumps to its line
 errorEl.addEventListener('click', () => {

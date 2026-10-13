@@ -3,7 +3,7 @@ import { commentKey, undoable } from '../editkeys.js';
 import { JAVASCRIPT } from './js/javascript.js';
 import { PYTHON } from './python/python.js';
 import { codeExample, mode } from '../state.js';
-import { escH } from '../util.js';
+import { escH, fitGutter, lineTop } from '../util.js';
 
 /* ---------- The code modes: unit tests on plain code, in the browser ----------
 
@@ -110,9 +110,11 @@ function makeEditor(root){
     hl.innerHTML = lines.map((l, i) => `<span class="l ${cls(i)}${also(i)}">${l || ' '}</span>`).join('');
     gutter.innerHTML = lines.map((_, i) => `<div class="${cls(i)}${also(i)}">${i + 1}</div>`).join('');
     root.classList.toggle('has-mutants', survived.size + killed.size > 0);
+    fitGutter(hl, gutter);
     sync();
   };
   ta.addEventListener('scroll', sync);
+  new ResizeObserver(() => { fitGutter(hl, gutter); sync(); }).observe(hl);
   commentKey(ta, () => P().comment);
   undoable(ta);
   // An edit makes the marks from the last run point at the wrong lines
@@ -148,7 +150,7 @@ function makeEditor(root){
       const pos = lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0);
       ta.focus({ preventScroll: true });
       ta.setSelectionRange(pos + lines[line].search(/\S|$/), pos + lines[line].length);
-      ta.scrollTop = Math.max(0, line * (parseFloat(getComputedStyle(ta).lineHeight) || 20) - ta.clientHeight / 3);
+      ta.scrollTop = Math.max(0, lineTop(hl, line, parseFloat(getComputedStyle(ta).lineHeight) || 20) - ta.clientHeight / 3);
     }
   };
 }

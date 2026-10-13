@@ -8,7 +8,6 @@
      min-width:901px block near the bottom compacts them for a mouse. */
   --tap:44px; --btn-font:15px; --btn-pad:11px 14px; --btn-r:10px;
   --small-tap:38px; --small-font:14px; --small-pad:9px 12px; --small-r:9px;
-  --tab-font:11.5px;   /* a phone's row of Results tabs */
   --ctl-font:16px; --ctl-pad:10px 12px;   /* 16px: anything smaller makes iOS zoom on focus */
   --icon-tap:42px; --chev:36px;
   --code-font:16px; --code-line:26px;
@@ -856,12 +855,16 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      take the second row between them, 60/40 like the example's row below. */
   .appbar .area-seg{order:2;flex:1 1 100%;min-width:0}
   .appbar .area-seg button{flex:1 1 0;min-width:0;padding:0 4px}
-  /* The code modes' tabs share one row with the fold, in smaller type so
-     all six fit */
+  /* No Create on a phone: writing tests from nothing needs a keyboard and
+     room. The code modes' other five tabs share one row with the fold. */
+  [data-resview="create"],[data-codetab="create"]{display:none}
   .console-panel .panel-head{column-gap:4px;padding-inline:8px}
   .console-panel .code-seg{gap:0}
-  .console-panel .code-seg button{flex:1 1 auto;padding:0 2px;font-size:var(--tab-font)}
+  .console-panel .code-seg button{flex:1 1 auto;padding:0 3px}
   .console-panel #foldCode{width:var(--small-tap)}
+  /* Long lines wrap rather than run off the side: the highlight wraps as the
+     text does, and each line number takes its line's height (util.js) */
+  #hl,#spec,.code-ed .hl,.code-ed textarea{white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable}
   /* Too narrow for a score on one line: its count goes on the next */
   .code-module-panel .cov-seg button{display:block;padding:3px 2px;text-align:center}
   .code-module-panel .cov-score span{display:block}
@@ -879,22 +882,26 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
      fills what Diff leaves of its own */
   .cmp-head .seg{flex:1 1 45%}
   .cmp-head .seg button{flex:1 1 0;min-width:0}
-  .cmp-head .cmp-actions{flex:1 1 auto;display:flex}
-  #cmpCompare{flex:1 1 auto}
+  .cmp-head .cmp-actions{flex:1 1 auto;display:flex;justify-content:flex-end}
+  /* No room for two sides: the large tests show alone */
+  #cmpCompare{display:none}
   /* Its buttons fill their rows: the run beside its score, the guide below */
   .mut-head > button{flex:1 1 auto}
   .mut-head .mut-view{margin-left:0}
   .appbar .picker{order:3;flex:1 1 100%;min-width:0;margin-left:0}
+  /* Phones leave out starting a new example: the example list is enough */
+  .new-btn{display:none}
 
   /* Run tests (Stop while running) is the primary target, so it takes whatever
      room the row has spare */
   .toolbar #run{flex:1 1 auto}
-  .toolbar .opts{width:100%;margin-left:0;gap:8px}
-  .toolbar .opts .field{flex:1 1 150px;justify-content:space-between}
-  .toolbar .opts select{flex:1 1 auto;min-width:0}
-  /* The code modes': Run tests and Repeat share a row. What runs the tests is
-     left out; only a failure takes a row */
-  .code-tests-panel .toolbar{display:grid;grid-template-columns:1fr auto}
+  /* Phones leave out what needs a desk: recording (the site is screens away),
+     exporting to an IDE, the speed and repeats of a run, and the tests large,
+     which the panel already is. A recording under way keeps its Stop */
+  #record:not(.recording),#export,.toolbar .opts,.repeat-field,#codeTestsOpen{display:none}
+  /* The code modes': Run tests takes the row. What runs the tests is left
+     out; only a failure takes a row */
+  .code-tests-panel .toolbar{display:grid;grid-template-columns:1fr}
   .code-tests-panel .toolbar > button{min-width:0;justify-content:center}
   .code-tests-panel .code-state{grid-column:1/-1;margin-left:0}
   .code-tests-panel .code-state:not(.bad){display:none}

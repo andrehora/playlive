@@ -1,7 +1,7 @@
 // End-to-end tests of the app itself: picker, editor, running, stopping,
 // step by step, time travel, the HTML view, recorder, export, reset, persistence, layout.
 import { test, expect } from '@playwright/test';
-import { describeFailures, openApp, runAll, selectSite, setSpeed, siteIds, siteName } from './app.mjs';
+import { describeFailures, openApp, runAll, selectSite, setMode, setSpeed, siteIds, siteName } from './app.mjs';
 
 const ids = await siteIds();
 // Home is whatever the manifest lists first, so reordering the examples cannot stale these tests.
@@ -764,7 +764,7 @@ test.describe('Layout and theming', () => {
   test('runs a site on a 390px phone viewport without page errors', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const { errors } = await openApp(page, { site: 'contact-form' });
-    await setSpeed(page, 'fast');
+    // A phone has no Speed: it runs at Normal
     const res = await runAll(page);
     expect(res.state, describeFailures(res)).toBe('ok');
     expect(errors).toEqual([]);
@@ -790,6 +790,86 @@ test.describe('Layout and theming', () => {
       expect(small, `too small to tap: ${JSON.stringify(small)}`).toEqual([]);
     });
   }
+
+  test('a phone leaves out Record, Export, Speed, Repeat and Expand, and runs once at Normal speed', async ({ page }) => {
+    await openApp(page);
+    await page.selectOption('#repeat', '5');
+    await page.selectOption('#speed', 'fast');
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const sel of ['#record', '#export', '#speed', '#repeat']) await expect(page.locator(sel)).toBeHidden();
+    await expect(page.locator('#run')).toBeVisible();
+    await expect(page.locator('#repeat')).toHaveValue('1');
+    await expect(page.locator('#speed')).toHaveValue('normal');
+    await setMode(page, 'python');
+    await expect(page.locator('#codeRepeat')).toBeHidden();
+    await expect(page.locator('#codeTestsOpen')).toBeHidden();
+    await expect(page.locator('#codeRun')).toBeVisible();
+  });
+
+  test('a phone brings the site into view while the tests run, then Results', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openApp(page, { site: 'contact-form' });
+    const top = sel => page.locator(sel).evaluate(el => Math.round(el.getBoundingClientRect().top));
+    await page.click('#run');
+    await expect(page.locator('#run .lbl')).toHaveText('Stop');
+    // The site is last on the page, so it shows whole rather than at the top
+    const inView = () => page.locator('.browser').evaluate(el => {
+      const r = el.getBoundingClientRect();
+      return r.top >= -1 && (r.bottom <= innerHeight + 1 || r.top <= 1);
+    });
+    await expect.poll(inView).toBe(true);
+    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+    await expect(page.locator('#run .lbl')).toHaveText('Run tests', { timeout: 60_000 });
+    await expect.poll(() => top('.results-panel')).toBeLessThanOrEqual(1);
+    expect(await top('.results-panel')).toBeGreaterThanOrEqual(-1);
+  });
+
+  // Long lines wrap on a phone: nothing runs off the side, the text and its
+  // highlight wrap alike, and each number sits beside its own line
+  for (const [mode, ed, ta] of [['html', '.editor', '#spec'], ['python', '#codeTestsEd', '#codeTestsEd textarea']]){
+    test(`a phone wraps long lines in the ${mode} tests`, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await openApp(page, mode === 'html' ? { site: 'contact-form' } : { mode });
+      const m = await page.evaluate(([ed, ta]) => {
+        const root = document.querySelector(ed), t = document.querySelector(ta);
+        const hl = root.querySelector('.hl'), lines = [...hl.children], nums = [...root.querySelector('.gutter').children];
+        const lh = parseFloat(getComputedStyle(t).lineHeight);
+        return {
+          sideways: t.scrollWidth - t.clientWidth,
+          tall: lines.filter(l => l.offsetHeight > lh * 1.5).length,
+          off: lines.map((l, i) => Math.abs(l.offsetTop - lines[0].offsetTop - (nums[i].offsetTop - nums[0].offsetTop))).filter(d => d > 1).length,
+          heights: Math.abs(t.scrollHeight - hl.scrollHeight)
+        };
+      }, [ed, ta]);
+      expect(m.sideways).toBeLessThanOrEqual(1);
+      expect(m.tall).toBeGreaterThan(0);
+      expect(m.off).toBe(0);
+      expect(m.heights).toBeLessThanOrEqual(2);
+    });
+  }
+
+  test('a phone leaves out Create, in both modes, and leaves Create for Results', async ({ page }) => {
+    await openApp(page);
+    await page.click('.res-seg [data-resview="create"]');
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'create');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'explore');
+    await expect(page.locator('.res-seg [data-resview="results"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.res-seg [data-resview="create"]')).toBeHidden();
+    await setMode(page, 'python');
+    await expect(page.locator('.code-seg [data-codetab="create"]')).toBeHidden();
+    // A link into Create opens on Results
+    await page.goto('/index.html#python-create');
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'python');
+    await expect(page.locator('.code-seg [data-codetab="results"]')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('a phone leaves out the New button', async ({ page }) => {
+    await openApp(page, { mode: 'python' });
+    await expect(page.locator('#newCode')).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('#newCode')).toBeHidden();
+  });
 
   test('a phone gets one column, no sideways scrolling, and the example list on screen', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
@@ -912,7 +992,7 @@ test.describe('Panel heads on small screens', () => {
     await page.setViewportSize({ width, height: 844 });
     for (const mode of ['html', 'python']){
       await openApp(page, mode === 'html' ? {} : { mode });
-      const tabs = mode === 'html' ? '.res-seg button' : '.code-seg button:visible';
+      const tabs = mode === 'html' ? '.res-seg button:visible' : '.code-seg button:visible';
       for (const tab of await page.locator(tabs).all()){
         await tab.click();
         const spill = await page.$$eval('.appbar, .panel-head, .site-head, .mut-head', heads => heads

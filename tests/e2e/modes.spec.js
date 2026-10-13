@@ -252,9 +252,8 @@ test.describe('Modes', () => {
     // Stacked, the panels keep their order, and the tabs are worth tapping too.
     await setTab(page, 'mutation');
     await expect(page.locator('#bugs .bug-row').first()).toBeVisible();
-    for (const b of await page.locator('.res-seg button').all()) expect((await b.boundingBox()).height).toBeGreaterThanOrEqual(28);
-    await setMode(page, 'create');
-    expect(await panels(page)).toEqual(['tests', 'results']);
-    await expect(page.locator('#createTab')).toBeVisible();
+    for (const b of await page.locator('.res-seg button:visible').all()) expect((await b.boundingBox()).height).toBeGreaterThanOrEqual(28);
+    // A phone has no Create
+    await expect(page.locator('.res-seg [data-resview="create"]')).toBeHidden();
   });
 });

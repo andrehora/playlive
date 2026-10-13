@@ -129,14 +129,15 @@ test.describe('Python mode', () => {
     const was = await h('#codeTestsEd');
     const handle = await page.locator('#codeResizer').boundingBox();
     const y = handle.y + handle.height / 2;
-    // Dragged down, the code grows by as much, and the page still does not scroll
+    // Dragged up, the code shrinks by as much (down, the window may have less
+    // room to give than the drag asks for)
     await page.mouse.move(handle.x + handle.width / 2, y);
     await page.mouse.down();
-    await page.mouse.move(handle.x + handle.width / 2, y + 60, { steps: 4 });
+    await page.mouse.move(handle.x + handle.width / 2, y - 60, { steps: 4 });
     await page.mouse.up();
-    expect(Math.abs(await h('#codeTestsEd') - (was + 60))).toBeLessThanOrEqual(2);
-    // and however far it is dragged, Results keeps its floor
-    await page.mouse.move(handle.x + handle.width / 2, y + 60);
+    expect(Math.abs(await h('#codeTestsEd') - (was - 60))).toBeLessThanOrEqual(2);
+    // and however far down it is dragged, Results keeps its floor and the page does not scroll
+    await page.mouse.move(handle.x + handle.width / 2, y - 60);
     await page.mouse.down();
     await page.mouse.move(handle.x + handle.width / 2, y + 2000, { steps: 4 });
     await page.mouse.up();
@@ -180,16 +181,19 @@ test.describe('Python mode', () => {
     expect(source).toBeGreaterThan(results);
   });
 
-  test('a phone shows every tab and the fold on one row', async ({ page }) => {
+  test('a phone shows every tab but Create, and the fold, on one row', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await openApp(page);
     await setMode(page, 'python');
     const y = async sel => (await page.locator(sel).boundingBox()).y;
     const row = await y('.code-seg [data-codetab="results"]');
-    for (const t of ['console', 'coverage', 'mutation', 'smells', 'create']){
-      await expect(page.locator(`.code-seg [data-codetab="${t}"]`)).toBeVisible();
+    for (const t of ['console', 'coverage', 'mutation', 'smells']){
+      const tab = page.locator(`.code-seg [data-codetab="${t}"]`);
+      await expect(tab).toBeVisible();
       expect(Math.abs(await y(`.code-seg [data-codetab="${t}"]`) - row), `${t} is not on the first row`).toBeLessThan(5);
+      expect(await tab.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(12);
     }
+    await expect(page.locator('.code-seg [data-codetab="create"]')).toBeHidden();
     const fold = await page.locator('#foldCode').boundingBox(), tabs = await page.locator('.code-seg').boundingBox();
     expect(Math.abs(fold.y + fold.height / 2 - (tabs.y + tabs.height / 2)), 'the fold left the tabs\' row').toBeLessThan(8);
     for (const b of await page.locator('.code-seg button:visible').all())

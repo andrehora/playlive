@@ -9,6 +9,17 @@ export const clean = s => String(s ?? '').replace(/\s+/g, ' ').trim();
 export const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 // Text that matches itself, put into a regular expression
 export const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// A phone wraps long code lines (app.css): each line number then takes its
+// line's height, and where a line starts is read, not counted
+export function fitGutter(hl, gutter){
+  if (getComputedStyle(hl).whiteSpace === 'pre') return;
+  const heights = [...hl.children].map(l => l.offsetHeight);
+  [...gutter.children].forEach((d, i) => { d.style.height = `${heights[i]}px`; });
+}
+export function lineTop(hl, i, lh){
+  const l = hl.children[i], first = hl.children[0];
+  return l && first ? l.offsetTop - first.offsetTop : i * lh;
+}
 // How a score reads, in three bands: all of it, most of it (60% on), or less
 export const band = p => (p === 100 ? 'ok' : p >= 60 ? 'warn' : 'bad');
 // What a Results head says when a run ends, in every mode alike: how many

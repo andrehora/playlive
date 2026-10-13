@@ -9,6 +9,19 @@ const overflow = page => page.evaluate(() => document.documentElement.scrollHeig
 const ready = (page, label = /^(JavaScript \(.+\)|TypeScript [\d.]+) · (Jasmine|Mocha) \d/) => codeReady(page, label);
 
 test.describe('JS/TS mode', () => {
+  test('a phone shows the large tests alone, without Compare', async ({ page }) => {
+    await openApp(page, { mode: 'python' });
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.click('#codeTestsOpen');
+    await page.click('#cmpCompare');
+    await expect(page.locator('#cmpOther')).toBeVisible();
+    // Turned upright: one side, and nothing to compare with
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('#cmpOther')).toBeHidden();
+    await expect(page.locator('#cmpCompare')).toBeHidden();
+    await expect(page.locator('#cmpClose')).toBeVisible();
+  });
+
   test('the tests open large, and Compare puts another framework beside them', async ({ page }) => {
     const { errors } = await openApp(page, { mode: 'python' });
     const dlg = page.locator('#cmp'), mine = page.locator('#cmpMine'), other = page.locator('#cmpOther');
