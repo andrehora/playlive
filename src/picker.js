@@ -149,6 +149,8 @@ const relist = () => {
 };
 document.addEventListener('playlive:mode', relist);
 function openPicker(){
+  // The room below the picker, which a narrow screen's list keeps to (app.css)
+  sitePop.style.setProperty('--pop-room', `${Math.round(innerHeight - siteBtn.getBoundingClientRect().bottom - 12)}px`);
   sitePop.hidden = false; siteBtn.setAttribute('aria-expanded', 'true');
   siteSearch.value = ''; filterSites('');
   siteSearch.focus({ preventScroll: true });

@@ -89,6 +89,21 @@ reloadBtn.addEventListener('click', () => {
   if (running || recording) return;
   loadApp();
 });
+// The tests back as they ship (in Create, back to the names), written as an
+// edit, so undo takes it back
+$id('resetSpec').addEventListener('click', async () => {
+  if (running || recording) return;
+  const site = editorSite, m = mode;
+  const text = m === 'create' ? await createSkeleton(site) : await exampleTests(site);
+  if (!text){ toast('The example did not load. Reload the page to try again.'); return; }
+  if (editorSite !== site || mode !== m || running || recording) return;
+  if (specEl.value !== text){
+    specEl.setRangeText(text, 0, specEl.value.length, 'start');
+    specEl.dispatchEvent(new Event('input'));
+    specEl.scrollTop = 0;
+  }
+  toast('Tests reset');
+});
 // A link like "#html#coupon-code" names the mode and the example to open; with
 // no hash the page opens home
 const linked = siteFromHash(), opening = linkedMode(), linkedCodeExample = codeExampleFromHash();

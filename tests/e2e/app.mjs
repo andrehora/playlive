@@ -17,9 +17,10 @@ export async function siteIds(){
 
 // The code examples of `ids` whose tests always pass: all but the flaky ones,
 // whose bad test fails now and then on purpose, read from their manifest.
-export async function steadyCodeIds(ids){
-  const { CODE_EXAMPLES } = await import(pathToFileURL(resolve(ROOT, 'examples/code.js')).href);
-  return ids.filter(id => !CODE_EXAMPLES[id].flaky);
+// With `fws`, only those written for every one of those frameworks.
+export async function steadyCodeIds(ids, fws = []){
+  const { CODE_EXAMPLES, hasFramework } = await import(pathToFileURL(resolve(ROOT, 'examples/code.js')).href);
+  return ids.filter(id => !CODE_EXAMPLES[id].flaky && fws.every(fw => hasFramework(id, fw)));
 }
 
 // The manifest itself, for tests that ask what a site is rather than which exist.

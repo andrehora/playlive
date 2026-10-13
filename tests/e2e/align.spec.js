@@ -7,6 +7,9 @@
 import { test, expect } from '@playwright/test';
 import { CODE_LOAD, codeReady, codeRun, openApp, steadyCodeIds } from './app.mjs';
 
+// Only the examples written in both languages, for every framework, are compared
+const ALL = ['unittest', 'pytest', 'jasmine', 'mocha'];
+
 // What one example's tests say in the code mode on screen
 async function measure(page, id){
   await page.evaluate(id => window.playlive.code.select(id), id);
@@ -33,12 +36,12 @@ test('every example says the same in Python and in JS/TS', async ({ page }) => {
   const { errors } = await openApp(page, { hash: '#python' });
   const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
   const python = {};
-  for (const id of await steadyCodeIds(ids)) python[id] = await measure(page, id);
+  for (const id of await steadyCodeIds(ids, ALL)) python[id] = await measure(page, id);
 
   await page.click('.code-lang [data-lang="js"]');
   await expect(page.locator('#codeFile')).toHaveText(/\.js$/);
   const differ = [];
-  for (const id of await steadyCodeIds(ids)){
+  for (const id of await steadyCodeIds(ids, ALL)){
     const js = await measure(page, id);
     if (JSON.stringify(js) !== JSON.stringify(python[id])) differ.push(`${id}: Python ${JSON.stringify(python[id])}, JS ${JSON.stringify(js)}`);
   }

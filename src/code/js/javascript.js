@@ -1,4 +1,4 @@
-import { CODE_EXAMPLES, CODE_IDS } from '../../../examples/code.js';
+import { examplesFor } from '../../../examples/code.js';
 import { highlighter } from '../highlight.js';
 import { smellsOf } from './smells.js';
 
@@ -141,7 +141,6 @@ export const JAVASCRIPT = {
   // What runs the tests, language first: JavaScript's version is the browser's
   label: (v, fw, lang) => `${lang === 'ts' ? `TypeScript ${v.typescript}` : `JavaScript (${v.browser})`} · `
     + (fw === 'mocha' ? `Mocha ${v.mocha} + Chai ${v.chai} + Sinon ${v.sinon}` : `Jasmine ${v.jasmine}`),
-  examples: CODE_EXAMPLES, ids: CODE_IDS,
   frameworks: [
     { id: 'jasmine', label: 'Jasmine', logo: 'jasmine', title: 'Tests with Jasmine' },
     { id: 'mocha', label: 'Mocha', logo: 'mocha', title: 'Tests with Mocha and Chai' }
@@ -187,3 +186,5 @@ export const JAVASCRIPT = {
   skeleton: skeletonOf,
   nameOf: t => t.name
 };
+// The examples written for one of its frameworks, as { examples, ids }
+Object.assign(JAVASCRIPT, examplesFor(JAVASCRIPT.frameworks.map(f => f.id)));

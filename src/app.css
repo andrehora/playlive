@@ -815,8 +815,9 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .cmp-panes{grid-auto-flow:row;grid-auto-rows:minmax(0,1fr)}
   .cmp-pane + .cmp-pane{border-left:0;border-top:1px solid var(--line)}
 
-  /* The example list opens as a sheet, so it is reachable wherever the page sits */
-  .pop{position:fixed;inset:auto 8px calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:min(70dvh,560px);border-radius:14px}
+  /* The example list opens right below the picker, as wide as it, and no
+     taller than the screen has room for below it (picker.js) */
+  .pop{top:calc(100% + 4px);right:0;width:auto;max-height:min(var(--pop-room,70dvh),560px);border-radius:14px}
   .pop-cat{padding:8px}
 
   /* Text that is comfortable at arm's length rather than at desk distance */

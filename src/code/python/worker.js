@@ -947,7 +947,9 @@ const ready = (async () => {
     python: py.runPython('import sys; sys.version.split()[0]'),
     pytest: py.runPython('import pytest; pytest.__version__')
   } });
-  return { run: py.globals.get('run'), mutate: py.globals.get('mutate'), list: py.globals.get('list_mutants'), smells: py.globals.get('list_smells'), brief: py.globals.get('brief'), measure: py.globals.get('measure') };
+  // A package an example imports, such as requests, is fetched the first time
+  const load = src => py.loadPackagesFromImports(src, { messageCallback: () => {}, errorCallback: () => {} });
+  return { load, run: py.globals.get('run'), mutate: py.globals.get('mutate'), list: py.globals.get('list_mutants'), smells: py.globals.get('list_smells'), brief: py.globals.get('brief'), measure: py.globals.get('measure') };
 })();
 ready.catch(e => postMessage({ type: 'error', message: String(e?.message || e) }));
 
@@ -955,6 +957,7 @@ onmessage = async ({ data }) => {
   let py;
   try { py = await ready; } catch { return; }      // already reported
   try {
+    if (data.files) await py.load(Object.values(data.files).join('\n'));
     if (data.list) py.list(data.src);
     else if (data.brief) py.brief(JSON.stringify(data.files), data.cover, data.target, data.original, data.framework);
     else if (data.smells) py.smells(data.src, data.example ?? undefined);

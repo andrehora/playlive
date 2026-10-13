@@ -131,7 +131,10 @@ function renderEditor(force){
 }
 function syncEditorScroll(){ hlEl.scrollTop = specEl.scrollTop; hlEl.scrollLeft = specEl.scrollLeft; gutterEl.scrollTop = specEl.scrollTop; }
 specEl.addEventListener('scroll', syncEditorScroll);
-new ResizeObserver(() => { fitGutter(hlEl, gutterEl); syncEditorScroll(); }).observe(hlEl);
+// A new width wraps the lines anew, and so does the code font arriving
+const refit = () => { fitGutter(hlEl, gutterEl); syncEditorScroll(); };
+new ResizeObserver(refit).observe(hlEl);
+document.fonts?.addEventListener('loadingdone', refit);
 
 /* ---------- Folding: one button hides the code, leaving the panel's controls ---------- */
 // The textarea holds the whole file either way, so running, recording and exporting are untouched

@@ -1,4 +1,4 @@
-import { CODE_EXAMPLES, CODE_IDS } from '../../../examples/code.js';
+import { examplesFor } from '../../../examples/code.js';
 import { highlighter } from '../highlight.js';
 
 /* ---------- Python mode's profile: what code/code.js needs to know about Python ----------
@@ -120,7 +120,6 @@ export const PYTHON = {
   runtime: 'Python', title: 'Python',
   // What runs the tests, language first: unittest is Python's own, with no version of its
   label: (v, fw) => `Python ${v.python} · ${fw === 'pytest' ? `pytest ${v.pytest}` : 'unittest'}`,
-  examples: CODE_EXAMPLES, ids: CODE_IDS,
   frameworks: [
     { id: 'pytest', label: 'pytest', logo: 'pytest', title: 'Tests with pytest' },
     { id: 'unittest', label: 'unittest', logo: 'python', title: 'Tests with unittest' }
@@ -166,3 +165,5 @@ export const PYTHON = {
     { id: 'general-fixture', name: 'General Fixture', why: fw === 'pytest' ? 'Give a test only the fixtures it uses.' : 'Keep in setUp only what every test uses.' }
   ]
 };
+// The examples written for one of its frameworks, as { examples, ids }
+Object.assign(PYTHON, examplesFor(PYTHON.frameworks.map(f => f.id)));

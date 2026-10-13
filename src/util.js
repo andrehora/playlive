@@ -13,7 +13,8 @@ export const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // line's height, and where a line starts is read, not counted
 export function fitGutter(hl, gutter){
   if (getComputedStyle(hl).whiteSpace === 'pre') return;
-  const heights = [...hl.children].map(l => l.offsetHeight);
+  // Exact, not rounded: a rounded pixel a line would add up down the file
+  const heights = [...hl.children].map(l => l.getBoundingClientRect().height);
   [...gutter.children].forEach((d, i) => { d.style.height = `${heights[i]}px`; });
 }
 export function lineTop(hl, i, lh){

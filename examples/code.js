@@ -13,9 +13,14 @@
 // The first example is where both modes open.
 //
 // Each row is [id, what it teaches], and { flaky: true } for a flaky one (the
-// suites that need every example green leave it out). The id names the
+// suites that need every example green leave it out). An example written for
+// some frameworks only names them, { frameworks: ['pytest'] }, and shows in
+// the modes that have one of them; a framework without it is greyed out. The id names the
 // folders and the link; the app shows it as a name, "-" as spaces and the
 // first letter capital ("saved-cart" is Saved cart).
+// The Integration examples are written for pytest alone
+const PYTEST = { frameworks: ["pytest"] };
+
 const GROUPS = [
   {
     group: "Basics", examples: [
@@ -49,6 +54,16 @@ const GROUPS = [
       ["invitations", "Mock/spy (manual)"],
       ["doorbell", "Mock/spy (framework)"],
       ["bookmarks", "Fake"],
+    ]
+  },
+  {
+    group: "Integration", examples: [
+      ["checkout", "Multiple classes", PYTEST],
+      ["notes-db", "Database", PYTEST],
+      ["score-file", "File system", PYTEST],
+      ["todo-api", "API 1", PYTEST],
+      ["currency-api", "API 2", PYTEST],
+      ["product-editor", "API 3", PYTEST],
     ]
   },
   {
@@ -104,8 +119,18 @@ const GROUPS = [
 
 const nameOf = id => id[0].toUpperCase() + id.slice(1).replace(/-/g, ' ');
 
-// Every example by id, with its group: { name, teaches, group, flaky }
+// Every example by id, with its group: { name, teaches, group, flaky,
+// frameworks }, frameworks null when it is written for all of them
 export const CODE_EXAMPLES = Object.fromEntries(GROUPS.flatMap(({ group, examples }) =>
-  examples.map(([id, teaches, { flaky = false } = {}]) => [id, { name: nameOf(id), teaches, group, flaky }])));
+  examples.map(([id, teaches, { flaky = false, frameworks = null } = {}]) => [id, { name: nameOf(id), teaches, group, flaky, frameworks }])));
 
 export const CODE_IDS = Object.keys(CODE_EXAMPLES);
+
+// Whether example `id` is written for framework `fw`
+export const hasFramework = (id, fw) => !CODE_EXAMPLES[id].frameworks || CODE_EXAMPLES[id].frameworks.includes(fw);
+
+// The examples of a mode whose frameworks are `fws`: those written for one of them
+export function examplesFor(fws) {
+  const ids = CODE_IDS.filter(id => fws.some(fw => hasFramework(id, fw)));
+  return { examples: Object.fromEntries(ids.map(id => [id, CODE_EXAMPLES[id]])), ids };
+}

@@ -173,7 +173,7 @@ export function syncUI(){
   recordBtn.classList.toggle('recording', recording);
   recBar.hidden = !recording;
   specEl.readOnly = recording;
-  resetBtn.disabled = reloadBtn.disabled = busy;
+  resetBtn.disabled = reloadBtn.disabled = $id('resetSpec').disabled = busy;
   [siteBtn, $id('prevSite'), $id('nextSite'), ...tabsEl.querySelectorAll('button')].forEach(b => b.disabled = busy);
   if (busy) closePicker();
   resultsEl.querySelectorAll('.run-one').forEach(b => b.disabled = busy);

@@ -1,3 +1,4 @@
+import { hasFramework } from '../../examples/code.js';
 import { $id, KEY } from '../dom.js';
 import { LOGOS } from './logos.js';
 import { syncUrl } from '../share.js';
@@ -398,26 +399,31 @@ function drawSwitches(){
   const p = P(), s = S();
   // The languages are told apart by their logos alone; the name is still what a
   // screen reader says.
-  const draw = (el, items, cur, attr, { logoOnly = false } = {}) => {
+  const draw = (el, items, cur, attr, { logoOnly = false, has = () => true } = {}) => {
     el.innerHTML = '';
     for (const it of items){
       const b = document.createElement('button');
       b.type = 'button'; b.dataset[attr] = it.id;
       b.setAttribute('aria-pressed', String(it.id === cur));
-      b.title = it.title;
+      b.disabled = !has(it.id);
+      b.title = b.disabled ? `Not written for ${it.label}` : it.title;
       b.innerHTML = LOGOS[it.logo] || '';
       if (logoOnly) b.setAttribute('aria-label', it.label);
       else b.append(Object.assign(document.createElement('span'), { textContent: it.label }));
       el.append(b);
     }
   };
-  draw(document.querySelector('.code-fw'), p.frameworks, s.framework, 'fw');
+  draw(document.querySelector('.code-fw'), p.frameworks, s.framework, 'fw', { has: fw => fits(exampleOf(active), fw) });
   const cur = LANGS.find(l => l.mode === active && (l.lang ?? null) === s.lang)?.id;
   draw(document.querySelector('.code-lang'), LANGS, cur, 'lang', { logoOnly: true });
 }
-// Put the example, in the framework and language chosen, into the editors
+// Whether example `id` has tests in framework `fw`; New is written in any
+const fits = (id, fw) => id === NEW || hasFramework(id, fw);
+// Put the example, in the framework and language chosen, into the editors.
+// One written for some frameworks only opens in the first of them it has.
 function show(){
   const m = active, id = exampleOf(m), s = S();
+  if (!fits(id, s.framework)) return switchTo({ framework: P().frameworks.find(f => fits(id, f.id)).id });
   const chosen = { id, lang: s.lang, framework: s.framework, create: creating };
   s.want = chosen;
   drawSwitches();
@@ -463,7 +469,7 @@ export function selectExample(id){
 function switchTo(change){
   const s = S(), [[k, v]] = Object.entries(change);
   const choices = k === 'framework' ? P().frameworks : P().langs;
-  if (!choices?.some(c => c.id === v) || v === s[k]) return;
+  if (!choices?.some(c => c.id === v) || v === s[k] || (k === 'framework' && !fits(exampleOf(active), v))) return;
   stopCodeTests(); stash();
   s[k] = v;
   if (P().fresh){ s.versions = null; drop(); boot(); }

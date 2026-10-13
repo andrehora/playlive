@@ -114,7 +114,10 @@ function makeEditor(root){
     sync();
   };
   ta.addEventListener('scroll', sync);
-  new ResizeObserver(() => { fitGutter(hl, gutter); sync(); }).observe(hl);
+  // A new width wraps the lines anew, and so does the code font arriving
+  const refit = () => { fitGutter(hl, gutter); sync(); };
+  new ResizeObserver(refit).observe(hl);
+  document.fonts?.addEventListener('loadingdone', refit);
   commentKey(ta, () => P().comment);
   undoable(ta);
   // An edit makes the marks from the last run point at the wrong lines

@@ -1,3 +1,4 @@
+import { hasFramework } from '../../examples/code.js';
 import { $id } from '../dom.js';
 import { plural } from '../util.js';
 import { LOGOS } from './logos.js';
@@ -51,6 +52,7 @@ async function textOf(c, id){
   const edited = sessions[c.mode]?.edits.get(key({ id, lang: c.lang, framework: c.fw }, 'tests'));
   if (edited != null) return edited;
   if (id === NEW) return '';
+  if (!hasFramework(id, c.fw)) return null;
   const file = CODE_MODES[c.mode].files(id, c.fw, c.lang ?? undefined).tests;
   const url = new URL(`../../examples/${c.mode}/${id}/${c.fw}/${file}`, import.meta.url).href;
   if (!fetched.has(url)) fetched.set(url, fetch(url).then(r => (r.ok ? r.text() : Promise.reject(new Error(r.status)))));
@@ -59,9 +61,10 @@ async function textOf(c, id){
 
 // The Tests panel's switches, as code/code.js draws them: the languages by
 // their logos alone, the frameworks by logo and name
-function button(it, pressed, logoOnly){
+function button(it, pressed, logoOnly, has = true){
   const b = document.createElement('button');
-  b.type = 'button'; b.title = it.title;
+  b.type = 'button'; b.title = has ? it.title : `Not written for ${it.label}`;
+  b.disabled = !has;
   b.setAttribute('aria-pressed', String(pressed));
   b.innerHTML = LOGOS[it.logo] || '';
   if (logoOnly) b.setAttribute('aria-label', it.label);
@@ -70,18 +73,19 @@ function button(it, pressed, logoOnly){
 }
 function drawSwitches(pane){
   const c = pane.shows, langs = pane.el.querySelector('.cmp-lang'), fws = pane.el.querySelector('.cmp-fw');
+  const id = exampleOf(active), has = fw => id === NEW || hasFramework(id, fw);
   langs.replaceChildren(...LANGS.map(l => {
-    const b = button(l, l === langOf(c), true);
+    const b = button(l, l === langOf(c), true, CODE_MODES[l.mode].frameworks.some(f => has(f.id)));
     b.dataset.lang = l.id;
     // Another language keeps the framework where it has it (Jasmine in JS and TS), its first otherwise
     b.addEventListener('click', () => {
-      const fw = CODE_MODES[l.mode].frameworks.some(f => f.id === c.fw) ? c.fw : CODE_MODES[l.mode].frameworks[0].id;
+      const fw = CODE_MODES[l.mode].frameworks.some(f => f.id === c.fw) ? c.fw : CODE_MODES[l.mode].frameworks.find(f => has(f.id)).id;
       show(pane, { mode: l.mode, lang: l.lang ?? null, fw });
     });
     return b;
   }));
   fws.replaceChildren(...CODE_MODES[c.mode].frameworks.map(f => {
-    const b = button(f, f.id === c.fw, false);
+    const b = button(f, f.id === c.fw, false, has(f.id));
     b.dataset.fw = f.id;
     b.addEventListener('click', () => show(pane, { ...c, fw: f.id }));
     return b;
@@ -114,7 +118,11 @@ function draw(pane){
   const code = pane.el.querySelector('.cmp-code'), { text, shows } = pane;
   if (text === undefined) return;
   if (text === null){
-    code.innerHTML = '<span class="cmp-none">These tests did not load. Close and try again.</span>';
+    const id = exampleOf(active);
+    code.innerHTML = '<span class="cmp-none"></span>';
+    code.firstChild.textContent = id === NEW || hasFramework(id, shows.fw)
+      ? 'These tests did not load. Close and try again.'
+      : `This example has no ${fwOf(shows).label} tests. Pick another framework above.`;
     return;
   }
   const [a, b] = panes;

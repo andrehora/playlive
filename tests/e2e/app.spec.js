@@ -633,6 +633,27 @@ test.describe('Export', () => {
 });
 
 test.describe('Reset', () => {
+  test('the Tests panel resets its tests, which undo takes back, and in Create back to the names', async ({ page }) => {
+    const { errors } = await openApp(page, { site: 'contact-form' });
+    const spec = page.locator('#spec'), shipped = await spec.inputValue();
+    const write = text => spec.evaluate((el, t) => { el.value = t; el.dispatchEvent(new Event('input')); }, text);
+    await write('test: Mine\nsteps:\n  - expectText: Mine\n');
+    await page.click('#resetSpec');
+    await expect(spec).toHaveValue(shipped);
+    await expect(page.locator('#toast')).toHaveText('Tests reset');
+    await spec.focus();
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect(spec).toHaveValue(/test: Mine/);
+
+    await page.click('.res-seg [data-resview="create"]');
+    const skeleton = await spec.inputValue();
+    expect(skeleton).toMatch(/^# /m);
+    await write('# mine\n');
+    await page.click('#resetSpec');
+    await expect(spec).toHaveValue(skeleton);
+    expect(errors).toEqual([]);
+  });
+
   test('brings the example tests back in one click', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });
     const example = await page.inputValue('#spec');
@@ -877,10 +898,12 @@ test.describe('Layout and theming', () => {
     const sideways = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(sideways).toBeLessThanOrEqual(1);
 
-    // The example list opens as a sheet, so it is on screen wherever the page sits.
+    // The example list opens right below the picker, and stays on screen
     await page.click('#siteBtn');
-    const pop = await page.locator('#sitePop').boundingBox();
-    expect(pop.y).toBeGreaterThanOrEqual(0);
+    const pop = await page.locator('#sitePop').boundingBox(), picker = await page.locator('.appbar .picker').boundingBox();
+    expect(pop.y - (picker.y + picker.height), 'a gap between the picker and its list').toBeLessThanOrEqual(6);
+    expect(pop.y).toBeGreaterThanOrEqual(picker.y + picker.height - 1);
+    expect(Math.abs(pop.width - picker.width)).toBeLessThanOrEqual(1);
     expect(pop.y + pop.height).toBeLessThanOrEqual(740 + 1);
     await page.click('#tabs .tab[data-site="login"]');
     await expect(page.locator('#siteName')).toHaveText('Login');

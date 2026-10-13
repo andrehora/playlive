@@ -92,22 +92,36 @@ const FRAMEWORKS = PYTHON.frameworks.map(f => f.id);
 const { SITES } = await load('examples/html/examples.js');
 const exists = p => access(resolve(ROOT, p)).then(() => true, () => false);
 
-test('every Python example has its code and its tests in both frameworks', async () => {
+const { CODE_IDS, hasFramework } = await load('examples/code.js');
+const { JAVASCRIPT } = await load('src/code/js/javascript.js');
+const inBoth = id => FRAMEWORKS.every(fw => hasFramework(id, fw));
+
+test('every Python example has its code and its tests in each framework it is written for', async () => {
   for (const id of PY_IDS){
     const m = moduleOf(id);
     assert.ok(await exists(`examples/python/${id}/${m}.py`), `${id}: ${m}.py is missing`);
     for (const fw of FRAMEWORKS)
-      assert.ok(await exists(`examples/python/${id}/${fw}/test_${m}.py`), `${id}: ${fw}/test_${m}.py is missing`);
+      assert.equal(await exists(`examples/python/${id}/${fw}/test_${m}.py`), hasFramework(id, fw), `${id}: ${fw}/test_${m}.py`);
     assert.ok(PY_EXAMPLES[id].name && PY_EXAMPLES[id].teaches, `${id} needs a name and what it teaches`);
   }
 });
 
 test('both versions of an example test the same things, under the same names', async () => {
-  for (const id of PY_IDS){
+  for (const id of PY_IDS.filter(inBoth)){
     const read = fw => readFile(resolve(ROOT, `examples/python/${id}/${fw}/test_${moduleOf(id)}.py`), 'utf8');
     const names = async fw => testsInFile(await read(fw)).map(t => t.name);
     assert.deepEqual(await names('unittest'), await names('pytest'), id);
     assert.ok((await names('pytest')).length >= 1, `${id} has no tests`);
+  }
+});
+
+test('the Integration examples are written for pytest alone, so they are in Python alone', () => {
+  const integration = PY_IDS.filter(id => PY_EXAMPLES[id].group === 'Integration');
+  assert.ok(integration.length);
+  assert.deepEqual(CODE_IDS.filter(id => !inBoth(id)), integration);
+  for (const id of integration){
+    assert.ok(hasFramework(id, 'pytest') && !hasFramework(id, 'unittest'), id);
+    assert.ok(!JAVASCRIPT.ids.includes(id) && !JAVASCRIPT.examples[id], id);
   }
 });
 
