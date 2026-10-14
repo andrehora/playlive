@@ -4,6 +4,7 @@
 - **E2E:** YAML tests run live against example sites; export to Playwright and Cypress.
 - **Unit:** Python (pytest/unittest) or JS/TS (Jasmine/Mocha) against a small module.
 - **Graders:** Mutation, Smells, Create.
+- **Practice:** lessons, each an example's idea on new code; Python and pytest for now.
 
 Buildless ES modules. Serve with `npm run serve` (http://localhost:4173).
 
@@ -32,6 +33,7 @@ src/html/       E2E mode
 src/code/       Unit modes; python/ and js/ hold each profile and worker
 examples/html/  One site per folder + examples.js manifest
 examples/python/, examples/javascript/, examples/code.js   Unit examples
+examples/practice/python/, examples/practice.js              Practice lessons
 tests/          unit/, e2e/, snapshot/, server.mjs
 ```
 
@@ -86,6 +88,15 @@ steps:
 - Python and JS/TS stay aligned: same examples, branches, mutations and smells (`align.spec.js`).
 - Add a row in `examples/code.js`.
 - `upload`, `happy-hour` and `delivery` are flaky on purpose (`{ flaky: true }`).
+
+**Practice lesson:**
+- Same idea as its example, different code. Small: one idea, no nested functions, no comments in the code.
+- `examples/practice/python/<id>/`: `<module>.py`, `pytest/test_<module>.py` (the start: the imports, and none, one or a few tests), `pytest/answer.py`.
+- A row in `examples/practice.js`: `[id, example, { goals, tools }]`, in its example's order. The id is no example's or site's.
+- Goals unlock the answer; every lesson has `pass` and `lines`. Add the one the idea asks for, worded for any framework; how each framework writes it goes in the profile (`parametrizedIn`, `raisesIn`, …).
+- Tools are what the panels show beyond the default (Lesson, Results, Output, line coverage). Name one only if the lesson is about it.
+- New goal: `GOALS` (`examples/practice.js` and `src/code/practice.js`), its finder in `src/code/python/python.js`. New tool: `TOOLS`, a `data-tool` element or a `shows('<tool>')` check.
+- The start must not meet the lesson's goal; the answer must (`practice.test.mjs`). Add an e2e test in `practice.spec.js`.
 
 Some example tests are smelly on purpose, with no comment saying so (`smells.test.mjs`). A smell stays silent when unsure.
 

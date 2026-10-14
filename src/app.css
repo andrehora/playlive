@@ -10,7 +10,7 @@
   --small-tap:38px; --small-font:14px; --small-pad:9px 12px; --small-r:9px;
   --ctl-font:16px; --ctl-pad:10px 12px;   /* 16px: anything smaller makes iOS zoom on focus */
   --icon-tap:42px; --chev:36px;
-  --code-font:16px; --code-line:26px;
+  --code-font:13.5px; --code-line:21px;   /* below 16px: main.js keeps iOS from zooming on focus */
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -358,6 +358,9 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 /* What the example teaches; it gives way before the name when space is short */
 .site-goal{flex-shrink:100;font-weight:400;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .site-goal:empty{display:none}
+/* An example of the unit modes leads with what it teaches, and the name gives way first */
+.site-btn.leads-goal .site-goal{flex-shrink:1;font-weight:600;color:var(--ink)}
+.site-btn.leads-goal .site-name{flex-shrink:100;font-weight:400;color:var(--muted)}
 /* The app bar and the picker's category heads both show the category's icon,
    tinted with its accent, so the colour still groups and the icon names. */
 .swatch{display:inline-flex;flex:none;color:var(--cat,var(--muted))}
@@ -386,6 +389,8 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .pop-list .tab[aria-pressed="true"]{font-weight:600}
 .pop-list .tab .tres{margin-left:auto}
 .pop-list .tab .tsub{margin-left:auto;font-size:var(--small-font);color:var(--muted)}
+.pop-list .tab.ex-tab .tsub{margin-left:0;font-size:inherit;color:var(--ink)}
+.pop-list .tab.ex-tab .tname{margin-left:auto;font-size:var(--small-font);font-weight:400;color:var(--muted)}
 .pop-empty{color:var(--muted);font-size:13px;padding:6px 14px 14px;margin:0}
 .site-count{flex:none;font-size:var(--small-font);color:var(--muted);font-variant-numeric:tabular-nums;padding-right:4px}
 .addr{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}
@@ -400,9 +405,9 @@ button.smell-line:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
    from across the room. Ink on panel inverts with the theme, so it reads in
    both without a colour of its own. */
 .area-seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);box-shadow:none}
-/* Two equal halves, at full button size: "E2E" is shorter than "Unit" and
+/* Equal thirds, at full button size: "E2E" is shorter than "Unit" and
    would otherwise read as the lesser choice */
-.area-seg{display:inline-grid;grid-template-columns:1fr 1fr}
+.area-seg{display:inline-grid;grid-template-columns:repeat(3,1fr)}
 .area-seg button{min-height:var(--tap);min-width:4.5em;padding:0 14px;font-size:var(--btn-font);font-weight:600;justify-content:center}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 12px;border-bottom:1px solid var(--line)}
 .snapbar{background:color-mix(in srgb,var(--run) 10%,transparent);color:var(--run)}
@@ -529,6 +534,21 @@ svg.flow{display:block;max-width:none;overflow:visible}
 .mut-score[data-band="bad"]{color:var(--fail)}
 .smell-score[data-band="warn"]{color:var(--running-ink)}
 .smell-score[data-band="ok"]{color:var(--pass)}
+/* Practice's Lesson tab: which example it practises, two goals
+   (a tick when met, a ring when not, so the mark says it without its colour),
+   and the answer, in a dialog, once both are */
+.lesson-head{justify-content:space-between;flex-wrap:wrap}
+.lesson-from{margin:0;min-width:0;font-size:12.5px}
+.lesson{padding:12px 14px;display:grid;gap:10px;font-size:12.5px}
+.lesson p{margin:0}
+.lesson-from{color:var(--muted)}
+.lesson-from a{color:var(--run);font-weight:600;text-underline-offset:3px}
+.lesson-from a:focus-visible{outline:2px solid var(--run);outline-offset:2px;border-radius:2px}
+.lesson-goals{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.lesson-goals li{display:flex;align-items:baseline;gap:8px}
+.lesson-mark::before{content:"○";color:var(--muted)}
+.lesson-goals li[data-done="true"] .lesson-mark::before{content:"✓";color:var(--pass);font-weight:700}
+.lesson-m{color:var(--muted);margin-left:auto;white-space:nowrap}
 .bug-group[data-state="unrun"] .bug-dot{border-style:dashed}
 /* Coverage of every example: one row per file, the most covered first */
 .rank-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
@@ -622,7 +642,7 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
    switches; the last one showing ends with Compare and Close. */
 .cmp-dlg{width:calc(100vw - 32px);height:calc(100dvh - 32px);max-width:none;max-height:none}
 .cmp-dlg[open]{display:flex;flex-direction:column}
-.cmp-dlg #cmpCompare[aria-pressed="true"]{border-color:var(--run);background:color-mix(in srgb,var(--run) 12%,var(--panel))}
+.cmp-dlg :is(#cmpCompare, #answerCompare)[aria-pressed="true"]{border-color:var(--run);background:color-mix(in srgb,var(--run) 12%,var(--panel))}
 .cmp-panes{flex:1;min-height:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
 .cmp-pane{display:flex;flex-direction:column;min-height:0;min-width:0}
 .cmp-pane[hidden]{display:none}
@@ -632,6 +652,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 .cmp-head .code-file{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .cmp-head .cmp-count{flex:none}
 .cmp-actions{display:flex;align-items:center;gap:6px}
+/* Your tests and the answer start level, whichever head holds the buttons */
+#answer .cmp-head{min-height:calc(var(--icon-tap) + 21px);box-sizing:border-box}
 /* The second side has no heading: its switches start the row, Diff and the actions end it */
 #cmpOther .cmp-head .cov-toggle{margin-left:auto}
 .cmp-code{flex:1;min-height:0;margin:0;overflow:auto;padding:12px 16px 12px 0;background:var(--panel-2);font:var(--code-font)/var(--code-line) "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;white-space:pre;tab-size:4;counter-reset:ln;outline:none}

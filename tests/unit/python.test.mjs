@@ -129,3 +129,52 @@ test('Calculator comes first, and no Python example shares an id with a site', (
   assert.equal(PY_IDS[0], 'calculator');
   assert.deepEqual(PY_IDS.filter(id => SITES[id]), [], 'a link could not tell which was meant');
 });
+
+/* ---------- Calls: the imported functions, offered with their parameters ---------- */
+
+test('the functions the tests import are offered, each writing its call', async () => {
+  const { callsOf } = await load('src/code/python/python.js');
+  const code = 'def make_username(first, last):\n    pass\n\n\ndef used(name, existing=None):\n    pass\n\n\ndef helper():\n    pass\n';
+  const calls = callsOf(code, 'import pytest\nfrom username import make_username, used as taken, missing\n', 'username');
+  assert.deepEqual(calls.map(c => c.label), ['make_username', 'taken'], 'only what is imported and defined, by the name it is imported as');
+  assert.equal(calls[0].body, 'make_username(${1:first}, last)$0');
+  assert.equal(calls[1].detail, '(name, existing)', 'defaults left out');
+  assert.deepEqual(callsOf(code, 'from username import (\n    helper,\n)\n', 'username').map(c => c.body), ['helper()$0'], 'bracketed imports too');
+  assert.ok(callsOf(code, 'import username\n', 'username').some(c => c.label === 'username.make_username'), 'the module imported whole');
+  assert.deepEqual(callsOf(code, 'from other import make_username\n', 'username'), [], 'another module is not the code');
+});
+
+test('a parameterized test is found in either framework, and a plain one is not', async () => {
+  const { parametrizedIn } = await load('src/code/python/python.js');
+  const pytest = 'import pytest\n\n\n@pytest.mark.parametrize("n", [\n    1,\n    2,\n])\ndef test_cases(n):\n    assert n\n\n\ndef test_plain():\n    assert True\n';
+  assert.deepEqual(parametrizedIn(pytest, 'test_x.py', 'pytest').map(t => t.name), ['test_cases']);
+  const unittest = 'class T(unittest.TestCase):\n    def test_cases(self):\n        for n in [1, 2]:\n            with self.subTest(n=n):\n                self.assertTrue(n)\n\n    def test_plain(self):\n        self.assertTrue(True)\n';
+  assert.deepEqual(parametrizedIn(unittest, 'test_x.py', 'unittest').map(t => t.name), ['test_cases']);
+});
+
+test('a test that expects an exception is found in either framework', async () => {
+  const { raisesIn } = await load('src/code/python/python.js');
+  const pytest = 'import pytest\n\n\ndef test_refused():\n    with pytest.raises(ValueError):\n        f(0)\n\n\ndef test_fine():\n    assert f(1)\n';
+  assert.deepEqual(raisesIn(pytest, 'test_x.py', 'pytest').map(t => t.name), ['test_refused']);
+  assert.deepEqual(raisesIn('from pytest import raises\n\n\ndef test_refused():\n    with raises(ValueError):\n        f(0)\n', 'test_x.py', 'pytest').map(t => t.name), ['test_refused']);
+  const unittest = 'class T(unittest.TestCase):\n    def test_refused(self):\n        with self.assertRaisesRegex(ValueError, "no"):\n            f(0)\n\n    def test_fine(self):\n        self.assertTrue(f(1))\n';
+  assert.deepEqual(raisesIn(unittest, 'test_x.py', 'unittest').map(t => t.name), ['test_refused']);
+});
+
+test('a test that starts from shared setup is found in either framework', async () => {
+  const { setupIn } = await load('src/code/python/python.js');
+  const pytest = 'import pytest\n\n\n@pytest.fixture\ndef stack():\n    return Stack()\n\n\ndef test_uses(stack):\n    assert stack\n\n\ndef test_own(tmp_path):\n    s = Stack()\n';
+  assert.deepEqual(setupIn(pytest, 'test_x.py', 'pytest').map(t => t.name), ['test_uses']);
+  const unittest = 'class A(unittest.TestCase):\n    def setUp(self):\n        self.s = Stack()\n\n    def test_uses(self):\n        pass\n\n\nclass B(unittest.TestCase):\n    def test_own(self):\n        pass\n';
+  assert.deepEqual(setupIn(unittest, 'test_x.py', 'unittest').map(t => t.name), ['test_uses']);
+});
+
+test('a test that checks a result is true, or false, is found in either framework', async () => {
+  const { truthsIn } = await load('src/code/python/python.js');
+  const pytest = 'def test_yes():\n    assert ok("a")\n\n\ndef test_no():\n    assert not ok("b")\n\n\ndef test_equal():\n    assert ok("c") == 3\n\n\ndef test_is():\n    assert ok("d") is False\n';
+  const p = truthsIn(pytest, 'test_x.py', 'pytest');
+  assert.deepEqual(p.truthy.map(t => t.name), ['test_yes'], 'a comparison checks a value, not a truth');
+  assert.deepEqual(p.falsy.map(t => t.name), ['test_no', 'test_is']);
+  const u = truthsIn('class T(unittest.TestCase):\n    def test_yes(self):\n        self.assertTrue(ok("a"))\n\n    def test_no(self):\n        self.assertFalse(ok("b"))\n', 'test_x.py', 'unittest');
+  assert.deepEqual([u.truthy.map(t => t.name), u.falsy.map(t => t.name)], [['test_yes'], ['test_no']]);
+});

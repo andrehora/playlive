@@ -9,6 +9,7 @@ import { load } from './env.mjs';
 const { siteFromHash, modeFromHash, linkedMode, codeExampleFromHash, shareUrl } = await load('src/share.js');
 const { CODE_IDS: PY_IDS, CODE_IDS: JS_IDS } = await load('examples/code.js');
 const { MODES } = await load('src/modes.js');
+const { PRACTICE_IDS } = await load('examples/practice.js');
 const { SITE_IDS } = await load('examples/html/examples.js');
 
 const HOME = SITE_IDS[0];
@@ -105,11 +106,15 @@ test('what a link says is what reading it back gives', () => {
       assert.equal(codeExampleFromHash(hash) || ids[0], ex, `${m} ${ex}`);
     }
   }
+  // Practice's links name a lesson, its first left out as every mode's is
+  const hash = new URL(shareUrl(OTHER, 'python-practice', PRACTICE_IDS[0])).hash;
+  assert.equal(hash, '#python-practice');
+  assert.equal(linkedMode(hash), 'python-practice');
 });
 
 /* ---------- The modes themselves ---------- */
 
 test('the modes run in the order the bar shows them', () => {
-  assert.deepEqual(MODES, ['python', 'python-create', 'javascript', 'javascript-create', 'explore', 'create']);
+  assert.deepEqual(MODES, ['python', 'python-create', 'javascript', 'javascript-create', 'explore', 'create', 'python-practice']);
   assert.equal(MODES[0], 'python', 'the default, so the one "/" opens');
 });

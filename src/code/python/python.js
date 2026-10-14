@@ -116,6 +116,99 @@ export const snippetsFor = (fw, lang, id = 'module') => [
   ...(fw === 'pytest' ? PYTEST : UNITTEST)
 ];
 
+/* ---------- What a test does, read off its lines ----------
+   The goals of Practice (code/practice.js) ask which tests do something, in
+   words for any framework; how each framework writes it is said here.      */
+// The tests of a file whose own lines (the def's, and those indented under it) match `re`
+function testsWith(text, file, re){
+  const lines = text.split('\n'), indent = l => /^\s*/.exec(l)[0].length;
+  return testsInFile(text, file).filter(t => {
+    const own = indent(lines[t.line]);
+    for (let j = t.line + 1; j < lines.length && (!lines[j].trim() || indent(lines[j]) > own); j++)
+      if (re.test(lines[j])) return true;
+    return false;
+  });
+}
+// One test, run once per case: in pytest, a test under a parametrize mark; in
+// unittest, one that runs its cases as subTests
+export function parametrizedIn(text, file, fw){
+  const lines = text.split('\n'), tests = testsInFile(text, file);
+  if (fw === 'pytest'){
+    // A mark decorates the next def below it
+    const marked = new Set();
+    lines.forEach((l, i) => {
+      if (!/^\s*@[\w.]*parametrize\s*\(/.test(l)) return;
+      const def = lines.findIndex((d, j) => j > i && /^\s*(?:async\s+)?def\s/.test(d));
+      if (def >= 0) marked.add(def);
+    });
+    return tests.filter(t => marked.has(t.line));
+  }
+  return testsWith(text, file, /\.subTest\s*\(/);
+}
+// A test that starts from shared setup: in pytest, one that takes a fixture;
+// in unittest, one of a class with setUp
+export function setupIn(text, file, fw){
+  const lines = text.split('\n'), tests = testsInFile(text, file);
+  if (fw === 'pytest'){
+    // A fixture is the def under a fixture mark
+    const fixtures = new Set();
+    lines.forEach((l, i) => {
+      if (!/^\s*@(?:pytest\.)?fixture\b/.test(l)) return;
+      const def = lines.slice(i + 1).map(d => /^\s*(?:async\s+)?def\s+(\w+)/.exec(d)).find(Boolean);
+      if (def) fixtures.add(def[1]);
+    });
+    return tests.filter(t => paramsOf(/\(([^)]*)/.exec(lines[t.line])?.[1] ?? '').some(p => fixtures.has(p)));
+  }
+  const set = new Set();
+  let cls = null;
+  for (const l of lines){
+    const m = /^class (\w+)/.exec(l);
+    if (m) cls = m[1]; else if (/^\S/.test(l)) cls = null;
+    if (cls && /^\s+def setUp(?:Class)?\s*\(/.test(l)) set.add(cls);
+  }
+  return tests.filter(t => set.has(t.id.split('::')[1]));
+}
+// The tests that check a result is true, and those that check one is false:
+// in pytest, a bare assert (no comparison) or "is True", and "assert not" or
+// "is False"; in unittest, assertTrue and assertFalse
+export function truthsIn(text, file, fw){
+  const [yes, no] = fw === 'pytest'
+    ? [/^\s*assert\s+(?!not\b)(?:(?!==|!=|<|>|\bin\b|\bis\b).)+$|\bis\s+True\b/, /^\s*assert\s+not\b|\bis\s+False\b/]
+    : [/\.assertTrue\s*\(/, /\.assertFalse\s*\(/];
+  return { truthy: testsWith(text, file, yes), falsy: testsWith(text, file, no) };
+}
+// A test that expects an exception: pytest.raises, or unittest's assertRaises
+export const raisesIn = (text, file, fw) =>
+  testsWith(text, file, fw === 'pytest' ? /\bpytest\.raises\s*\(|(?:^|[^.\w])raises\s*\(/ : /\.assertRaises(?:Regex)?\s*\(/);
+
+/* ---------- Calls: the functions the tests import, as snippets ----------
+   Each function the tests file imports from the code under test ("from
+   username import suggest", or "import username" for username.suggest) is
+   offered by its name, and writes the call with the parameters its def names,
+   the first selected to type over. Only functions defined at the top of the
+   code, and only once imported, since a call to any other would not run. */
+export function paramsOf(list){
+  return list.split(',').map(p => p.trim().replace(/[:=].*$/s, '').trim())
+    .filter(p => p && p !== 'self' && p !== '/' && p !== '*');
+}
+export function callsOf(code, tests, id){
+  const module = moduleOf(id), defs = new Map();
+  for (const m of code.matchAll(/^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)/gm)) defs.set(m[1], paramsOf(m[2]));
+  const named = [];                    // [what the tests call it, the def's name]
+  const from = new RegExp(`^from\\s+${module}\\s+import\\s+(\\([^)]*\\)|[^\\n#]*)`, 'gm');
+  for (const m of tests.matchAll(from))
+    for (const part of m[1].replace(/[()]/g, '').split(',')){
+      const [name, alias] = part.trim().split(/\s+as\s+/);
+      if (name) named.push([alias || name, name]);
+    }
+  const whole = new RegExp(`^import\\s+${module}(?:\\s+as\\s+(\\w+))?\\s*$`, 'gm');
+  for (const m of tests.matchAll(whole)) for (const name of defs.keys()) named.push([`${m[1] || module}.${name}`, name]);
+  return named.filter(([, name]) => defs.has(name)).map(([label, name]) => {
+    const ps = defs.get(name);
+    return { label, detail: `(${ps.join(', ')})`, body: `${label}(${ps.map((p, i) => (i ? p : `\${1:${p}}`)).join(', ')})$0` };
+  });
+}
+
 export const PYTHON = {
   runtime: 'Python', title: 'Python',
   // What runs the tests, language first: unittest is Python's own, with no version of its
@@ -131,6 +224,8 @@ export const PYTHON = {
   testsIn: testsInFile,
   consoleClass,
   snippets: snippetsFor,
+  calls: callsOf,
+  parametrizedIn, raisesIn, setupIn, truthsIn,
   comment: '#', indent: '    ', opensBlock: /:\s*(#.*)?$/,
   emptyText: fw => (fw === 'pytest'
     ? 'A test is a function whose name starts with test_.'

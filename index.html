@@ -28,6 +28,8 @@
         title="Unit tests in Python, JavaScript or TypeScript">Unit</button>
       <button type="button" data-area="html" aria-pressed="false"
         title="End-to-end tests on example sites">E2E</button>
+      <button type="button" data-area="practice" aria-pressed="false"
+        title="Lessons to finish in Python">Practice</button>
     </div>
     <div class="picker">
       <!-- The arrows step through the list without opening it, inside its box -->
@@ -186,9 +188,9 @@
         <div class="panel-head">
           <h2>Tests <span class="code-file" id="codeTestsFile"></span> <span id="codeCount" class="file-status" aria-live="polite"></span></h2>
           <div class="head-actions">
-            <div class="seg code-lang" role="group" aria-label="Language"></div>
+            <div class="seg code-lang" role="group" aria-label="Language" data-tool="lang"></div>
             <div class="seg code-fw" role="group" aria-label="Test framework"></div>
-            <button id="codeTestsOpen" type="button" class="ghost icon-btn" aria-label="Open the tests large"
+            <button id="codeTestsOpen" type="button" class="ghost icon-btn" data-tool="large" aria-label="Open the tests large"
               title="Open large"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
             </svg></button>
@@ -216,7 +218,7 @@
               <path class="ic-play" d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none" />
               <rect class="ic-stop" x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" hidden />
             </svg><span class="lbl">Run tests</span></button>
-          <label class="field repeat-field">Repeat
+          <label class="field repeat-field" data-tool="repeat">Repeat
             <select id="codeRepeat">
               <option value="1">1×</option>
               <option value="5">5×</option>
@@ -235,18 +237,20 @@
                 title="Test results">Results</button>
               <button type="button" data-codetab="console" aria-pressed="false"
                 title="Test output">Output</button>
-              <button type="button" data-codetab="coverage" aria-pressed="false"
+              <button type="button" data-codetab="coverage" data-tool="coverage" aria-pressed="false"
                 title="Coverage of every example">Coverage</button>
-              <button type="button" data-codetab="mutation" aria-pressed="false" hidden
+              <button type="button" data-codetab="mutation" data-tool="mutation" aria-pressed="false" hidden
                 title="Mutation testing">Mutation</button>
-              <button type="button" data-codetab="smells" aria-pressed="false" hidden
+              <button type="button" data-codetab="smells" data-tool="smells" aria-pressed="false" hidden
                 title="Smells in these tests">Smells</button>
-              <button type="button" data-codetab="create" aria-pressed="false" hidden
+              <button type="button" data-codetab="create" data-tool="create" aria-pressed="false" hidden
                 title="Write tests from their names">Create</button>
+              <button type="button" data-codetab="lesson" data-tool="lesson" aria-pressed="false" hidden
+                title="What to do, and the answer">Lesson</button>
             </span><span class="run-said"><span id="codeSummary" aria-live="polite"></span></span></h2>
           <div class="head-actions">
             <button id="foldCode" type="button" class="ghost icon-btn" aria-label="Collapse the panel"
-              aria-expanded="true" aria-controls="codeCreate codeResults codeConsole codeRanking codeMutation codeSmells" title="Collapse"><svg class="i"
+              aria-expanded="true" aria-controls="codeCreate codeResults codeConsole codeRanking codeMutation codeSmells codeLesson" title="Collapse"><svg class="i"
                 viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M7 4l5 5 5-5M7 20l5-5 5 5" />
               </svg></button>
@@ -259,6 +263,7 @@
         <div id="codeRanking" class="code-mutation" hidden></div>
         <div id="codeMutation" class="code-mutation" hidden></div>
         <div id="codeSmells" class="code-mutation" hidden></div>
+        <div id="codeLesson" class="code-mutation" hidden></div>
       </section>
     </div>
     <div class="resizer col-resizer" id="colResizer" role="separator" aria-orientation="vertical"
@@ -341,6 +346,7 @@
             <button type="button" id="codeBranch" class="cov-score" data-covby="branches" aria-pressed="false"
               title="Colour by branch">Branch: <strong></strong><span></span></button>
           </div>
+          <span id="codeLineCov" class="cov-score" hidden>Line coverage: <strong></strong><span></span></span>
           <span id="codeCovNote" class="cov-note" hidden></span>
           <label class="cov-toggle" hidden title="Shade the lines the tests ran"><input type="checkbox"
               id="codeCovShow">Coverage</label>
@@ -406,6 +412,28 @@
       <button id="cmpCompare" type="button" class="small" aria-pressed="false"
         title="Show another framework beside these">Compare</button>
       <button id="cmpClose" type="button" class="ghost icon-btn" aria-label="Close" title="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
+    </div>
+  </dialog>
+  <!-- Practice's answer, large, as the tests are in the dialog above, and your tests beside it -->
+  <dialog id="answer" class="cmp-dlg" aria-labelledby="answerTitle">
+    <div class="cmp-panes">
+      <section class="cmp-pane" id="answerMine" hidden>
+        <div class="cmp-head">
+          <h2>Your tests <span class="code-file"></span></h2>
+        </div>
+        <pre class="cmp-code code-view" tabindex="0" aria-label="Your tests"></pre>
+      </section>
+      <section class="cmp-pane" id="answerTheirs">
+        <div class="cmp-head">
+          <h2 id="answerTitle">Answer <span class="code-file"></span></h2>
+          <div class="cmp-actions">
+            <button id="answerCompare" type="button" class="small" aria-pressed="false"
+              title="Your tests beside the answer">Compare</button>
+            <button id="answerClose" type="button" class="ghost icon-btn" aria-label="Close" title="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
+          </div>
+        </div>
+        <pre class="cmp-code code-view" tabindex="0" aria-label="The answer"></pre>
+      </section>
     </div>
   </dialog>
   <script type="module" src="src/main.js"></script>

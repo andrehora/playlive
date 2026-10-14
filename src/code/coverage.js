@@ -1,6 +1,6 @@
 import { $id } from '../dom.js';
 import { FLOW_DEFS, flowSvg } from './flow.js';
-import { codeEd, onWorker, view } from './core.js';
+import { P, codeEd, onWorker, shows, view } from './core.js';
 import { band, escH } from '../util.js';
 
 /* ---------- Coverage: which lines of the code the last run ran ----------
@@ -15,13 +15,15 @@ import { band, escH } from '../util.js';
    lines, so it makes the measure stale until the next run. `note` says why
    there is none, on top of the code while the tab is open. While the
    Mutation tab is, a Coverage check on top of the code shades it by lines. */
-const codeCov = $id('codeCov'), codeBranch = $id('codeBranch'), covNote = $id('codeCovNote');
+const codeCov = $id('codeCov'), codeBranch = $id('codeBranch'), lineCov = $id('codeLineCov'), covNote = $id('codeCovNote');
 const covShow = $id('codeCovShow'), covToggle = covShow.closest('label');
 const covSeg = document.querySelector('.cov-seg'), viewSeg = document.querySelector('.code-flowseg'), flowEl = $id('codeFlow');
 export let coverage = null, coverageNote = '';
 let covBy = 'lines', codeView = 'code';    // what colours the code, and code or flow
 // The code, not its flow: where a row of another panel takes you
 export function showCode(){ codeView = 'code'; renderFlow(); }
+// A lesson opens shaded by what it is about: by branch where it names branches
+export function coverLesson(){ if (P().practice) covBy = shows('branches') ? 'branches' : 'lines'; }
 export function setCoverage(c, note = ''){ coverage = c; coverageNote = note; renderCoverage(); }
 // What a run measured, or the file it could not
 onWorker(['coverage'], data => (data.lines
@@ -50,18 +52,24 @@ function boxClass(lines, decision){
   return !code.length ? 'none' : ran === code.length ? 'hit' : ran ? 'part' : 'miss';
 }
 export function renderCoverage(){
-  // The Coverage tab, or the Mutation tab with its check on, which shades by lines alone
-  const tab = view === 'coverage', checked = view === 'mutation' && covShow.checked, shown = tab || checked;
-  const live = coverage && !coverage.stale, on = live && shown, br = live && coverage.branches;
+  // The Coverage tab (Practice's Lesson tab is its), or the Mutation tab with its
+  // check on, which shades by lines alone. A lesson shows lines alone, its
+  // goal, unless it is about branches (examples/practice.js).
+  const tab = view === 'coverage' || view === 'lesson', checked = view === 'mutation' && covShow.checked, shown = tab || checked;
+  const linesOnly = view === 'lesson' && !shows('branches');
+  const live = coverage && !coverage.stale, on = live && shown, br = live && !linesOnly && coverage.branches;
   if (live){
-    score(codeCov, coverage.lines.filter(l => coverage.hit.has(l)).length, coverage.lines.length);
+    for (const el of [codeCov, lineCov]) score(el, coverage.lines.filter(l => coverage.hit.has(l)).length, coverage.lines.length);
     if (br){
       const ways = [...br.values()];
       score(codeBranch, ways.reduce((n, w) => n + w[1], 0), ways.reduce((n, w) => n + w[0], 0));
     }
   }
-  if (!br) covBy = 'lines';
-  covSeg.hidden = !(on && tab);
+  // Measured with no branches: lines are all there is (before a run, the choice stands)
+  if (live && !br) covBy = 'lines';
+  // Practice's is a score alone, with nothing to choose
+  covSeg.hidden = !(on && tab) || linesOnly;
+  lineCov.hidden = !(on && linesOnly);
   covToggle.hidden = view !== 'mutation';
   codeBranch.hidden = !br;
   for (const b of covSeg.querySelectorAll('[data-covby]')) b.setAttribute('aria-pressed', String(b.dataset.covby === covBy));
@@ -73,7 +81,7 @@ export function renderCoverage(){
   codeEd.paint(on ? new Map(coverage.lines.map(l => [l, lineClass(l, tab ? covBy : 'lines')])) : null);
   document.dispatchEvent(new CustomEvent('playlive:code-coverage'));
   // The flow is there while coverage is shown, for the methods with a branch
-  viewSeg.hidden = !(on && tab && coverage.flows?.length);
+  viewSeg.hidden = !(on && tab && !linesOnly && coverage.flows?.length);
   if (viewSeg.hidden) codeView = 'code';
   renderFlow();
 }

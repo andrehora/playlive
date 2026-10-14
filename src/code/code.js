@@ -1,4 +1,3 @@
-import { hasFramework } from '../../examples/code.js';
 import { $id, KEY } from '../dom.js';
 import { LOGOS } from './logos.js';
 import { syncUrl } from '../share.js';
@@ -6,12 +5,13 @@ import { mode, setCodeExample } from '../state.js';
 import { setProgress, toast } from '../ui.js';
 import { escH, holdWidth, plural, runSummary } from '../util.js';
 import { CODE_MODES, LANGS, P, S, active, codeEd, creating, exampleOf, files, handlerOf, isExample, isCodeMode, isCodeCreate, job, key, label, codeModeOf, onWorker, progressEl,
-  request, rt, session, sessions, setActive, setCreating, setCurrentView, setJob, shipped, testsEd, NEW, view } from './core.js';
-import { coverage, renderCoverage, setCoverage } from './coverage.js';
-import { createBtn, createEl, endCheck, renderCreate, resetCreate } from './create.js';
-import { endHunt, listMutations, markMutants, mutationBtn, mutationEl, resetMutation } from './mutation.js';
+  request, rt, session, sessions, setActive, setCreating, setCurrentView, setJob, shipped, shows, testsEd, NEW, view, writtenFor } from './core.js';
+import { coverLesson, coverage, renderCoverage, setCoverage } from './coverage.js';
+import { createEl, endCheck, renderCreate, resetCreate } from './create.js';
+import { forgetSolved, lessonEl, renderLesson, resetLesson } from './practice.js';
+import { endHunt, listMutations, markMutants, mutationEl, resetMutation } from './mutation.js';
 import { endRanking, listRanking, rankEl } from './ranking.js';
-import { listSmells, resetSmells, scanAll, smellView, smellsBtn, smellsEl } from './smells.js';
+import { listSmells, resetSmells, scanAll, smellView, smellsEl } from './smells.js';
 
 /* ---------- The code modes' panels, and what runs them ----------
    code/core.js holds what every panel shares (the profiles, the sessions, the
@@ -162,13 +162,14 @@ function onTest(data){
 }
 
 
-/* ---------- Create, results, console, coverage, mutation or smells: one panel, six views ---------- */
+/* ---------- Create, results, console, coverage, mutation, smells or lesson: one panel, seven views ---------- */
 export function setCodeView(v){
   // All examples is read again each time the tab opens
   if (v === 'smells' && view !== 'smells' && smellView === 'all') scanAll();
   setCurrentView(v);
   document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.codetab === v)));
   createEl.hidden = v !== 'create';
+  lessonEl.hidden = v !== 'lesson';
   resultsEl.hidden = v !== 'results';
   consoleEl.hidden = v !== 'console';
   mutationEl.hidden = v !== 'mutation';
@@ -179,6 +180,7 @@ export function setCodeView(v){
   listRanking();
   renderCoverage();
   markMutants();
+  renderLesson();
 }
 document.querySelectorAll('.code-seg [data-codetab]').forEach(b => b.addEventListener('click', () => setCodeView(b.dataset.codetab)));
 
@@ -331,6 +333,10 @@ function finish(code, note = 'Stopped'){
   for (const t of tests) if (t.state === 'running') t.state = 'idle';
   renderResults();
   if (!coverage) setCoverage(null, code == null ? 'The run did not finish, so nothing was measured. Run the tests again.' : '');
+  // What Practice's goals are read from (code/practice.js)
+  if (code != null) document.dispatchEvent(new CustomEvent('playlive:code-ran', {
+    detail: { whole: runTarget === files().tests, ok: said.ok && !collectError, passed, ran: counted.length }
+  }));
 }
 
 // The summary counts the runs and names no test, as the site modes' does: which
@@ -349,7 +355,7 @@ let reps = 1, rep = 1, spent = 0;   // repetitions asked for, the one running, a
 export function runCodeTests(target = files().tests){
   if (job || !active) return;
   begin('run');
-  runTarget = target; reps = Number(repeatEl.value) || 1; rep = 1; spent = 0; tally.clear();
+  runTarget = target; reps = shows('repeat') ? Number(repeatEl.value) || 1 : 1; rep = 1; spent = 0; tally.clear();
   clearConsole(); consoleEl.innerHTML = '';
   summaryEl.textContent = 'Running…'; summaryEl.className = ''; setProgress(0, null, progressEl);
   repetition();
@@ -379,6 +385,15 @@ function stopCodeTests(){
   drop();
   ENDS[stopped].stopped();
   boot();
+}
+
+
+// Every optional part of the panels shown or not, as the mode and the example
+// or lesson have it (core.js's shows); a tab gone takes its view with it
+function applyTools(){
+  for (const el of document.querySelectorAll('.code-panel [data-tool]')) el.hidden = !shows(el.dataset.tool);
+  const tab = document.querySelector(`.code-seg [data-codetab="${view}"]`);
+  if (tab?.hidden) setCodeView(P().practice ? 'lesson' : 'results');
 }
 
 
@@ -417,8 +432,7 @@ function drawSwitches(){
   const cur = LANGS.find(l => l.mode === active && (l.lang ?? null) === s.lang)?.id;
   draw(document.querySelector('.code-lang'), LANGS, cur, 'lang', { logoOnly: true });
 }
-// Whether example `id` has tests in framework `fw`; New is written in any
-const fits = (id, fw) => id === NEW || hasFramework(id, fw);
+const fits = writtenFor;
 // Put the example, in the framework and language chosen, into the editors.
 // One written for some frameworks only opens in the first of them it has.
 function show(){
@@ -442,6 +456,8 @@ function show(){
       codeEd.value = code; testsEd.value = testText ?? P().skeleton(original, files().tests);
     } catch { toast('The example did not load. Reload the page to try again.'); return; }
     const f = files();
+    applyTools();
+    coverLesson();
     $id('codeTitle').textContent = P().codeTitle(s.lang);
     $id('codeFile').textContent = f.code;
     $id('codeTestsFile').textContent = f.tests;
@@ -452,6 +468,7 @@ function show(){
     if (view === 'smells' && smellView === 'all') scanAll();
     listRanking();
     renderCreate();
+    resetLesson();
     if (!job) runBtn.title = `Run tests (${KEY}+Enter)`;
   })();
 }
@@ -501,12 +518,11 @@ export function enterCodeMode(mode){
     document.dispatchEvent(new CustomEvent('playlive:code-example'));
   }
   setActive(m); setCreating(create);
-  mutationBtn.hidden = !P().mutation;
-  smellsBtn.hidden = !P().smells;
-  createBtn.hidden = !P().create;
-  // Create opens on its list; leaving it, the list goes with it
+  applyTools();
+  // Create and Practice open on their lists; leaving them, the list goes with them
   if (creating) setCodeView('create');
-  else if ((mutationBtn.hidden && view === 'mutation') || (smellsBtn.hidden && view === 'smells') || view === 'create') setCodeView('results');
+  else if (P().practice) setCodeView('lesson');
+  else if (view === 'create') setCodeView('results');
   // the editors keep their contents, so colour them for the language now showing
   testsEd.render(); codeEd.render();
   boot(m);
@@ -525,6 +541,7 @@ export function leaveCodeMode(){
 export async function resetCodeModes(){
   stopCodeTests();
   for (const s of Object.values(sessions)){ s.edits.clear(); s.shown = null; }
+  forgetSolved();
   for (const m of Object.keys(CODE_MODES)) if (exampleOf(m) === NEW) setCodeExample(m, CODE_MODES[m].ids[0]);
   if (!active) return;
   syncUrl();

@@ -1,5 +1,5 @@
 import { codeState } from './code.js';
-import { CODE_MODES, codeModeOf } from './core.js';
+import { CODE_MODES, codeEd, codeModeOf } from './core.js';
 import { expand, match } from './snippets.js';
 import { mode } from '../state.js';
 import { suggestionList } from '../suggestlist.js';
@@ -8,7 +8,8 @@ import { suggestionList } from '../suggestlist.js';
 
    What it offers depends on the language and the framework on screen: a blank
    test, a group, a hook, an import, and the framework's checks (unittest's
-   asserts, pytest's helpers, Jasmine's matchers, Chai's chains). The snippets
+   asserts, pytest's helpers, Jasmine's matchers, Chai's chains), and in
+   Python the functions the tests import from the code. The snippets
    are the profiles' (code/python/python.js, code/js/javascript.js); finding and expanding them is
    code/snippets.js, and the list itself suggestlist.js, the same one the YAML
    editor has. It opens as you type a word that begins a snippet, or after
@@ -36,7 +37,9 @@ function updateCodeCompletion(forced = false){
   const L = CODE_MODES[codeModeOf(mode)];
   if (!L || ta.readOnly || document.activeElement !== ta || ta.selectionStart !== ta.selectionEnd) return list.close();
   const { example, framework, lang } = codeState();
-  found = match(L.snippets(framework, lang, example), ta.value, ta.selectionStart, { forced, comment: L.comment });
+  // The functions the tests import from the code first, then the framework's
+  const snippets = [...L.calls?.(codeEd.value, ta.value, example) ?? [], ...L.snippets(framework, lang, example)];
+  found = match(snippets, ta.value, ta.selectionStart, { forced, comment: L.comment });
   if (found) list.show(found.items); else list.close();
 }
 // Typing, not the editor's own changes: an accepted snippet is not a keystroke

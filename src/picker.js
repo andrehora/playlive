@@ -3,7 +3,7 @@ import { $id, errorEl, resultsEl, specEl, tabsEl } from './dom.js';
 import { createSkeleton } from './html/create.js';
 import { catIconSvg } from './html/icons.js';
 import { selectExample } from './code/code.js';
-import { CODE_MODES, NEW, exampleOf, codeModeOf, isCodeCreate } from './code/core.js';
+import { CODE_MODES, NEW, exampleOf, codeModeOf, isCodeCreate, isPractice } from './code/core.js';
 import { preview } from './html/run.js';
 import { syncUrl } from './share.js';
 import { loadApp, persist, stashEditor, testsFor } from './html/sites.js';
@@ -42,8 +42,9 @@ function renderExampleTabs(){
   for (const id of p.ids){
     if (!group || p.examples[id].group !== title) startGroup(title = p.examples[id].group);
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'tab'; b.dataset.site = id;
-    b.innerHTML = '<span class="tname"></span><span class="tsub"></span>';
+    // What it teaches first, the name after it: a student looks for the idea
+    b.type = 'button'; b.className = 'tab ex-tab'; b.dataset.site = id;
+    b.innerHTML = '<span class="tsub"></span><span class="tname"></span>';
     b.querySelector('.tname').textContent = p.examples[id].name;
     b.querySelector('.tsub').textContent = p.examples[id].teaches;
     b.addEventListener('click', () => { closePicker(true); selectExample(id); });
@@ -55,8 +56,10 @@ function setExampleView(id){
   tabsEl.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === id)));
   $id('siteSwatch').innerHTML = '';
   $id('siteName').textContent = ex.name;
-  // What the example teaches, beside its name
+  // What the example teaches, before its name, as in the list
   $id('siteGoal').textContent = ex.teaches;
+  siteBtn.classList.add('leads-goal');
+  $id('siteName').before($id('siteGoal'));
   delete siteBtn.dataset.status;
   siteBtn.title = 'Choose an example';
   setCount(id);
@@ -93,6 +96,8 @@ export function setView(id){
   swatch.style.setProperty('--cat', SITES[id].accent);
   $id('siteName').textContent = SITES[id].name;
   $id('siteGoal').textContent = '';
+  siteBtn.classList.remove('leads-goal');
+  $id('siteName').after($id('siteGoal'));
   $id('sitePanelName').textContent = SITES[id].name;
   const cat = $id('siteCat');
   cat.innerHTML = catIconSvg(SITES[id].category) + '<span></span>';
@@ -124,7 +129,8 @@ function filterSites(q){
     let any = false;
     g.querySelectorAll('.tab').forEach(b => {
       const hit = inList.has(b.dataset.site)
-        && (!q || catHit || nameOf(b.dataset.site).toLowerCase().includes(q) || b.dataset.site.includes(q));
+        && (!q || catHit || nameOf(b.dataset.site).toLowerCase().includes(q) || b.dataset.site.includes(q)
+          || !!profile()?.examples[b.dataset.site]?.teaches.toLowerCase().includes(q));
       b.hidden = !hit; if (hit){ any = true; shown++; }
     });
     g.hidden = !any;
@@ -137,8 +143,9 @@ function filterSites(q){
 let listedFor = null;                 // the code mode the list is of, or null for the sites
 const relist = () => {
   const now = codeModeOf(mode);
-  // Only the unit modes have New, and not their Create, which needs an example's names
-  newBtn.hidden = !now || isCodeCreate(mode);
+  // Only the unit modes have New, and not their Create, which needs an example's
+  // names, nor Practice, whose lessons are the point
+  newBtn.hidden = !now || isCodeCreate(mode) || isPractice(mode);
   if (now !== listedFor){
     listedFor = now;
     renderTabs();

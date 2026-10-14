@@ -2,6 +2,7 @@ import { $id } from '../dom.js';
 import { caretLine, commentKey, gutterSelect, indentTab, undoable } from '../editkeys.js';
 import { JAVASCRIPT } from './js/javascript.js';
 import { PYTHON } from './python/python.js';
+import { PRACTICE } from './python/practice.js';
 import { codeExample, mode } from '../state.js';
 import { escH, fitGutter, lineTop } from '../util.js';
 
@@ -31,7 +32,10 @@ import { escH, fitGutter, lineTop } from '../util.js';
    The files ship in examples/<mode>/<id>/. Edits are kept while you move
    between examples, frameworks and languages, but not stored: Reset or a
    reload brings them back as they ship.                                    */
-export const CODE_MODES = { python: PYTHON, javascript: JAVASCRIPT };
+export const CODE_MODES = { python: PYTHON, javascript: JAVASCRIPT, 'python-practice': PRACTICE };
+// Practice ("python-practice") is a code mode of its own, with a profile of its
+// own (code/python/practice.js): lessons instead of examples, and no Create.
+export const isPractice = m => !!CODE_MODES[codeModeOf(m)]?.practice;
 // Each code mode has a Create beside it ("python-create"): the same panels and
 // examples, with a file of your own in the tests editor. codeModeOf is the code mode
 // either one is, or null for the site modes.
@@ -80,6 +84,24 @@ export const NEW = 'new';
 export const isExample = (m, id) => !!CODE_MODES[m].examples[id] || id === NEW;
 export const exampleOf = (m = mode) => codeExample[codeModeOf(m)] ?? CODE_MODES[codeModeOf(m)].ids[0];
 export const files = () => P().files(exampleOf(active), S().framework, S().lang);
+/* ---------- Tools: the optional parts of the panels ----------
+   Each part the panels may leave out is a tool, named on its element as
+   data-tool (index.html) and asked for here by that name: the tabs beyond
+   Results and Output, the language switch, Open large, Repeat, and branch
+   coverage with the flow. An example shows every tool its mode has. A lesson
+   shows the Lesson tab and only the tools it names (examples/practice.js), so
+   it shows what its idea needs and nothing else; code/code.js applies them
+   each time an example or a lesson loads.                                  */
+// The tools a mode may not have; any other, every example shows
+const MODE_HAS = { lesson: () => false, mutation: p => !!p.mutation, smells: p => !!p.smells, create: p => !!p.create };
+export function shows(tool){
+  const p = P();
+  if (!p) return false;
+  if (p.practice) return tool === 'lesson' || !!p.examples[exampleOf(active)]?.tools.includes(tool);
+  return MODE_HAS[tool]?.(p) ?? true;
+}
+// Whether example `id` of the mode on screen has tests in framework `fw`; New is written in any
+export const writtenFor = (id, fw) => id === NEW || !P().examples[id]?.frameworks || P().examples[id].frameworks.includes(fw);
 
 /* ---------- What the runtime says, and what a job asks it ----------
    Each panel names the messages it handles when it loads, as it would add a
@@ -167,11 +189,12 @@ export const progressEl = $id('codeProgress');
 // What an edit is kept under: the code per language, the tests per framework too
 export const key = ({ id, lang, framework, create }, which) => (which === 'code' ? `${id}/${lang}` : `${create ? 'create:' : ''}${id}/${lang}/${framework}`);
 // Every code mode ships the same way: examples/<mode>/<id>/ holds the code,
-// and a folder per framework the tests
+// and a folder per framework the tests (Practice's answer beside them)
 export async function shipped(id, which){
   if (id === NEW) return '';
   const s = S(), f = P().files(id, s.framework, s.lang);
-  const r = await fetch(new URL(`../../examples/${active}/${id}/${which === 'code' ? f.code : `${s.framework}/${f.tests}`}`, import.meta.url));
+  const file = which === 'code' ? f.code : `${s.framework}/${which === 'answer' ? P().answer : f.tests}`;
+  const r = await fetch(new URL(`../../examples/${P().dir || active}/${id}/${file}`, import.meta.url));
   if (!r.ok) throw new Error(`${id}: ${r.status}`);
   return r.text();
 }

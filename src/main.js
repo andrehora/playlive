@@ -27,6 +27,12 @@ import './code/complete.js';   // and the code modes' one
 import './code/compare.js';    // the code modes' tests, large and side by side
 
 /* ---------- Wiring ---------- */
+// The code editors are under 16px on a phone, and iOS zooms in on focusing
+// one. maximum-scale stops that; iOS still lets the user pinch, so only it gets it.
+if (/iPhone|iPad/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)){
+  const vp = document.querySelector('meta[name=viewport]');
+  vp?.setAttribute('content', vp.content + ', maximum-scale=1');
+}
 specEl.addEventListener('input', () => {
   clearTimeout(previewTimer);
   setPreviewTimer(setTimeout(() => {

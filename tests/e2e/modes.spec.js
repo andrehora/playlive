@@ -240,11 +240,11 @@ test.describe('Modes', () => {
     await page.setViewportSize({ width: 360, height: 740 });
     await openApp(page, { site: SITE });
     await expect(page.locator('.area-seg')).toBeVisible();
-    // A row of their own, the two names sharing it, each worth tapping, without
+    // A row of their own, the three names sharing it, each worth tapping, without
     // pushing the bar sideways — which the sideways check below is what guards.
     const buttons = await page.locator('.area-seg button').all();
     const boxes = await Promise.all(buttons.map(b => b.boundingBox()));
-    expect(boxes).toHaveLength(2);
+    expect(boxes).toHaveLength(3);
     expect(new Set(boxes.map(b => Math.round(b.y))).size).toBe(1);
     for (const b of boxes) expect(b.height).toBeGreaterThanOrEqual(28);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
