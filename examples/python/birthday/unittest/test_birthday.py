@@ -1,13 +1,19 @@
 import unittest
-from types import SimpleNamespace
 from unittest.mock import Mock, patch
 import birthday
+
+
+# Stub: returns canned data, no behavior
+class FakeDatetime:
+    @staticmethod
+    def now():
+        return "2026-10-09 08:00:00"
 
 
 class BirthdayTest(unittest.TestCase):
     # Bad: send_greetings reads the real date, so the test must fake the clock
     def test_greets_on_the_day(self):
-        with patch("birthday.datetime", SimpleNamespace(now=lambda: "2026-10-09 08:00:00")):
+        with patch("birthday.datetime", FakeDatetime):
             mailer = Mock()
             self.assertEqual(birthday.send_greetings([("Ana", "1990-10-09")], mailer), 1)
             mailer.send.assert_called_once_with("Happy birthday, Ana!")

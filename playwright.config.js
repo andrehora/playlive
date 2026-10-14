@@ -27,7 +27,12 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'off'
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // ARIA snapshots of the app's own UI live apart from the behaviour tests:
+  // they pin structure (roles, names, states), not what a run does.
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'snapshot', testDir: './tests/snapshot', use: { ...devices['Desktop Chrome'] } }
+  ],
   webServer: {
     command: `node tests/server.mjs ${PORT}`,
     url: `http://localhost:${PORT}/index.html`,

@@ -1,6 +1,6 @@
 import { VisitCounter } from "./visit-counter";
 
-// Fake: counts kept in an object
+// Fake: in-memory version of a dependency
 class FakeStore {
   counts: Record<string, number> = {};
 

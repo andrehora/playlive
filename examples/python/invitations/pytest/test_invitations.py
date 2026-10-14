@@ -2,7 +2,7 @@ import pytest
 from invitations import invite
 
 
-# Spy, by hand: counts the emails instead of sending them
+# Mock (interaction): verifies method calls; use sparingly
 class SpyMailer:
     def __init__(self):
         self.sent = 0

@@ -6,7 +6,7 @@ describe("Doorbell", () => {
   let phone;
   let doorbell;
 
-  // Mock, from the framework: replaces the phone and checks its calls
+  // Mock (interaction): verifies method calls; use sparingly
   beforeEach(() => {
     phone = { notify: sinon.stub() };
     doorbell = new Doorbell(phone);

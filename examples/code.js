@@ -51,9 +51,10 @@ const GROUPS = [
       ["invoice", "Dummy"],
       ["converter", "Stub (manual)"],
       ["greeting", "Stub (framework)"],
-      ["invitations", "Mock/spy (manual)"],
-      ["doorbell", "Mock/spy (framework)"],
+      ["invitations", "Mock (manual)"],
+      ["doorbell", "Mock (framework)"],
       ["bookmarks", "Fake"],
+      ["cafe", "Choosing a double"],
     ]
   },
   {

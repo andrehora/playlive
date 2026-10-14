@@ -1,6 +1,6 @@
 const { TodoService } = require("./todo-service");
 
-// Fake: the to-dos kept in an object
+// Fake: in-memory version of a dependency
 class InMemoryTodos {
   todos = {};
 

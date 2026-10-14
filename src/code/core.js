@@ -1,5 +1,5 @@
 import { $id } from '../dom.js';
-import { commentKey, undoable } from '../editkeys.js';
+import { caretLine, commentKey, gutterSelect, indentTab, undoable } from '../editkeys.js';
 import { JAVASCRIPT } from './js/javascript.js';
 import { PYTHON } from './python/python.js';
 import { codeExample, mode } from '../state.js';
@@ -120,6 +120,8 @@ function makeEditor(root){
   document.fonts?.addEventListener('loadingdone', refit);
   commentKey(ta, () => P().comment);
   undoable(ta);
+  caretLine(ta, hl);
+  gutterSelect(ta, gutter);
   // An edit makes the marks from the last run point at the wrong lines
   ta.addEventListener('input', () => { bad = new Set(); render(); });
   // Tab indents by the language's step, and Enter keeps the indent, one step
@@ -128,7 +130,7 @@ function makeEditor(root){
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const { selectionStart: a, selectionEnd: b, value } = ta;
     if (e.key === 'Tab' && !e.shiftKey){
-      e.preventDefault(); ta.setRangeText(P().indent, a, b, 'end');
+      e.preventDefault(); indentTab(ta, P().indent);
     } else if (e.key === 'Enter' && !e.shiftKey){
       const line = value.slice(value.lastIndexOf('\n', a - 1) + 1, a);
       const indent = /^\s*/.exec(line)[0] + (P().opensBlock.test(line) ? P().indent : '');

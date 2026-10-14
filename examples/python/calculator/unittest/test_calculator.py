@@ -8,8 +8,8 @@ class CalculatorTest(unittest.TestCase):
         self.assertEqual(add(2, 3), 5)
         self.assertEqual(subtract(10, 4), 6)
         self.assertEqual(multiply(3, 4), 12)
-        self.assertEqual(divide(10, 4), 2.5)
         self.assertEqual(divide(10, 2), 5)
+        self.assertEqual(divide(10, 4), 2.5)
         with self.assertRaises(ValueError):
             divide(1, 0)
 

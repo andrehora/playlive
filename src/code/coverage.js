@@ -66,7 +66,7 @@ export function renderCoverage(){
   codeBranch.hidden = !br;
   for (const b of covSeg.querySelectorAll('[data-covby]')) b.setAttribute('aria-pressed', String(b.dataset.covby === covBy));
   // Open with nothing to show: why
-  const why = coverage?.stale ? `${coverage.file} changed after the run. Run the tests again to measure it.`
+  const why = coverage?.stale ? 'Run the tests again...'
     : coverageNote || (checked ? 'Run the tests to see coverage.' : '');
   covNote.textContent = why;
   covNote.hidden = !(shown && !live && why);

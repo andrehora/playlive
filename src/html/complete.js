@@ -280,8 +280,10 @@ function update(forced){
   open = found;
   list.show(found.items);
 }
-specEl.addEventListener('input', e => { if (!accepting && !e.undo) update(); });
+specEl.addEventListener('input', e => { if (e.indent) closeCompletion(); else if (!accepting && !e.undo) update(); });
 specEl.addEventListener('keydown', e => {
+  // A key the editor has already used (Enter opening the next step) is not the list's
+  if (e.defaultPrevented) return;
   if (e.key === ' ' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); update(true); return; }
   if (list.key(e)){ e.preventDefault(); e.stopPropagation(); }
 });

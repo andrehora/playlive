@@ -1,7 +1,7 @@
 from converter import Converter
 
 
-# Stub, by hand: returns a fixed rate
+# Stub: returns canned data, no behavior
 class StubBankService:
     def rate(self, currency):
         return 0.5

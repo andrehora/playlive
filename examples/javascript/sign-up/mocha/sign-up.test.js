@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const sinon = require("sinon");
 const { SignUp } = require("./sign-up");
 
-// Fake: users kept in a list
+// Fake: in-memory version of a dependency
 class FakeUsers {
   emails = [];
 

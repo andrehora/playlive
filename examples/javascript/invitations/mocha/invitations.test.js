@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { invite } = require("./invitations");
 
-// Spy, by hand: counts the emails instead of sending them
+// Mock (interaction): verifies method calls; use sparingly
 class SpyMailer {
   constructor() {
     this.sent = 0;

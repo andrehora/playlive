@@ -7,8 +7,8 @@ describe("Calculator", () => {
     expect(add(2, 3)).to.equal(5);
     expect(subtract(10, 4)).to.equal(6);
     expect(multiply(3, 4)).to.equal(12);
-    expect(divide(10, 4)).to.equal(2.5);
     expect(divide(10, 2)).to.equal(5);
+    expect(divide(10, 4)).to.equal(2.5);
     expect(() => divide(1, 0)).to.throw();
   });
 

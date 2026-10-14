@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from sign_up import SignUp
 
 
-# Fake: users kept in a list
+# Fake: in-memory version of a dependency
 class FakeUsers:
     def __init__(self):
         self.emails = []

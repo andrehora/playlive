@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from todo_service import TodoService
 
 
-# Fake: the to-dos kept in a dict
+# Fake: in-memory version of a dependency
 class InMemoryTodos:
     def __init__(self):
         self.todos = {}

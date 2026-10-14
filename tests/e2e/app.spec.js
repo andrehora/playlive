@@ -532,6 +532,114 @@ test.describe('HTML view', () => {
 
 // Writing the step is the exercise, so nothing can be pasted in from somewhere
 // else. Taking the tests out is fine.
+test.describe('Caret line', () => {
+  // The band behind an editor's caret sits on the caret's line, and only while it has focus
+  async function expectBandOn(page, ta, line){
+    const at = await page.evaluate(([sel, line]) => {
+      const ta = document.querySelector(sel), band = ta.parentElement.querySelector('.caret-line');
+      const l = ta.parentElement.querySelector('pre').children[line];
+      return { hidden: band.hidden, band: band.getBoundingClientRect().top, line: l.getBoundingClientRect().top };
+    }, [ta, line]);
+    expect(at.hidden).toBe(false);
+    expect(Math.abs(at.band - at.line)).toBeLessThan(1);
+  }
+  const caretTo = (page, ta, line) => page.evaluate(([sel, line]) => {
+    const ta = document.querySelector(sel), at = ta.value.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0);
+    ta.focus(); ta.setSelectionRange(at, at);
+  }, [ta, line]);
+  const bandHidden = (page, ta) => page.evaluate(sel => document.querySelector(sel).parentElement.querySelector('.caret-line').hidden, ta);
+
+  test('every editor shades the line the caret is on while it has focus', async ({ page }) => {
+    await openApp(page);
+    await page.click('.view-seg [data-view="html"]');
+    for (const ta of ['#spec', '#htmlEdit']){
+      expect(await bandHidden(page, ta)).toBe(true);
+      await caretTo(page, ta, 2);
+      await expect.poll(() => bandHidden(page, ta)).toBe(false);
+      await expectBandOn(page, ta, 2);
+      await page.keyboard.press('ArrowDown');
+      await expect.poll(async () => { try { await expectBandOn(page, ta, 3); return true; } catch { return false; } }).toBe(true);
+    }
+    await setMode(page, 'python');
+    for (const ta of ['#codeTestsEd textarea', '#codeEd textarea']){
+      await expect(page.locator(ta)).not.toHaveValue('');
+      await caretTo(page, ta, 4);
+      await expect.poll(() => bandHidden(page, ta)).toBe(false);
+      await expectBandOn(page, ta, 4);
+    }
+    await page.locator('#codeEd textarea').blur();
+    await expect.poll(() => bandHidden(page, '#codeEd textarea')).toBe(true);
+  });
+
+  test('a bracket beside the caret and its partner are boxed', async ({ page }) => {
+    await openApp(page);
+    const line = await page.evaluate(() => document.querySelector('#spec').value.split('\n').findIndex(l => l.includes('{')));
+    await page.evaluate(line => {
+      const ta = document.querySelector('#spec'), lines = ta.value.split('\n');
+      const at = lines.slice(0, line).join('\n').length + 1 + lines[line].indexOf('{') + 1;
+      ta.focus(); ta.setSelectionRange(at, at);
+    }, line);
+    const marks = page.locator('.editor .bracket-mark');
+    await expect(marks.nth(0)).toBeVisible();
+    await expect(marks.nth(1)).toBeVisible();
+    const [a, b] = [await marks.nth(0).boundingBox(), await marks.nth(1).boundingBox()];
+    expect(Math.abs(a.y - b.y)).toBeLessThan(1);
+    expect(b.x).toBeGreaterThan(a.x);
+    // Two to the left, the caret is beside no bracket
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowLeft');
+    await expect(marks.nth(0)).toBeHidden();
+  });
+});
+
+test.describe('Editor keys', () => {
+  test('Tab indents the selected lines, and Enter starts the next step', async ({ page }) => {
+    await openApp(page);
+    await page.evaluate(() => {
+      const ta = document.querySelector('#spec');
+      ta.value = 'test: One\nsteps:'; ta.dispatchEvent(new Event('input'));
+      ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+    });
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#spec')).toHaveValue('test: One\nsteps:\n  - ');
+    await page.keyboard.type('click: A');
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#spec')).toHaveValue('test: One\nsteps:\n  - click: A\n  - ');
+    // Only the dash: no suggestion is open to take the next Enter
+    await expect(page.locator('#spec')).toHaveAttribute('aria-expanded', 'false');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#spec')).toHaveValue('test: One\nsteps:\n  - click: A\n', 'an empty step ends the list');
+    await page.evaluate(() => document.querySelector('#spec').setSelectionRange(0, 16));
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#spec')).toHaveValue('  test: One\n  steps:\n  - click: A\n');
+  });
+
+  test('clicking a line number selects that line, in every editor', async ({ page }) => {
+    await openApp(page);
+    const selected = sel => page.evaluate(sel => { const t = document.querySelector(sel); return t.value.slice(t.selectionStart, t.selectionEnd); }, sel);
+    const lineOf = (sel, i) => page.evaluate(([sel, i]) => document.querySelector(sel).value.split('\n')[i] + '\n', [sel, i]);
+    await page.locator('#gutter > div').nth(1).click();
+    expect(await selected('#spec')).toBe(await lineOf('#spec', 1));
+    await page.locator('#gutter > div').nth(3).click({ modifiers: ['Shift'] });
+    expect((await selected('#spec')).split('\n').length).toBe(4);
+    // Dragging up the numbers takes in each line passed over, and the band
+    // behind the caret's line stays out of a selection
+    const [from, to] = [await page.locator('#gutter > div').nth(4).boundingBox(), await page.locator('#gutter > div').nth(2).boundingBox()];
+    await page.mouse.move(from.x + 8, from.y + 4); await page.mouse.down();
+    await page.mouse.move(to.x + 8, to.y + 4, { steps: 4 }); await page.mouse.up();
+    expect(await selected('#spec')).toBe((await lineOf('#spec', 2)) + (await lineOf('#spec', 3)) + (await lineOf('#spec', 4)));
+    await expect(page.locator('#editor .caret-line')).toBeHidden();
+    await setMode(page, 'python');
+    const ta = '#codeEd textarea';
+    await expect(page.locator(ta)).not.toHaveValue('');
+    await page.locator('#codeEd .gutter > div').nth(0).click();
+    expect(await selected(ta)).toBe(await lineOf(ta, 0));
+    await page.keyboard.press('Tab');
+    await expect.poll(() => lineOf(ta, 0)).toMatch(/^ {4}/);
+  });
+});
+
 test.describe('Copy and paste', () => {
   test('the editor allows copy and cut but refuses paste and a dropped selection', async ({ page }) => {
     await openApp(page, { site: 'contact-form' });

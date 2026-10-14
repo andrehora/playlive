@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { Bookmarks, Store } from "./bookmarks";
 
-// Fake: a simple store that really works, in a list
+// Fake: in-memory version of a dependency
 class FakeStore implements Store {
   urls: string[] = [];
 

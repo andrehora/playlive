@@ -1,6 +1,6 @@
 import { SignUp } from "./sign-up";
 
-// Fake: users kept in a list
+// Fake: in-memory version of a dependency
 class FakeUsers {
   emails: string[] = [];
 

@@ -115,6 +115,10 @@ body.resizing iframe{pointer-events:none}
 .hl,#spec{position:absolute;inset:0;margin:0;padding:12px 14px;font:inherit;white-space:pre;tab-size:2;border:0;letter-spacing:0}
 .hl{overflow:hidden;pointer-events:none;color:var(--ink)}
 .hl .l{display:block;min-height:var(--code-line)}
+/* The caret's line, behind the highlighted copy (editkeys.js) */
+.caret-line{position:absolute;left:0;right:0;pointer-events:none;background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.caret-line[hidden],.bracket-mark[hidden]{display:none}
+.bracket-mark{position:absolute;pointer-events:none;border-radius:2px;background:color-mix(in srgb,var(--ink) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--muted) 70%,transparent)}
 .hl .l.cur{background:color-mix(in srgb,var(--running) 24%,transparent);box-shadow:inset 3px 0 var(--running)}
 .hl .l.bad{background:color-mix(in srgb,var(--fail) 13%,transparent);box-shadow:inset 2px 0 var(--fail)}
 .hl i{font-style:normal}

@@ -1,5 +1,5 @@
 import { $id, doc, frame } from '../dom.js';
-import { commentKey, undoable } from '../editkeys.js';
+import { caretLine, commentKey, gutterSelect, undoable } from '../editkeys.js';
 import { escH } from '../util.js';
 import { reduceMotion } from './find.js';
 import { layout, saveLayout } from '../layout.js';
@@ -211,6 +211,8 @@ htmlEdit.addEventListener('keydown', e => {
 });
 commentKey(htmlEdit, '<!--', '-->');
 undoable(htmlEdit);
+caretLine(htmlEdit, htmlCode);
+gutterSelect(htmlEdit, htmlGutter);
 // Leaving the editor applies it, unless it is the whole window that lost focus:
 // coming back to another app's half-typed tag would find it already on the page.
 htmlEdit.addEventListener('blur', () => { if (document.hasFocus()) applyHtml(); });

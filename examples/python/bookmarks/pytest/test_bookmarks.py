@@ -2,7 +2,7 @@ import pytest
 from bookmarks import Bookmarks
 
 
-# Fake: a simple store that really works, in a list
+# Fake: in-memory version of a dependency
 class FakeStore:
     def __init__(self):
         self.urls = []

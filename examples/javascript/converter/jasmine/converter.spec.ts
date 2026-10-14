@@ -1,6 +1,6 @@
 import { BankService, Converter } from "./converter";
 
-// Stub, by hand: returns a fixed rate
+// Stub: returns canned data, no behavior
 class StubBankService implements BankService {
   rate(): number {
     return 0.5;

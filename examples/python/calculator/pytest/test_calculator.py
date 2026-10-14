@@ -7,8 +7,8 @@ def test_calculator():
     assert add(2, 3) == 5
     assert subtract(10, 4) == 6
     assert multiply(3, 4) == 12
-    assert divide(10, 4) == 2.5
     assert divide(10, 2) == 5
+    assert divide(10, 4) == 2.5
     with pytest.raises(ValueError):
         divide(1, 0)
 

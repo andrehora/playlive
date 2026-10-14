@@ -1,6 +1,6 @@
 const { clock, greet } = require("./greeting");
 
-// Stub, from the framework: returns a fixed hour
+// Stub: returns canned data, no behavior
 describe("Greeting", () => {
   it("says good morning", () => {
     spyOn(clock, "hour").and.returnValue(9);

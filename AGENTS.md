@@ -12,11 +12,14 @@ Buildless ES modules. Serve with `npm run serve` (http://localhost:4173).
 ```sh
 npm install && npx playwright install chromium   # once
 npm run test:unit                    # fast, jsdom
-npm run test:e2e                     # must be green
+npm run test:e2e                     # must be green (includes snapshots)
+npm run test:snapshot                # ARIA snapshots only
 npm run lint && npm run lint:css     # must be clean
 ```
 
 - Pure logic → `tests/unit/`. Needs a browser → `tests/e2e/`. Never both.
+- ARIA snapshots → `tests/snapshot/`: one region each, inline, only the children that matter, regex for times and counts.
+- UI change on purpose → `npm run test:snapshot:update`, then read the diff.
 - Unit: import with `await load(...)` (`tests/unit/env.mjs`). No layout; call `flushFrames()` for rAF.
 - Layout change → take a screenshot. The desktop page never scrolls.
 - New action, exporter rule, smell or example → add a test.
@@ -29,7 +32,7 @@ src/html/       E2E mode
 src/code/       Unit modes; python/ and js/ hold each profile and worker
 examples/html/  One site per folder + examples.js manifest
 examples/python/, examples/javascript/, examples/code.js   Unit examples
-tests/          unit/, e2e/, server.mjs
+tests/          unit/, e2e/, snapshot/, server.mjs
 ```
 
 A module lives in its mode's folder; shared ones in `src/`. Drop the folder prefix from names.

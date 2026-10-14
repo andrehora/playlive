@@ -1,6 +1,6 @@
 const { VisitCounter } = require("./visit-counter");
 
-// Fake: counts kept in an object
+// Fake: in-memory version of a dependency
 class FakeStore {
   counts = {};
 

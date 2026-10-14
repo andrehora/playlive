@@ -2,7 +2,7 @@ from unittest.mock import Mock
 from visit_counter import VisitCounter
 
 
-# Fake: counts kept in a dict
+# Fake: in-memory version of a dependency
 class FakeStore:
     def __init__(self):
         self.counts = {}

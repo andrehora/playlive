@@ -1,6 +1,6 @@
 import { TodoService } from "./todo-service";
 
-// Fake: the to-dos kept in an object
+// Fake: in-memory version of a dependency
 class InMemoryTodos {
   todos: Record<number, { id: number; title: string; done: boolean }> = {};
 

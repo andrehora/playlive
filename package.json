@@ -17,6 +17,8 @@
     "test:e2e": "playwright test",
     "test:examples": "playwright test examples.spec.js",
     "test:app": "playwright test app.spec.js",
+    "test:snapshot": "playwright test --project=snapshot",
+    "test:snapshot:update": "playwright test --project=snapshot --update-snapshots",
     "test:headed": "playwright test --headed",
     "test:report": "playwright show-report"
   },

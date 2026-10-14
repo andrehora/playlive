@@ -6,8 +6,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './env.mjs';
 
-const { lineForStep, errorLinesFor, hlLine, hlValue, isAction } = await load('src/html/editor.js');
-const { undoable } = await load('src/editkeys.js');
+const { lineForStep, errorLinesFor, hlLine, hlValue, isAction, yamlNewline } = await load('src/html/editor.js');
+const { indentLines, matchBracket, undoable } = await load('src/editkeys.js');
 const { escH } = await load('src/util.js');
 const { validate } = await load('src/html/parse.js');
 
@@ -207,4 +207,37 @@ test('undo tells the editor with an input event, and a file loaded starts a new 
   ta.value = 'another file';
   key('z');
   assert.equal(ta.value, 'another file', 'undo does not reach back into the file before');
+});
+
+/* ---------- What the keys do to the text ---------- */
+
+test('Tab over several lines indents each, and over one line is left to typing', () => {
+  const text = 'a\n  b\n\nc\nd';
+  const r = indentLines(text, 1, 8, '  ');
+  assert.equal(r.text, '  a\n    b\n\n  c\nd', 'blank lines are left alone');
+  assert.deepEqual([r.start, r.end], [0, 14], 'the lines are selected');
+  assert.equal(indentLines('x\ny\n', 0, 2, '    ').text, '    x\ny\n',
+    'a line the selection only reaches the start of is not touched');
+  assert.equal(indentLines('abc\ndef', 1, 2, '  '), null);
+  assert.equal(indentLines('abc', 0, 0, '  '), null);
+});
+
+test('Enter starts the next step, or keeps the indent', () => {
+  assert.equal(yamlNewline('steps:'), '  - ');
+  assert.equal(yamlNewline('beforeEach:'), '  - ');
+  assert.equal(yamlNewline('  - click: { role: button, name: Save }'), '  - ');
+  assert.equal(yamlNewline('    timeout: 8000'), '    ');
+  assert.equal(yamlNewline('test: Saves'), '');
+  assert.equal(yamlNewline('  - '), null, 'an empty step ends the list');
+});
+
+test('the bracket beside the caret finds its partner, nested or not', () => {
+  const text = '- fill: { label: Email, value: (a{b}) }';
+  const open = text.indexOf('{'), close = text.length - 1;
+  assert.deepEqual(matchBracket(text, open + 1), [open, close], 'just after it');
+  assert.deepEqual(matchBracket(text, open), [open, close], 'just before it');
+  assert.deepEqual(matchBracket(text, close + 1), [close, open], 'from the closing one');
+  assert.deepEqual(matchBracket(text, text.indexOf('}') ), [text.indexOf('}'), text.indexOf('{', open + 1)]);
+  assert.equal(matchBracket('{ a', 1), null, 'unmatched');
+  assert.equal(matchBracket('abc', 1), null);
 });

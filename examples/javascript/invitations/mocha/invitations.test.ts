@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { invite, Sender } from "./invitations";
 
-// Spy, by hand: counts the emails instead of sending them
+// Mock (interaction): verifies method calls; use sparingly
 class SpyMailer implements Sender {
   sent = 0;
 

@@ -4,7 +4,7 @@ from doorbell import Doorbell
 
 
 class DoorbellTest(unittest.TestCase):
-    # Mock, from the framework: replaces the phone and checks its calls
+    # Mock (interaction): verifies method calls; use sparingly
     def setUp(self):
         self.phone = Mock()
         self.doorbell = Doorbell(self.phone)

@@ -1,6 +1,6 @@
 const { SignUp } = require("./sign-up");
 
-// Fake: users kept in a list
+// Fake: in-memory version of a dependency
 class FakeUsers {
   emails = [];
 

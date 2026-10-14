@@ -3,7 +3,7 @@ import { ACTIONS } from './actions.js';
 import { $id, errorEl, specEl } from '../dom.js';
 import { completionOpen } from '../state.js';
 import { toast } from '../ui.js';
-import { commentKey, undoable } from '../editkeys.js';
+import { caretLine, commentKey, gutterSelect, indentTab, undoable } from '../editkeys.js';
 import { escH, fitGutter, lineTop, plural } from '../util.js';
 
 /* ---------- Editor: syntax highlighting, line numbers, error lines ---------- */
@@ -201,14 +201,32 @@ errorEl.addEventListener('click', () => {
 });
 commentKey(specEl, '#');
 undoable(specEl);
-// Tab inserts two spaces instead of leaving the editor
+caretLine(specEl, hlEl);
+gutterSelect(specEl, gutterEl);
+/* ---------- Enter keeps the YAML's shape ----------
+   What a new line starts with, from the line up to the caret: a step after
+   "steps:" or "beforeEach:", another step after a step, and otherwise the same
+   indent. Enter on a step with nothing in it ends the list instead (null). */
+export function yamlNewline(line){
+  if (/^\s*-\s*$/.test(line)) return null;
+  if (/^(steps|beforeEach):\s*$/.test(line)) return '  - ';
+  const indent = /^\s*/.exec(line)[0];
+  return /^\s*- /.test(line) ? indent + '- ' : indent;
+}
+// Tab inserts two spaces instead of leaving the editor, or indents the lines
+// selected. The suggestion list, when open, has Tab and Enter first.
 specEl.addEventListener('keydown', e => {
-  if (e.key === 'Tab' && !completionOpen && !e.shiftKey && !e.metaKey && !e.ctrlKey && !specEl.readOnly){
-    e.preventDefault();
-    const { selectionStart: a, selectionEnd: b } = specEl;
-    specEl.setRangeText('  ', a, b, 'end');
-    specEl.dispatchEvent(new Event('input'));
-  }
+  if (completionOpen || e.defaultPrevented || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || specEl.readOnly) return;
+  const { selectionStart: a, selectionEnd: b, value } = specEl;
+  if (e.key === 'Tab') indentTab(specEl, '  ');
+  else if (e.key === 'Enter'){
+    const from = value.lastIndexOf('\n', a - 1) + 1, next = yamlNewline(value.slice(from, a));
+    if (next === null) specEl.setRangeText('', from, b, 'end');
+    else specEl.setRangeText('\n' + next, a, b, 'end');
+  } else return;
+  e.preventDefault();
+  // Marked, so the suggestion list waits for the step to be typed (complete.js)
+  specEl.dispatchEvent(Object.assign(new Event('input'), { indent: true }));
 });
 export function setFileStatus(v){
   const el = $id('fileStatus');

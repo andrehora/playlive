@@ -2,7 +2,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { SignUp } from "./sign-up";
 
-// Fake: users kept in a list
+// Fake: in-memory version of a dependency
 class FakeUsers {
   emails: string[] = [];
 
