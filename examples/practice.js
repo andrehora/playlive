@@ -15,6 +15,7 @@
 //   "lines"         every line of the code runs
 //   "branches"      every way out of every branch is taken
 //   "parametrized"  some test is parameterized, one test run once per case
+//   "steady"        every test passes 10 runs in a row, for a lesson about flaky tests
 //   "truefalse"     some test checks a result is true, and some that one is false
 //   "raises"        some test checks the code raises an exception
 //   "setup"         some test starts from shared setup, made once for every test
@@ -27,7 +28,7 @@
 // The picker shows a lesson under its example's group, with what that example teaches.
 import { CODE_EXAMPLES } from "./code.js";
 
-export const GOALS = ["pass", "lines", "branches", "parametrized", "truefalse", "raises", "setup"];
+export const GOALS = ["pass", "lines", "branches", "parametrized", "steady", "truefalse", "raises", "setup"];
 export const TOOLS = ["repeat", "branches"];
 const ALWAYS = ["pass", "lines"];
 
@@ -36,6 +37,7 @@ const LESSONS = [
   ["pin-code", "password-check", { goals: ["truefalse"] }],
   ["anagram", "palindrome", { goals: ["parametrized"] }],
   ["elevator", "bank-account", { goals: ["raises"] }],
+  ["password", "dice", { goals: ["steady"], tools: ["repeat"] }],
   ["museum", "water", { goals: ["branches"], tools: ["branches"] }],
   ["jukebox", "stack", { goals: ["setup"] }],
 ];

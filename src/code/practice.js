@@ -15,7 +15,7 @@ import { plural } from '../util.js';
    or a reload: it is never stored.                                        */
 export const lessonEl = $id('codeLesson'), lessonBtn = document.querySelector('.code-seg [data-codetab="lesson"]');
 const solved = new Set();            // the lessons whose answer you may see
-let lastRun = null;                  // { id, code, tests, whole, ok, passed, ran, lines, hit, ways, taken }
+let lastRun = null;                  // { id, code, tests, whole, ok, passed, ran, reps, lines, hit, ways, taken }
 const dlg = $id('answer'), compareBtn = $id('answerCompare');
 const sides = { mine: $id('answerMine'), answer: $id('answerTheirs') };
 let answerText = '';               // the answer showing in the dialog
@@ -45,6 +45,11 @@ const GOALS = {
     const n = P().setupIn(r.tests, files().tests, S().framework).length;
     return { done: n > 0, detail: n ? plural(n, 'test') : 'none yet' };
   } },
+  // Repeated, a run is ok only when every repetition passed
+  steady: { text: 'Passes 10 runs in a row', check: r => ({
+    done: r.ok && r.reps >= 10,
+    detail: r.reps < 10 ? 'run with Repeat 10×' : r.ok ? `${r.reps} of ${r.reps} runs` : 'failed in a run'
+  }) },
   truefalse: { text: 'Checks both true and false', check: r => {
     const { truthy, falsy } = P().truthsIn(r.tests, files().tests, S().framework);
     return { done: truthy.length > 0 && falsy.length > 0, detail: `${truthy.length} true, ${falsy.length} false` };

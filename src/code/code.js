@@ -335,7 +335,7 @@ function finish(code, note = 'Stopped'){
   if (!coverage) setCoverage(null, code == null ? 'The run did not finish, so nothing was measured. Run the tests again.' : '');
   // What Practice's goals are read from (code/practice.js)
   if (code != null) document.dispatchEvent(new CustomEvent('playlive:code-ran', {
-    detail: { whole: runTarget === files().tests, ok: said.ok && !collectError, passed, ran: counted.length }
+    detail: { whole: runTarget === files().tests, ok: said.ok && !collectError, passed, ran: counted.length, reps }
   }));
 }
 

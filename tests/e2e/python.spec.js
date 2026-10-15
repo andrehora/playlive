@@ -26,7 +26,7 @@ test.describe('Python mode', () => {
 
     // The picker lists the Python examples, Calculator first
     await expect(page.locator('#siteName')).toHaveText('Calculator');
-    await expect(page.locator('#siteCount')).toHaveText('1 of 74');
+    await expect(page.locator('#siteCount')).toHaveText('1 of 75');
     await expect(page.locator('#codeFile')).toHaveText('calculator.py');
     await expect(page.locator('#codeTestsFile')).toHaveText('test_calculator.py');
     await expect(page.locator('.code-fw [data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
@@ -670,7 +670,7 @@ test.describe('Python mode', () => {
     await panel.locator('[data-codesmells="all"]').click();
     await expect(panel.locator('[data-codesmells="all"]')).toHaveAttribute('aria-pressed', 'true');
     // Bank account and Cart repeat their setup, on purpose
-    await expect(score).toHaveText(/^\d+ of 74 examples have one$/);
+    await expect(score).toHaveText(/^\d+ of 75 examples have one$/);
     await expect(group('duplication-of-setup').locator('.smell-what')).toContainText(['Cart', 'Bank account']);
     // Every smell is named, whether or not an example has it, the most common first
     await expect(panel.locator('.smell-group')).toHaveCount(4);
@@ -718,8 +718,8 @@ test.describe('Python mode', () => {
 
     // All examples runs every example as it is chosen
     await panel.locator('[data-codecov="all"]').click();
-    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 74 files fully covered$/, { timeout: PYTHON });
-    await expect(rows).toHaveCount(74);
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 75 files fully covered$/, { timeout: PYTHON });
+    await expect(rows).toHaveCount(75);
     const pcts = await panel.locator('.rank-lines').allTextContents();
     expect(pcts.map(parseFloat)).toEqual(pcts.map(parseFloat).sort((a, b) => b - a));
     // Water teaches coverage: its tests leave a line unrun
@@ -743,15 +743,15 @@ test.describe('Python mode', () => {
     expect(await ed.evaluate(t => t.value.slice(0, t.selectionStart).split('\n').length)).toBe(at);
     // Back on All examples, the ranking is still up to date, so nothing runs
     await panel.locator('[data-codecov="all"]').click();
-    await expect(rows).toHaveCount(74);
-    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 74 files fully covered$/);
+    await expect(rows).toHaveCount(75);
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 75 files fully covered$/);
     // An edit makes it stale, so choosing it again measures again
     await panel.locator('[data-codecov="all"]').click();
     await ed.evaluate(t => { t.value += '\n'; t.dispatchEvent(new Event('input')); });
     await expect(panel.locator('.list-note')).toHaveText('The code changed after the last run. Run the tests to measure it again.');
     await panel.locator('[data-codecov="all"]').click();
     await expect(panel.locator('.rank-score')).toHaveText(/^Measuring/);
-    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 74 files fully covered$/, { timeout: PYTHON });
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 75 files fully covered$/, { timeout: PYTHON });
     await expect(panel.locator('.list-note')).toHaveCount(0);
     // The tab has no Run button: Measure all examples is what measures it
     await expect(panel.locator('.mut-head > button')).toHaveCount(1);
@@ -768,7 +768,7 @@ test.describe('Python mode', () => {
     await expect(panel.locator('.rank-row')).toHaveCount(1, { timeout: PYTHON });
     await expect(panel.locator('.rank-sort')).toHaveCount(0);
     await panel.locator('[data-codecov="all"]').click();
-    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 74 files fully covered$/, { timeout: PYTHON });
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 75 files fully covered$/, { timeout: PYTHON });
     const pcts = col => panel.locator(`.rank-${col}`).allTextContents();
     const nums = list => list.filter(t => t.endsWith('%')).map(parseFloat);
     const desc = list => [...list].sort((a, b) => b - a), asc = list => [...list].sort((a, b) => a - b);
@@ -789,7 +789,7 @@ test.describe('Python mode', () => {
       expect(n).toEqual(order(n));
       expect(br.slice(n.length).every(t => t === '–'), 'a file with no branch is not last').toBe(true);
     }
-    await expect(panel.locator('.rank-row')).toHaveCount(74);
+    await expect(panel.locator('.rank-row')).toHaveCount(75);
     expect(errors).toEqual([]);
   });
 
@@ -835,7 +835,7 @@ test.describe('Python mode', () => {
     const { errors } = await openApp(page, { mode: 'python' });
     await ready(page);
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    expect(ids).toHaveLength(74);
+    expect(ids).toHaveLength(75);
     const failures = [];
     for (const fw of ['unittest', 'pytest']){
       await page.evaluate(fw => window.playlive.code.framework(fw), fw);

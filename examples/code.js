@@ -34,6 +34,7 @@ const GROUPS = [
       ["rainfall", "Compare approximately"],
       ["menu", "Other checks"],
       ["bus-fare", "Skipping a test"],
+      ["dice", "Flaky tests", { flaky: true }],
       ["water", "Code coverage"],
     ]
   },

@@ -87,7 +87,7 @@ steps:
 - Same tests, same names, in every framework (and language for JS/TS), all passing.
 - Python and JS/TS stay aligned: same examples, branches, mutations and smells (`align.spec.js`).
 - Add a row in `examples/code.js`.
-- `upload`, `happy-hour` and `delivery` are flaky on purpose (`{ flaky: true }`).
+- `dice`, `upload`, `happy-hour` and `delivery` are flaky on purpose (`{ flaky: true }`).
 
 **Practice lesson:**
 - Same idea as its example, different code. Small: one idea, no nested functions, no comments in the code.

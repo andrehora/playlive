@@ -183,6 +183,26 @@ def test_suggests_the_next_free_username():
     expect(errors).toEqual([]);
   });
 
+  test('a lesson about flaky tests shows Repeat, and waits for 10 runs in a row', async ({ page }) => {
+    test.setTimeout(2 * CODE_LOAD);
+    const { errors } = await openApp(page, { hash: '#python-practice#password' });
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Dice: Flaky tests');
+    // The one tool it names: Repeat
+    await expect(page.locator('.code-tests-panel .repeat-field')).toBeVisible();
+    await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
+    // One run, green or not, is not 10 in a row
+    await codeRun(page);
+    await expect(page.locator('#codeLesson .lesson-m').nth(2)).toHaveText('run with Repeat 10×');
+    await expect(page.locator('#codeLesson .lesson-answer')).toBeDisabled();
+    // The answer, 10 times over, never fails
+    await page.locator('#codeRepeat').selectOption('10');
+    await writeAnswer(page, 'password');
+    expect(await goals(page)).toEqual([['Every test passes', true], ['100% line coverage', true], ['Passes 10 runs in a row', true]]);
+    await expect(page.locator('#codeLesson .lesson-m').nth(2)).toHaveText('10 of 10 runs');
+    await expect(page.locator('#codeLesson .lesson-answer')).toBeEnabled();
+    expect(errors).toEqual([]);
+  });
+
   test('a lesson about branches shows them, and waits for every one', async ({ page }) => {
     test.setTimeout(2 * CODE_LOAD);
     const { errors } = await openApp(page, { hash: '#python-practice#museum' });
