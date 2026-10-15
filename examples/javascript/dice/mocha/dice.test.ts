@@ -6,6 +6,7 @@ describe("Dice", () => {
     expect(Number.isInteger(roll())).to.equal(true);
   });
 
+  // Flaky test: look closely at the boundaries.
   it("rolls from 1 to 6", () => {
     const value = roll();
     expect(value).to.be.at.least(1);

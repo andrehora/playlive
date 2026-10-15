@@ -84,7 +84,7 @@ export function renderLesson(){
     + '<button type="button" class="small lesson-answer"></button></div><div class="lesson"><ul class="lesson-goals"></ul></div>';
   const link = lessonEl.querySelector('.lesson-from a');
   link.href = `#python#${lesson.from}`;
-  link.textContent = `${from.name}: ${from.teaches}`;
+  link.textContent = `${from.teaches}: ${from.name}`;
   link.title = `Open ${from.name}`;
 
   const goals = lessonEl.querySelector('.lesson-goals');
@@ -103,17 +103,23 @@ export function renderLesson(){
 }
 
 // The answer, large and read-only, named after the file it would be. Compare
-// puts your tests beside it, to read the two side by side.
+// puts your tests beside it, or your code for a lesson whose answer is the code.
 async function showAnswer(){
   const id = exampleOf(active);
   if (!solved.has(id)) return;
   try { answerText = await shipped(id, 'answer'); }
   catch { toast('The answer did not load. Try again.'); return; }
   if (!active || exampleOf(active) !== id) return;
-  for (const side of Object.values(sides)) side.querySelector('.code-file').textContent = files().tests;
+  const code = isCodeAnswer();
+  for (const side of Object.values(sides)) side.querySelector('.code-file').textContent = code ? files().code : files().tests;
+  const yours = code ? 'Your code' : 'Your tests';
+  sides.mine.querySelector('h2').firstChild.textContent = yours + ' ';
+  sides.mine.querySelector('.cmp-code').setAttribute('aria-label', yours);
+  compareBtn.title = `${yours} beside the answer`;
   setComparing(false);
   dlg.showModal();
 }
+const isCodeAnswer = () => P().examples[exampleOf(active)]?.answer === 'code';
 function paint(side, text){
   const code = side.querySelector('.cmp-code');
   code.innerHTML = P().highlight(text).map(l => `<span class="l">${l || ' '}</span>`).join('');
@@ -123,7 +129,7 @@ function setComparing(on){
   compareBtn.setAttribute('aria-pressed', String(on));
   sides.mine.hidden = !on;
   dlg.classList.toggle('comparing', on);
-  if (on) paint(sides.mine, testsEd.value);
+  if (on) paint(sides.mine, isCodeAnswer() ? codeEd.value : testsEd.value);
   paint(sides.answer, answerText);
 }
 compareBtn.addEventListener('click', () => setComparing(compareBtn.getAttribute('aria-pressed') !== 'true'));

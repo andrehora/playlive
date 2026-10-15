@@ -10,7 +10,7 @@ export const PRACTICE = {
   ...PYTHON,
   frameworks: PYTHON.frameworks.filter(f => f.id === 'pytest'),
   dir: 'practice/python',           // where its files ship, under examples/
-  answer: 'answer.py',              // the lesson's tests, written, beside the ones you start from
+  answer: 'answer.py',              // the lesson's tests, written, beside the ones you start from; or its code, fixed
   practice: true,
   mutation: false, smells: null, create: false,
   examples: LESSONS, ids: PRACTICE_IDS

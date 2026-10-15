@@ -118,8 +118,8 @@ test('both versions of an example test the same things, under the same names', a
 test('the Integration examples are written for pytest alone, so they are in Python alone', () => {
   const integration = PY_IDS.filter(id => PY_EXAMPLES[id].group === 'Integration');
   assert.ok(integration.length);
-  assert.deepEqual(CODE_IDS.filter(id => !inBoth(id)), integration);
-  for (const id of integration){
+  assert.deepEqual(CODE_IDS.filter(id => !inBoth(id) && PY_EXAMPLES[id].group !== 'Flaky tests'), integration);
+  for (const id of CODE_IDS.filter(id => !inBoth(id))){
     assert.ok(hasFramework(id, 'pytest') && !hasFramework(id, 'unittest'), id);
     assert.ok(!JAVASCRIPT.ids.includes(id) && !JAVASCRIPT.examples[id], id);
   }

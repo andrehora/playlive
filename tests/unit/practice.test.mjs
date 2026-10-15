@@ -18,7 +18,8 @@ test('every lesson ships its code, the tests to start from, and the answer', asy
   assert.ok(PRACTICE_IDS.length);
   for (const id of PRACTICE_IDS){
     const dir = `examples/practice/python/${id}`, m = moduleOf(id);
-    for (const f of [`${m}.py`, `pytest/test_${m}.py`, 'pytest/answer.py']) assert.ok(await exists(`${dir}/${f}`), `${id}: ${f} is missing`);
+    const answer = PRACTICE[id].answer === 'code' ? 'answer.py' : 'pytest/answer.py';
+    for (const f of [`${m}.py`, `pytest/test_${m}.py`, answer]) assert.ok(await exists(`${dir}/${f}`), `${id}: ${f} is missing`);
   }
 });
 
@@ -37,9 +38,9 @@ test('the tests you start from import the code, and the answer has each of them'
   for (const id of PRACTICE_IDS){
     const dir = `examples/practice/python/${id}`, m = moduleOf(id);
     const names = async f => testsInFile(await read(`${dir}/${f}`)).map(t => t.name);
-    const start = await names(`pytest/test_${m}.py`), answer = await names('pytest/answer.py');
     assert.match(await read(`${dir}/pytest/test_${m}.py`), new RegExp(`^from ${m} import `, 'm'), `${id}: the start imports nothing`);
-    if (PRACTICE[id].goals.includes('parametrized')) continue;
+    if (PRACTICE[id].goals.includes('parametrized') || PRACTICE[id].answer === 'code') continue;
+    const start = await names(`pytest/test_${m}.py`), answer = await names('pytest/answer.py');
     for (const n of start) assert.ok(answer.includes(n), `${id}: the answer has no ${n}`);
   }
 });
@@ -55,11 +56,15 @@ test('a lesson names only tools the panels know, each one an element or a check 
 });
 
 test('every lesson has the goals every lesson has, and only goals the Lesson tab checks', async () => {
+  // Only a lesson about a real service leaves out line coverage: its answer never calls it
+  const NO_LINES = ['stock'];
   const { GOALS } = await load('examples/practice.js');
   const src = await read('src/code/practice.js');
   for (const g of GOALS) assert.match(src, new RegExp(`^  ${g}: \\{ text: '`, 'm'), `no check for ${g}`);
   for (const id of PRACTICE_IDS){
-    assert.deepEqual(PRACTICE[id].goals.slice(0, 2), ['pass', 'lines'], id);
+    const always = NO_LINES.includes(id) ? ['pass'] : ['pass', 'lines'];
+    assert.deepEqual(PRACTICE[id].goals.slice(0, always.length), always, id);
+    assert.equal(PRACTICE[id].goals.includes('lines'), !NO_LINES.includes(id), id);
     for (const g of PRACTICE[id].goals) assert.ok(GOALS.includes(g), `${id}: no goal ${g}`);
   }
 });
@@ -74,4 +79,19 @@ test('a lesson about what a test does starts with no such test, and its answer h
       assert.equal(find(await read(`${dir}/pytest/${file}`), file, 'pytest').length, 0, `${id}: the start meets ${goal}`);
       assert.ok(find(await read(`${dir}/pytest/answer.py`), file, 'pytest').length > 0, `${id}: the answer misses ${goal}`);
     }
+});
+
+// A lesson about a bug in the code has its tests right from the start, and its
+// answer is the code, fixed: the same functions, written so the tests hold
+test('an answer that is the code defines what the code does, and nothing else', async () => {
+  const defs = text => [...text.matchAll(/^(?:def|class) (\w+)/gm)].map(m => m[1]);
+  const code = PRACTICE_IDS.filter(id => PRACTICE[id].answer === 'code');
+  assert.ok(code.length);
+  for (const id of PRACTICE_IDS){
+    assert.ok(['tests', 'code'].includes(PRACTICE[id].answer), `${id}: answer is "tests" or "code"`);
+    if (PRACTICE[id].answer !== 'code') continue;
+    const dir = `examples/practice/python/${id}`;
+    assert.ok(!(await exists(`${dir}/pytest/answer.py`)), `${id}: its answer is the code, so pytest/answer.py would never show`);
+    assert.deepEqual(defs(await read(`${dir}/answer.py`)), defs(await read(`${dir}/${moduleOf(id)}.py`)), id);
+  }
 });

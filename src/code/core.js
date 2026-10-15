@@ -193,7 +193,9 @@ export const key = ({ id, lang, framework, create }, which) => (which === 'code'
 export async function shipped(id, which){
   if (id === NEW) return '';
   const s = S(), f = P().files(id, s.framework, s.lang);
-  const file = which === 'code' ? f.code : `${s.framework}/${which === 'answer' ? P().answer : f.tests}`;
+  // A lesson whose answer is the code fixed ships it beside the code
+  const fixed = which === 'answer' && P().examples[id]?.answer === 'code';
+  const file = which === 'code' ? f.code : fixed ? P().answer : `${s.framework}/${which === 'answer' ? P().answer : f.tests}`;
   const r = await fetch(new URL(`../../examples/${P().dir || active}/${id}/${file}`, import.meta.url));
   if (!r.ok) throw new Error(`${id}: ${r.status}`);
   return r.text();

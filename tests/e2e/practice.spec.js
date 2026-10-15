@@ -28,7 +28,7 @@ test.describe('Practice', () => {
     await expect(page.locator('#codeTestsOpen')).toBeHidden();
     await expect(page.locator('.code-seg [data-codetab="lesson"]')).toHaveAttribute('aria-pressed', 'true');
     const lesson = page.locator('#codeLesson'), answerBtn = lesson.locator('.lesson-answer');
-    await expect(lesson.locator('.lesson-from a')).toHaveText('Calculator: A first example');
+    await expect(lesson.locator('.lesson-from a')).toHaveText('A first example: Calculator');
     await expect(answerBtn).toBeDisabled();
 
     // The tests it starts with pass, but leave lines unrun: still locked
@@ -118,7 +118,7 @@ def test_suggests_the_next_free_username():
     test.setTimeout(2 * CODE_LOAD);
     const { errors } = await openApp(page, { hash: '#python-practice#anagram' });
     await expect(page.locator('#siteName')).toHaveText('Anagram');
-    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Palindrome: Parametrized tests');
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Parametrized tests: Palindrome');
     // A lesson that names no tools looks as Username does: Practice's own panels and nothing more
     await expectPracticeDefault(page);
     await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
@@ -136,7 +136,7 @@ def test_suggests_the_next_free_username():
   test('a lesson about true and false waits for a check of each', async ({ page }) => {
     test.setTimeout(2 * CODE_LOAD);
     const { errors } = await openApp(page, { hash: '#python-practice#pin-code' });
-    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Password check: Checking true or false');
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Checking true or false: Password check');
     await expectPracticeDefault(page);
     await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
     // It starts with the import alone: no test, so no goal is met
@@ -154,7 +154,7 @@ def test_suggests_the_next_free_username():
     test.setTimeout(2 * CODE_LOAD);
     const { errors } = await openApp(page, { hash: '#python-practice#elevator' });
     await expect(page.locator('#siteName')).toHaveText('Elevator');
-    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Bank account: Testing exceptions');
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Testing exceptions: Bank account');
     await expectPracticeDefault(page);
     await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
     expect(allPassed(await codeRun(page))).toBe(1);
@@ -170,7 +170,7 @@ def test_suggests_the_next_free_username():
   test('a lesson about setup waits for tests that share it', async ({ page }) => {
     test.setTimeout(2 * CODE_LOAD);
     const { errors } = await openApp(page, { hash: '#python-practice#jukebox' });
-    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Stack: Setup 1');
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Setup 1: Stack');
     await expectPracticeDefault(page);
     await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
     // Each test builds its own jukebox: they pass and run every line, but share nothing
@@ -186,7 +186,7 @@ def test_suggests_the_next_free_username():
   test('a lesson about flaky tests shows Repeat, and waits for 10 runs in a row', async ({ page }) => {
     test.setTimeout(2 * CODE_LOAD);
     const { errors } = await openApp(page, { hash: '#python-practice#password' });
-    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Dice: Flaky tests');
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Bug in test: Dice');
     // The one tool it names: Repeat
     await expect(page.locator('.code-tests-panel .repeat-field')).toBeVisible();
     await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
@@ -199,6 +199,52 @@ def test_suggests_the_next_free_username():
     await writeAnswer(page, 'password');
     expect(await goals(page)).toEqual([['Every test passes', true], ['100% line coverage', true], ['Passes 10 runs in a row', true]]);
     await expect(page.locator('#codeLesson .lesson-m').nth(2)).toHaveText('10 of 10 runs');
+    await expect(page.locator('#codeLesson .lesson-answer')).toBeEnabled();
+    expect(errors).toEqual([]);
+  });
+
+  test('a lesson about a bug in the code opens the code, fixed, as its answer', async ({ page }) => {
+    test.setTimeout(2 * CODE_LOAD);
+    const { errors } = await openApp(page, { hash: '#python-practice#coupon' });
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Bug in code: Password generator');
+    await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
+    await page.locator('#codeRepeat').selectOption('10');
+    // The tests are right from the start: the code is what gets fixed
+    const fixed = await (await page.request.get('/examples/practice/python/coupon/answer.py')).text();
+    await page.locator('#codeEd textarea').fill(fixed);
+    await codeRun(page);
+    expect(await goals(page)).toEqual([['Every test passes', true], ['100% line coverage', true], ['Passes 10 runs in a row', true]]);
+    await page.locator('#codeLesson .lesson-answer').click();
+    const dlg = page.locator('#answer');
+    await expect(dlg.locator('#answerTheirs .code-file')).toHaveText('coupon.py');
+    await expect(dlg.locator('#answerTheirs .cmp-code')).toContainText('random.shuffle(chars)');
+    await dlg.locator('#answerCompare').click();
+    await expect(dlg.locator('#answerMine h2')).toContainText('Your code');
+    await expect(dlg.locator('#answerMine .cmp-code')).toContainText('random.shuffle(chars)');
+    expect(errors).toEqual([]);
+  });
+
+  test('a lesson about too restrictive a check passes 10 runs in a row once it is loosened', async ({ page }) => {
+    test.setTimeout(2 * CODE_LOAD);
+    const { errors } = await openApp(page, { hash: '#python-practice#taxi' });
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('Too restrictive range: Bonus points');
+    await expect(page.locator('.code-tests-panel .repeat-field')).toBeVisible();
+    await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
+    await page.locator('#codeRepeat').selectOption('10');
+    await writeAnswer(page, 'taxi');
+    expect(await goals(page)).toEqual([['Every test passes', true], ['100% line coverage', true], ['Passes 10 runs in a row', true]]);
+    await expect(page.locator('#codeLesson .lesson-answer')).toBeEnabled();
+    expect(errors).toEqual([]);
+  });
+
+  test('a lesson about a real service asks for no line coverage, since its answer never calls it', async ({ page }) => {
+    test.setTimeout(2 * CODE_LOAD);
+    const { errors } = await openApp(page, { hash: '#python-practice#stock' });
+    await expect(page.locator('#codeLesson .lesson-from a')).toHaveText('External call: Forecast');
+    await codeReady(page, /^Python 3\.\d+\.\d+ · pytest/);
+    await page.locator('#codeRepeat').selectOption('10');
+    await writeAnswer(page, 'stock');
+    expect(await goals(page)).toEqual([['Every test passes', true], ['Passes 10 runs in a row', true]]);
     await expect(page.locator('#codeLesson .lesson-answer')).toBeEnabled();
     expect(errors).toEqual([]);
   });

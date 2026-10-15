@@ -8,8 +8,8 @@
 // on purpose.
 //
 // The picker shows the groups in this order, each under its heading, and the
-// examples in a group from the simplest up. Basics, Fixtures and Test doubles
-// show one tool each; Best practices, last, shows each practice three times.
+// examples in a group from the simplest up. Basics, Flaky tests, Fixtures and
+// Test doubles show one tool each; Best practices, last, shows each practice three times.
 // The first example is where both modes open.
 //
 // Each row is [id, what it teaches], and { flaky: true } for a flaky one (the
@@ -18,7 +18,7 @@
 // the modes that have one of them; a framework without it is greyed out. The id names the
 // folders and the link; the app shows it as a name, "-" as spaces and the
 // first letter capital ("saved-cart" is Saved cart).
-// The Integration examples are written for pytest alone
+// The Integration examples, and a few others, are written for pytest alone
 const PYTEST = { frameworks: ["pytest"] };
 
 const GROUPS = [
@@ -34,8 +34,15 @@ const GROUPS = [
       ["rainfall", "Compare approximately"],
       ["menu", "Other checks"],
       ["bus-fare", "Skipping a test"],
-      ["dice", "Flaky tests", { flaky: true }],
       ["water", "Code coverage"],
+    ]
+  },
+  {
+    group: "Flaky tests", examples: [
+      ["dice", "Bug in test", { flaky: true }],
+      ["password-generator", "Bug in code", { flaky: true, ...PYTEST }],
+      ["bonus-points", "Too restrictive range", { flaky: true, ...PYTEST }],
+      ["forecast", "External call", { flaky: true, ...PYTEST }],
     ]
   },
   {

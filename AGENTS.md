@@ -91,9 +91,9 @@ steps:
 
 **Practice lesson:**
 - Same idea as its example, different code. Small: one idea, no nested functions, no comments in the code.
-- `examples/practice/python/<id>/`: `<module>.py`, `pytest/test_<module>.py` (the start: the imports, and none, one or a few tests), `pytest/answer.py`.
+- `examples/practice/python/<id>/`: `<module>.py`, `pytest/test_<module>.py` (the start: the imports, and none, one or a few tests), `pytest/answer.py`. A lesson about a bug in the code says `answer: "code"` and ships the fixed code as `answer.py` beside `<module>.py`.
 - A row in `examples/practice.js`: `[id, example, { goals, tools }]`, in its example's order. The id is no example's or site's.
-- Goals unlock the answer; every lesson has `pass` and `lines`. Add the one the idea asks for, worded for any framework; how each framework writes it goes in the profile (`parametrizedIn`, `raisesIn`, …).
+- Goals unlock the answer; every lesson has `pass` and `lines`, but a lesson whose answer leaves code unrun on purpose (a real service) says `lines: false`. Add the one the idea asks for, worded for any framework; how each framework writes it goes in the profile (`parametrizedIn`, `raisesIn`, …).
 - Tools are what the panels show beyond the default (Lesson, Results, Output, line coverage). Name one only if the lesson is about it.
 - New goal: `GOALS` (`examples/practice.js` and `src/code/practice.js`), its finder in `src/code/python/python.js`. New tool: `TOOLS`, a `data-tool` element or a `shows('<tool>')` check.
 - The start must not meet the lesson's goal; the answer must (`practice.test.mjs`). Add an e2e test in `practice.spec.js`.

@@ -4,13 +4,17 @@
 //
 // Python and pytest only, for now. A lesson ships in examples/practice/python/<id>/:
 // the code in <module>.py (the id with "-" as "_"), the tests you start from in
-// pytest/test_<module>.py, and the answer in pytest/answer.py.
+// pytest/test_<module>.py, and the answer in pytest/answer.py. A lesson about a
+// bug in the code, whose tests are right from the start, says { answer: "code" }
+// and ships the code fixed, in answer.py beside <module>.py.
 //
-// Each row is [id, the example it practises], and { goals, tools }.
+// Each row is [id, the example it practises], and { goals, tools, lines, answer }.
 //
 // Goals are what the answer waits for, each named here and said in words that
 // hold for any framework (src/code/practice.js checks them). Every lesson has
-// "pass" and "lines"; a lesson adds what its example's idea asks for:
+// "pass" and "lines", but a lesson whose answer leaves code unrun on purpose, as
+// one about a real service does, says { lines: false }. A lesson adds what its
+// example's idea asks for:
 //   "pass"          every test passes
 //   "lines"         every line of the code runs
 //   "branches"      every way out of every branch is taken
@@ -30,25 +34,27 @@ import { CODE_EXAMPLES } from "./code.js";
 
 export const GOALS = ["pass", "lines", "branches", "parametrized", "steady", "truefalse", "raises", "setup"];
 export const TOOLS = ["repeat", "branches"];
-const ALWAYS = ["pass", "lines"];
 
 const LESSONS = [
   ["username", "calculator"],
   ["pin-code", "password-check", { goals: ["truefalse"] }],
   ["anagram", "palindrome", { goals: ["parametrized"] }],
   ["elevator", "bank-account", { goals: ["raises"] }],
-  ["password", "dice", { goals: ["steady"], tools: ["repeat"] }],
   ["museum", "water", { goals: ["branches"], tools: ["branches"] }],
+  ["password", "dice", { goals: ["steady"], tools: ["repeat"] }],
+  ["coupon", "password-generator", { goals: ["steady"], tools: ["repeat"], answer: "code" }],
+  ["taxi", "bonus-points", { goals: ["steady"], tools: ["repeat"] }],
+  ["stock", "forecast", { goals: ["steady"], tools: ["repeat"], lines: false }],
   ["jukebox", "stack", { goals: ["setup"] }],
 ];
 
 const nameOf = id => id[0].toUpperCase() + id.slice(1).replace(/-/g, " ");
 
-// Every lesson by id: { name, teaches, group, from, goals, tools, frameworks },
+// Every lesson by id: { name, teaches, group, from, goals, tools, answer, frameworks },
 // in the shape of the code examples, so the picker and the panels read them alike
-export const PRACTICE = Object.fromEntries(LESSONS.map(([id, from, { goals = [], tools = [] } = {}]) => [id, {
+export const PRACTICE = Object.fromEntries(LESSONS.map(([id, from, { goals = [], tools = [], lines = true, answer = "tests" } = {}]) => [id, {
   name: nameOf(id), teaches: CODE_EXAMPLES[from].teaches, group: CODE_EXAMPLES[from].group,
-  from, goals: [...ALWAYS, ...goals], tools, flaky: false, frameworks: ["pytest"]
+  from, goals: ["pass", ...(lines ? ["lines"] : []), ...goals], tools, answer, flaky: false, frameworks: ["pytest"]
 }]));
 
 export const PRACTICE_IDS = Object.keys(PRACTICE);
