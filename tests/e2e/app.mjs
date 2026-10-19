@@ -23,6 +23,19 @@ export async function steadyCodeIds(ids, fws = []){
   return ids.filter(id => !CODE_EXAMPLES[id].flaky && fws.every(fw => hasFramework(id, fw)));
 }
 
+// Those of them with a Mutation tab: all but the Real world ones, whose code
+// is an installed package's
+export async function mutatedCodeIds(ids, fws = []){
+  const { CODE_EXAMPLES } = await import(pathToFileURL(resolve(ROOT, 'examples/code.js')).href);
+  return (await steadyCodeIds(ids, fws)).filter(id => !CODE_EXAMPLES[id].installed);
+}
+
+// The Real world examples, each with the label its code has
+export async function realWorldCode(){
+  const { CODE_EXAMPLES, CODE_IDS, installedName } = await import(pathToFileURL(resolve(ROOT, 'examples/code.js')).href);
+  return CODE_IDS.filter(id => CODE_EXAMPLES[id].installed).map(id => ({ id, label: installedName(CODE_EXAMPLES[id].installed) }));
+}
+
 // The manifest itself, for tests that ask what a site is rather than which exist.
 export async function manifest(){
   const { SITES } = await import(pathToFileURL(resolve(ROOT, 'examples/html/examples.js')).href);

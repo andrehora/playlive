@@ -1,4 +1,5 @@
 import { $id, KEY } from '../dom.js';
+import { installedName } from '../../examples/code.js';
 import { LOGOS } from './logos.js';
 import { syncUrl } from '../share.js';
 import { mode, setCodeExample } from '../state.js';
@@ -459,7 +460,7 @@ function show(){
     applyTools();
     coverLesson();
     $id('codeTitle').textContent = P().codeTitle(s.lang);
-    $id('codeFile').textContent = f.code;
+    $id('codeFile').textContent = P().examples[id]?.installed ? installedName(P().examples[id].installed) : f.code;
     $id('codeTestsFile').textContent = f.tests;
     tests = []; collectError = null; folded.clear(); runIds = null; tally.clear();
     clearConsole(); readTests(); setCoverage(null);

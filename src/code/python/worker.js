@@ -8,7 +8,8 @@
 
    Messages in: { files, target, framework }: the files to write, the test file
    or one test's id ("test_x.py::Class::test_y") to run, and 'unittest' or
-   'pytest' to run it with. Messages out: { type: 'status', text },
+   'pytest' to run it with, and for a Real world example `installed`, the
+   installed function the code file is (see view below). Messages out: { type: 'status', text },
    { type: 'ready', versions: { python, pytest } }, { type: 'out', line }, { type: 'done', code }
    (0 passed, 1 failed, 5 no tests), { type: 'error', message }, and while the
    tests run: { type: 'collected', tests: [{ id, name, line }] },
@@ -40,7 +41,7 @@ const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/';
 // imported, or the tests would run against the code as it was. No bytecode is
 // written, so an edit inside the same second cannot be served from a stale .pyc.
 const RUNNER = `
-import ast, contextlib, dis, inspect, io, json, os, re, sys, time, traceback, types, unittest, pytest
+import ast, contextlib, dis, importlib, importlib.util, inspect, io, json, os, re, sys, time, traceback, types, unittest, pytest
 sys.dont_write_bytecode = True
 os.makedirs('/work', exist_ok=True)
 os.chdir('/work')
@@ -51,6 +52,57 @@ FILES = set()
 def tell(kind, **data):
     emit(json.dumps({'type': kind, **data}))
 
+# ---------- Installed code: a Real world example's function, in its package ----------
+# The code file is one function of a package Pyodide installed ("rich.text:
+# Text.truncate"), unindented, and the tests import the package, so the file
+# is put back in the package's own file in that function's place, indented as
+# it was. The lines from there on count as the code file's; set per job.
+# The standard library is in a zip, which cannot be written: its module is
+# copied to SHADOW, ahead of it on the path, and the copy removed after.
+VIEW, PRISTINE, SHADOW = [None], {}, '/installed'
+
+def view(spec=None, cover=None):
+    VIEW[0] = None
+    for path, src in PRISTINE.items():              # as installed, for the next job
+        if path.startswith(SHADOW + '/'):
+            if os.path.exists(path):
+                os.remove(path)
+        else:
+            with open(path, 'w') as f:
+                f.write(src)
+    importlib.invalidate_caches()
+    if not spec:
+        return
+    module, qualname = spec.split(':')
+    found = importlib.util.find_spec(module)
+    path = found.origin
+    if not os.path.isfile(path):
+        path = os.path.join(SHADOW, *module.split('.')) + '.py'
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        if SHADOW not in sys.path:
+            sys.path.insert(0, SHADOW)
+    src = PRISTINE.setdefault(path, found.loader.get_source(module))
+    node = ast.parse(src)
+    for part in qualname.split('.'):
+        node = next((n for n in node.body if isinstance(n, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == part), None)
+        if node is None:
+            raise ValueError(f'{qualname} is not in the installed {module}. Update the example to match it.')
+    start = min([node.lineno] + [d.lineno for d in node.decorator_list])
+    VIEW[0] = {'name': cover, 'path': path, 'lines': src.split(chr(10)), 'start': start, 'end': node.end_lineno,
+               'indent': ' ' * node.col_offset, 'package': module.split('.')[0], 'n': 0}
+
+# The package's file with the code file in the function's place
+def spliced(src):
+    v = VIEW[0]
+    body = [v['indent'] + l if l.strip() else l for l in src.rstrip(chr(10)).split(chr(10))]
+    v['n'] = len(body)
+    return chr(10).join(v['lines'][:v['start'] - 1] + body + v['lines'][v['end']:])
+
+# Where the code under test runs from, which coverage watches
+def watched(cover):
+    v = VIEW[0]
+    return v['path'] if v and cover == v['name'] else os.path.abspath(cover)
+
 # The files of a job, written where the runners import them from; the names of
 # their modules, which each run forgets so it imports them afresh
 def write_files(files):
@@ -59,13 +111,29 @@ def write_files(files):
         with open(name, 'w') as f:
             f.write(src)
         FILES.add(name)
+        if VIEW[0] and name == VIEW[0]['name']:
+            with open(VIEW[0]['path'], 'w') as f:
+                f.write(spliced(src))
+            importlib.invalidate_caches()
     return [n.removesuffix('.py') for n in files]
 
+# Forgetting the modules, and the whole installed package the code is put in
+def forget(modules):
+    for m in modules:
+        sys.modules.pop(m, None)
+    if VIEW[0]:
+        p = VIEW[0]['package']
+        for m in [m for m in sys.modules if m == p or m.startswith(p + '.')]:
+            del sys.modules[m]
+
 def frames(pairs):
-    out = []
+    out, v = [], VIEW[0]
     for path, lineno in pairs:
         name = os.path.basename(str(path))
-        if name in FILES and lineno:
+        if v and lineno and os.path.abspath(str(path)) == v['path']:
+            if v['start'] <= lineno < v['start'] + v['n']:
+                out.append({'file': v['name'], 'line': lineno - v['start']})
+        elif name in FILES and lineno:
             out.append({'file': name, 'line': lineno - 1})
     return out
 
@@ -239,8 +307,25 @@ def code_map(src, name):
                             return None
                         return at.get(backs.get(dest, dest))
                     branches.append((at[src_off], [(key + (left,), line(left)), (key + (right,), line(right))]))
-        todo.extend(k for k in c.co_consts if isinstance(k, types.CodeType))
+        # Annotations (Python 3.14) are code of their own, run only when asked
+        # for, so a signature's lines would never seem to run
+        todo.extend(k for k in c.co_consts if isinstance(k, types.CodeType) and k.co_name != '__annotate__')
     return lines, branches
+
+# What a run measured of the code file, from 0: the lines holding code, those
+# that ran, and the branches. Installed code is measured in its package's
+# file, and only its own lines are kept, counted from its first.
+def covered(src):
+    v = VIEW[0]
+    if not v or WATCH[0] != v['path']:
+        lines, points = code_map(src, WATCH[0])
+        return (sorted(n - 1 for n in lines), sorted(n - 1 for n in HIT & lines),
+                statement_branches(src, points, HIT) if BRANCHING else None)
+    full, off = spliced(src), v['start'] - 1
+    lines, points = code_map(full, WATCH[0])
+    lines = {n for n in lines if off < n <= off + v['n']}
+    branches = [[l - off, w, t] for l, w, t in statement_branches(full, points, HIT) if off <= l < off + v['n']] if BRANCHING else None
+    return sorted(n - 1 - off for n in lines), sorted(n - 1 - off for n in HIT & lines), branches
 
 # An if that ends its function with no else jumps, when false, to a copy of
 # the function's "return None" that the compiler gives the jump's own place,
@@ -785,8 +870,7 @@ def mutate(files, target, framework, cover, only=None):
 # ids, so the class you put a test in is yours to choose; a parametrized test
 # fails when any of its cases does. None when the file did not load.
 def failing(target, framework, modules):
-    for m in modules:
-        sys.modules.pop(m, None)
+    forget(modules)
     sink, names, bad = io.StringIO(), set(), set()
     with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
         if framework == 'pytest':
@@ -893,7 +977,7 @@ def measure(files, target, framework, cover, example):
         return
     HIT.clear()
     TAKEN.clear()
-    WATCH[0] = os.path.abspath(cover)
+    WATCH[0] = watched(cover)
     MON.restart_events()
     events = MON.events.LINE
     if BRANCHING:
@@ -903,21 +987,18 @@ def measure(files, target, framework, cover, example):
         failing(target, framework, modules)
     finally:
         MON.set_events(MON.COVERAGE_ID, 0)
-        for m in modules:
-            sys.modules.pop(m, None)
-    lines, points = code_map(files[cover], WATCH[0])
-    tell('measured', example=example, file=cover, lines=sorted(n - 1 for n in lines), hit=sorted(n - 1 for n in HIT & lines),
-         branches=statement_branches(files[cover], points, HIT) if BRANCHING else None)
+        forget(modules)
+    lines, hit, branches = covered(files[cover])
+    tell('measured', example=example, file=cover, lines=lines, hit=hit, branches=branches)
 
 def run(files, target, framework, cover=None):
     files = json.loads(files)
-    for m in write_files(files):
-        sys.modules.pop(m, None)
+    forget(write_files(files))
     measure = bool(MON and cover in files)
     if measure:
         HIT.clear()
         TAKEN.clear()
-        WATCH[0] = os.path.abspath(cover)
+        WATCH[0] = watched(cover)
         MON.restart_events()
         events = MON.events.LINE
         if BRANCHING:
@@ -928,9 +1009,8 @@ def run(files, target, framework, cover=None):
     finally:
         if measure:
             MON.set_events(MON.COVERAGE_ID, 0)
-            lines, points = code_map(files[cover], WATCH[0])
-            tell('coverage', file=cover, lines=sorted(n - 1 for n in lines), hit=sorted(n - 1 for n in HIT & lines),
-                 branches=statement_branches(files[cover], points, HIT) if BRANCHING else None, flows=flows_of(files[cover]))
+            lines, hit, branches = covered(files[cover])
+            tell('coverage', file=cover, lines=lines, hit=hit, branches=branches, flows=flows_of(files[cover]))
 `;
 
 const say = line => postMessage({ type: 'out', line });
@@ -949,7 +1029,7 @@ const ready = (async () => {
   } });
   // A package an example imports, such as requests, is fetched the first time
   const load = src => py.loadPackagesFromImports(src, { messageCallback: () => {}, errorCallback: () => {} });
-  return { load, run: py.globals.get('run'), mutate: py.globals.get('mutate'), list: py.globals.get('list_mutants'), smells: py.globals.get('list_smells'), brief: py.globals.get('brief'), measure: py.globals.get('measure') };
+  return { load, view: py.globals.get('view'), run: py.globals.get('run'), mutate: py.globals.get('mutate'), list: py.globals.get('list_mutants'), smells: py.globals.get('list_smells'), brief: py.globals.get('brief'), measure: py.globals.get('measure') };
 })();
 ready.catch(e => postMessage({ type: 'error', message: String(e?.message || e) }));
 
@@ -957,7 +1037,10 @@ onmessage = async ({ data }) => {
   let py;
   try { py = await ready; } catch { return; }      // already reported
   try {
-    if (data.files) await py.load(Object.values(data.files).join('\n'));
+    if (data.files){
+      await py.load(Object.values(data.files).join('\n'));
+      py.view(data.installed ?? undefined, data.cover ?? undefined);
+    }
     if (data.list) py.list(data.src);
     else if (data.brief) py.brief(JSON.stringify(data.files), data.cover, data.target, data.original, data.framework);
     else if (data.smells) py.smells(data.src, data.example ?? undefined);

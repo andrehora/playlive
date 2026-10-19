@@ -92,12 +92,15 @@ export const files = () => P().files(exampleOf(active), S().framework, S().lang)
    shows the Lesson tab and only the tools it names (examples/practice.js), so
    it shows what its idea needs and nothing else; code/code.js applies them
    each time an example or a lesson loads.                                  */
-// The tools a mode may not have; any other, every example shows
+// The tools a mode may not have; any other, every example shows. A Real world
+// example's code is a package's (examples/code.js): nothing mutates it.
 const MODE_HAS = { lesson: () => false, mutation: p => !!p.mutation, smells: p => !!p.smells, create: p => !!p.create };
+const MUTATES = new Set(['mutation', 'create']);
 export function shows(tool){
   const p = P();
   if (!p) return false;
   if (p.practice) return tool === 'lesson' || !!p.examples[exampleOf(active)]?.tools.includes(tool);
+  if (MUTATES.has(tool) && p.examples[exampleOf(active)]?.installed) return false;
   return MODE_HAS[tool]?.(p) ?? true;
 }
 // Whether example `id` of the mode on screen has tests in framework `fw`; New is written in any
@@ -107,13 +110,15 @@ export const writtenFor = (id, fw) => id === NEW || !P().examples[id]?.framework
    Each panel names the messages it handles when it loads, as it would add a
    listener; code/code.js hands every message of the mode on screen to its handler.
    `request` is what every job sends: both files as the editors hold them, and
-   what to run them with, plus the job's own fields. */
+   what to run them with (and where, for a Real world example), plus the job's
+   own fields. */
 const handlers = {};
 export const onWorker = (types, fn) => { for (const t of types) handlers[t] = fn; };
 export const handlerOf = type => handlers[type];
 export const request = extra => {
   const f = files(), s = S();
-  return { files: { [f.code]: codeEd.value, [f.tests]: testsEd.value }, target: f.tests, cover: f.code, framework: s.framework, lang: s.lang, ...extra };
+  return { files: { [f.code]: codeEd.value, [f.tests]: testsEd.value }, target: f.tests, cover: f.code, framework: s.framework, lang: s.lang,
+    installed: P().examples[exampleOf(active)]?.installed ?? null, ...extra };
 };
 
 /* ---------- The two editors ---------- */

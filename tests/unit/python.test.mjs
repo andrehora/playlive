@@ -92,7 +92,7 @@ const FRAMEWORKS = PYTHON.frameworks.map(f => f.id);
 const { SITES } = await load('examples/html/examples.js');
 const exists = p => access(resolve(ROOT, p)).then(() => true, () => false);
 
-const { CODE_IDS, hasFramework } = await load('examples/code.js');
+const { CODE_IDS, hasFramework, installedName } = await load('examples/code.js');
 const { JAVASCRIPT } = await load('src/code/js/javascript.js');
 const inBoth = id => FRAMEWORKS.every(fw => hasFramework(id, fw));
 
@@ -115,14 +115,26 @@ test('both versions of an example test the same things, under the same names', a
   }
 });
 
-test('the Integration examples are written for pytest alone, so they are in Python alone', () => {
-  const integration = PY_IDS.filter(id => PY_EXAMPLES[id].group === 'Integration');
+test('the Integration and Real world examples are written for pytest alone, so they are in Python alone', () => {
+  const integration = PY_IDS.filter(id => ['Integration', 'Real world - Rich'].includes(PY_EXAMPLES[id].group));
   assert.ok(integration.length);
   assert.deepEqual(CODE_IDS.filter(id => !inBoth(id) && PY_EXAMPLES[id].group !== 'Flaky tests'), integration);
   for (const id of CODE_IDS.filter(id => !inBoth(id))){
     assert.ok(hasFramework(id, 'pytest') && !hasFramework(id, 'unittest'), id);
     assert.ok(!JAVASCRIPT.ids.includes(id) && !JAVASCRIPT.examples[id], id);
   }
+});
+
+test('a Real world example names an installed function, and only it does', () => {
+  for (const id of PY_IDS){
+    const { group, installed } = PY_EXAMPLES[id];
+    if (group === 'Real world - Rich') assert.match(installed, /^\w+(\.\w+)*:\w+(\.\w+)*$/, `${id}: installed is "module:Class.function"`);
+    else assert.equal(installed, null, id);
+  }
+});
+
+test('a Real world example is labelled by its file and function', () => {
+  assert.equal(installedName('rich.text:Text.truncate'), 'rich/text.py · Text.truncate');
 });
 
 test('Calculator comes first, and no Python example shares an id with a site', () => {

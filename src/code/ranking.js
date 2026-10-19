@@ -121,7 +121,8 @@ function next(){
   const x = queue.shift();
   if (!x) return endRanking();
   const s = S();
-  send({ measure: true, example: x.id, files: { [x.f.code]: x.code, [x.f.tests]: x.tests }, target: x.f.tests, cover: x.f.code, framework: s.framework, lang: s.lang });
+  send({ measure: true, example: x.id, files: { [x.f.code]: x.code, [x.f.tests]: x.tests }, target: x.f.tests, cover: x.f.code, framework: s.framework, lang: s.lang,
+    installed: P().examples[x.id]?.installed ?? null });
 }
 onWorker(['measured'], data => {
   if (job !== 'cover' || ranked !== asking) return;

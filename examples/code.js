@@ -20,6 +20,10 @@
 // first letter capital ("saved-cart" is Saved cart).
 // The Integration examples, and a few others, are written for pytest alone
 const PYTEST = { frameworks: ["pytest"] };
+// A Real world example's code is one function of a package Pyodide installs,
+// "module:Class.function", and its tests are that package's own: they import
+// the package, so the code runs where the package has it. No Mutation or Create.
+const installed = what => ({ ...PYTEST, installed: what });
 
 const GROUPS = [
   {
@@ -76,6 +80,20 @@ const GROUPS = [
     ]
   },
   {
+    group: "Real world - Rich", examples: [
+      ["rich-contains", "Checking true or false", installed("rich.text:Text.__contains__")],
+      ["rich-clamp", "Optional arguments", installed("rich.measure:Measurement.clamp")],
+      ["rich-padding-unpack", "Testing exceptions", installed("rich.padding:Padding.unpack")],
+      ["rich-ratio-reduce", "Parametrized tests", installed("rich._ratio:ratio_reduce")],
+      ["rich-pick-bool", "Too many checks in one test", installed("rich._pick:pick_bool")],
+      ["rich-pick-first", "Only the unhappy path", installed("rich.style:Style.pick_first")],
+      ["rich-style-at-offset", "A branch left out", installed("rich.text:Text.get_style_at_offset")],
+      ["rich-align", "A boundary left out", installed("rich.text:Text.align")],
+      ["rich-rstrip-end", "Every line, not every branch", installed("rich.text:Text.rstrip_end")],
+      ["rich-truncate", "An option left out", installed("rich.text:Text.truncate")],
+    ]
+  },
+  {
     group: "Best practices", examples: [
       ["user-profile", "Unchanging tests 1"],
       ["receipt", "Unchanging tests 2"],
@@ -129,11 +147,16 @@ const GROUPS = [
 const nameOf = id => id[0].toUpperCase() + id.slice(1).replace(/-/g, ' ');
 
 // Every example by id, with its group: { name, teaches, group, flaky,
-// frameworks }, frameworks null when it is written for all of them
+// frameworks, installed }, frameworks null when it is written for all of them
+// and installed null but for a Real world example
 export const CODE_EXAMPLES = Object.fromEntries(GROUPS.flatMap(({ group, examples }) =>
-  examples.map(([id, teaches, { flaky = false, frameworks = null } = {}]) => [id, { name: nameOf(id), teaches, group, flaky, frameworks }])));
+  examples.map(([id, teaches, { flaky = false, frameworks = null, installed = null } = {}]) => [id, { name: nameOf(id), teaches, group, flaky, frameworks, installed }])));
 
 export const CODE_IDS = Object.keys(CODE_EXAMPLES);
+
+// What a Real world example's code is called: where it is, then which function
+// ("rich.text:Text.truncate" is "rich/text.py · Text.truncate")
+export const installedName = installed => installed.replace(/^([\w.]+):(.+)$/, (_, m, f) => `${m.replace(/\./g, '/')}.py · ${f}`);
 
 // Whether example `id` is written for framework `fw`
 export const hasFramework = (id, fw) => !CODE_EXAMPLES[id].frameworks || CODE_EXAMPLES[id].frameworks.includes(fw);
