@@ -89,6 +89,12 @@ steps:
 - Add a row in `examples/code.js`.
 - `dice`, `upload`, `happy-hour` and `delivery` are flaky on purpose (`{ flaky: true }`).
 
+**Real world example:**
+- One function of a package Pyodide ships, and that project's own tests: only the ones named, with the imports they use, otherwise unchanged.
+- `<module>.py` is the function unindented, copied from the version Pyodide ships (rich 14.3.3, CPython 3.14.2). The tests import the package.
+- Manifest row: `installed("module:Class.function")` for pytest, `stdlib(...)` for unittest. One framework, Python only.
+- The worker splices the code into the installed file (stdlib: a copy in `/installed`), so edits run. No Mutation or Create.
+
 **Practice lesson:**
 - Same idea as its example, different code. Small: one idea, no nested functions, no comments in the code.
 - `examples/practice/python/<id>/`: `<module>.py`, `pytest/test_<module>.py` (the start: the imports, and none, one or a few tests), `pytest/answer.py`. A lesson about a bug in the code says `answer: "code"` and ships the fixed code as `answer.py` beside `<module>.py`.

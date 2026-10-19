@@ -20,10 +20,14 @@
 // first letter capital ("saved-cart" is Saved cart).
 // The Integration examples, and a few others, are written for pytest alone
 const PYTEST = { frameworks: ["pytest"] };
+// and CPython's own tests (Real world - CPython) for unittest alone
+const UNITTEST = { frameworks: ["unittest"] };
 // A Real world example's code is one function of a package Pyodide installs,
-// "module:Class.function", and its tests are that package's own: they import
-// the package, so the code runs where the package has it. No Mutation or Create.
-const installed = what => ({ ...PYTEST, installed: what });
+// or of the standard library, "module:Class.function", and its tests are that
+// package's own, in its framework: they import the package, so the code runs
+// where the package has it. No Mutation or Create.
+const installed = (what, fw = PYTEST) => ({ ...fw, installed: what });
+const stdlib = what => installed(what, UNITTEST);
 
 const GROUPS = [
   {
@@ -91,6 +95,18 @@ const GROUPS = [
       ["rich-align", "A boundary left out", installed("rich.text:Text.align")],
       ["rich-rstrip-end", "Every line, not every branch", installed("rich.text:Text.rstrip_end")],
       ["rich-truncate", "An option left out", installed("rich.text:Text.truncate")],
+    ]
+  },
+  {
+    group: "Real world - CPython", examples: [
+      ["calendar-isleap", "Full coverage, a case left out", stdlib("calendar:isleap")],
+      ["calendar-leapdays", "Testing boundaries", stdlib("calendar:leapdays")],
+      ["calendar-monthrange", "Valid and invalid boundaries", stdlib("calendar:monthrange")],
+      ["calendar-month-name", "Both ways of a flag", stdlib("calendar:HTMLCalendar.formatmonthname")],
+      ["calendar-timegm", "A round trip", stdlib("calendar:timegm")],
+      ["calendar-weekdays", "Logic in tests", stdlib("calendar:Calendar.iterweekdays")],
+      ["calendar-deprecated", "Testing warnings", stdlib("calendar:__getattr__")],
+      ["calendar-first-weekday", "Tests that change global state", stdlib("calendar:setfirstweekday")],
     ]
   },
   {

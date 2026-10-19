@@ -59,11 +59,13 @@ def tell(kind, **data):
 # it was. The lines from there on count as the code file's; set per job.
 # The standard library is in a zip, which cannot be written: its module is
 # copied to SHADOW, ahead of it on the path, and the copy removed after.
+# Each module's file and source are read once, as installed: a module already
+# imported would name the copy.
 VIEW, PRISTINE, SHADOW = [None], {}, '/installed'
 
 def view(spec=None, cover=None):
     VIEW[0] = None
-    for path, src in PRISTINE.items():              # as installed, for the next job
+    for path, src in PRISTINE.values():             # as installed, for the next job
         if path.startswith(SHADOW + '/'):
             if os.path.exists(path):
                 os.remove(path)
@@ -74,14 +76,16 @@ def view(spec=None, cover=None):
     if not spec:
         return
     module, qualname = spec.split(':')
-    found = importlib.util.find_spec(module)
-    path = found.origin
-    if not os.path.isfile(path):
-        path = os.path.join(SHADOW, *module.split('.')) + '.py'
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        if SHADOW not in sys.path:
-            sys.path.insert(0, SHADOW)
-    src = PRISTINE.setdefault(path, found.loader.get_source(module))
+    if module not in PRISTINE:
+        found = importlib.util.find_spec(module)
+        path = found.origin
+        if not os.path.isfile(path):
+            path = os.path.join(SHADOW, *module.split('.')) + '.py'
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+        PRISTINE[module] = (path, found.loader.get_source(module))
+    path, src = PRISTINE[module]
+    if path.startswith(SHADOW + '/') and SHADOW not in sys.path:
+        sys.path.insert(0, SHADOW)
     node = ast.parse(src)
     for part in qualname.split('.'):
         node = next((n for n in node.body if isinstance(n, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == part), None)
