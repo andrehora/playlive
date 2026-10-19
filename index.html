@@ -333,22 +333,9 @@
     </section>
     <section class="panel code-module-panel code-panel">
       <div class="panel-head">
-        <h2><span id="codeTitle">Code</span> <span class="code-file" id="codeFile"></span></h2>
+        <h2><span id="codeTitle">Code</span> <span class="code-file" id="codeFile"></span> <span class="cat-badge" id="codeCat"></span></h2>
         <div class="head-actions">
-          <div class="seg code-flowseg" role="group" aria-label="What to show" hidden>
-            <button type="button" data-codeview="code" aria-pressed="true" title="Show the code">Code</button>
-            <button type="button" data-codeview="flow" aria-pressed="false"
-              title="Show the control flow">Flow</button>
-          </div>
-          <div class="seg cov-seg" role="group" aria-label="Colour by" hidden>
-            <button type="button" id="codeCov" class="cov-score" data-covby="lines" aria-pressed="true"
-              title="Colour by line">Line: <strong></strong><span></span></button>
-            <button type="button" id="codeBranch" class="cov-score" data-covby="branches" aria-pressed="false"
-              title="Colour by branch">Branch: <strong></strong><span></span></button>
-          </div>
-          <span id="codeLineCov" class="cov-score" hidden>Line coverage: <strong></strong><span></span></span>
-          <span id="codeCovNote" class="cov-note" hidden></span>
-          <label class="cov-toggle" hidden title="Shade the lines the tests ran"><input type="checkbox"
+          <label class="cov-toggle" title="Shade the lines the tests ran"><input type="checkbox"
               id="codeCovShow">Coverage</label>
           <button id="codeReset" type="button" class="ghost icon-btn" aria-label="Reset the code"
             title="Reset the code"><svg class="i" viewBox="0 0 24 24"
@@ -360,6 +347,21 @@
             aria-expanded="true" aria-controls="codeEd codeFlow" title="Collapse"><svg class="i" viewBox="0 0 24 24"
               aria-hidden="true"><path d="M7 4l5 5 5-5M7 20l5-5 5 5" /></svg></button>
         </div>
+      </div>
+      <div class="code-covbar">
+        <div class="seg code-flowseg" role="group" aria-label="What to show" hidden>
+          <button type="button" data-codeview="code" aria-pressed="true" title="Show the code">Code</button>
+          <button type="button" data-codeview="flow" aria-pressed="false"
+            title="Show the control flow">Flow</button>
+        </div>
+        <div class="seg cov-seg" role="group" aria-label="Colour by" hidden>
+          <button type="button" id="codeCov" class="cov-score" data-covby="lines" aria-pressed="true"
+            title="Colour by line">Line: <strong></strong><span></span></button>
+          <button type="button" id="codeBranch" class="cov-score" data-covby="branches" aria-pressed="false"
+            title="Colour by branch">Branch: <strong></strong><span></span></button>
+        </div>
+        <span id="codeLineCov" class="cov-score" hidden>Line coverage: <strong></strong><span></span></span>
+        <span id="codeCovNote" class="cov-note" hidden></span>
       </div>
       <div id="codeFlow" class="code-flow" hidden></div>
       <div class="code-ed" id="codeEd">

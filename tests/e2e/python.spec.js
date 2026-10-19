@@ -26,7 +26,7 @@ test.describe('Python mode', () => {
 
     // The picker lists the Python examples, Calculator first
     await expect(page.locator('#siteName')).toHaveText('Calculator');
-    await expect(page.locator('#siteCount')).toHaveText('1 of 93');
+    await expect(page.locator('#siteCount')).toHaveText('1 of 81');
     await expect(page.locator('#codeFile')).toHaveText('calculator.py');
     await expect(page.locator('#codeTestsFile')).toHaveText('test_calculator.py');
     await expect(page.locator('.code-fw [data-fw="pytest"]')).toHaveAttribute('aria-pressed', 'true');
@@ -392,14 +392,24 @@ test.describe('Python mode', () => {
     const texts = cls => lines(cls).evaluateAll(ls => ls.map(l => l.textContent.trim()));
     const code = page.locator('#codeEd textarea');
     await expect(page.locator('#codeConsole')).toHaveText('Press Run to run the tests.');
-    // The check is the Mutation tab's alone: the Coverage tab shows it anyway
-    await expect(page.locator('#codeCovShow')).toBeHidden();
+    // The Coverage check is on top of the code in every tab, off to start with
+    const covShow = page.locator('#codeCovShow');
+    await expect(covShow).toBeVisible();
+    await expect(covShow).not.toBeChecked();
 
-    // Measured on every run, and the code stays plain until the tab is open
+    // Measured on every run, and the code stays plain until the tab is open or the check on
     await codeRun(page);
     await expect(score).toBeHidden();
     await expect(lines('cov-hit')).toHaveCount(0);
+    await covShow.check();
+    await expect(lines('cov-hit')).toHaveCount(11);
+    await expect(score).toBeHidden();
+    await covShow.uncheck();
+    await expect(lines('cov-hit')).toHaveCount(0);
     await tab('coverage');
+    // The tab shows coverage anyway: its check says so and cannot be turned off
+    await expect(covShow).toBeChecked();
+    await expect(covShow).toBeDisabled();
     await expect(score).toHaveText(/^Line: 84%\s*\(11 of 13\)$/);
     await expect(score).toHaveAttribute('data-band', 'warn');
     await expect(branch).toHaveText(/^Branch: 50%\s*\(2 of 4\)$/);
@@ -670,7 +680,7 @@ test.describe('Python mode', () => {
     await panel.locator('[data-codesmells="all"]').click();
     await expect(panel.locator('[data-codesmells="all"]')).toHaveAttribute('aria-pressed', 'true');
     // Bank account and Cart repeat their setup, on purpose
-    await expect(score).toHaveText(/^\d+ of 93 examples have one$/);
+    await expect(score).toHaveText(/^\d+ of 81 examples have one$/);
     await expect(group('duplication-of-setup').locator('.smell-what')).toContainText(['Cart', 'Bank account']);
     // Every smell is named, whether or not an example has it, the most common first
     await expect(panel.locator('.smell-group')).toHaveCount(4);
@@ -718,8 +728,8 @@ test.describe('Python mode', () => {
 
     // All examples runs every example as it is chosen
     await panel.locator('[data-codecov="all"]').click();
-    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 93 files fully covered$/, { timeout: PYTHON });
-    await expect(rows).toHaveCount(93);
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 81 files fully covered$/, { timeout: PYTHON });
+    await expect(rows).toHaveCount(81);
     const pcts = await panel.locator('.rank-lines').allTextContents();
     expect(pcts.map(parseFloat)).toEqual(pcts.map(parseFloat).sort((a, b) => b - a));
     // Water teaches coverage: its tests leave a line unrun
@@ -743,15 +753,15 @@ test.describe('Python mode', () => {
     expect(await ed.evaluate(t => t.value.slice(0, t.selectionStart).split('\n').length)).toBe(at);
     // Back on All examples, the ranking is still up to date, so nothing runs
     await panel.locator('[data-codecov="all"]').click();
-    await expect(rows).toHaveCount(93);
-    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 93 files fully covered$/);
+    await expect(rows).toHaveCount(81);
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 81 files fully covered$/);
     // An edit makes it stale, so choosing it again measures again
     await panel.locator('[data-codecov="all"]').click();
     await ed.evaluate(t => { t.value += '\n'; t.dispatchEvent(new Event('input')); });
     await expect(panel.locator('.list-note')).toHaveText('The code changed after the last run. Run the tests to measure it again.');
     await panel.locator('[data-codecov="all"]').click();
     await expect(panel.locator('.rank-score')).toHaveText(/^Measuring/);
-    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 93 files fully covered$/, { timeout: PYTHON });
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 81 files fully covered$/, { timeout: PYTHON });
     await expect(panel.locator('.list-note')).toHaveCount(0);
     // The tab has no Run button: Measure all examples is what measures it
     await expect(panel.locator('.mut-head > button')).toHaveCount(1);
@@ -768,7 +778,7 @@ test.describe('Python mode', () => {
     await expect(panel.locator('.rank-row')).toHaveCount(1, { timeout: PYTHON });
     await expect(panel.locator('.rank-sort')).toHaveCount(0);
     await panel.locator('[data-codecov="all"]').click();
-    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 93 files fully covered$/, { timeout: PYTHON });
+    await expect(panel.locator('.rank-score')).toHaveText(/^\d+ of 81 files fully covered$/, { timeout: PYTHON });
     const pcts = col => panel.locator(`.rank-${col}`).allTextContents();
     const nums = list => list.filter(t => t.endsWith('%')).map(parseFloat);
     const desc = list => [...list].sort((a, b) => b - a), asc = list => [...list].sort((a, b) => a - b);
@@ -789,7 +799,7 @@ test.describe('Python mode', () => {
       expect(n).toEqual(order(n));
       expect(br.slice(n.length).every(t => t === '–'), 'a file with no branch is not last').toBe(true);
     }
-    await expect(panel.locator('.rank-row')).toHaveCount(93);
+    await expect(panel.locator('.rank-row')).toHaveCount(81);
     expect(errors).toEqual([]);
   });
 
@@ -819,7 +829,7 @@ test.describe('Python mode', () => {
     test.setTimeout(2 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Rich truncate');
-    await expect(page.locator('#codeFile')).toHaveText('rich/text.py · Text.truncate');
+    await expect(page.locator('#codeFile')).toHaveText('text.py');
     await expect(page.locator('#codeTestsFile')).toHaveText('test_rich_truncate.py');
     await expect(page.locator('.code-fw [data-fw="unittest"]')).toBeDisabled();
     // Nothing mutates a package's code
@@ -846,7 +856,7 @@ test.describe('Python mode', () => {
     test.setTimeout(2 * PYTHON);
     const { errors } = await openApp(page, { mode: 'python' });
     await choose(page, 'Calendar isleap');
-    await expect(page.locator('#codeFile')).toHaveText('calendar.py · isleap');
+    await expect(page.locator('#codeFile')).toHaveText('calendar.py');
     await expect(page.locator('.code-fw [data-fw="unittest"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-fw [data-fw="pytest"]')).toBeDisabled();
     await ready(page);
@@ -856,22 +866,26 @@ test.describe('Python mode', () => {
     await code.fill((await code.inputValue()).replace('year % 400 == 0', 'year % 400 == 1'));
     expect(await codeRun(page)).toMatch(/^1 of 1 test failed/);
     // The module is the real one again for the next example
-    await page.evaluate(() => window.playlive.code.select('calendar-leapdays'));
-    await expect(page.locator('#codeFile')).toHaveText('calendar.py · leapdays');
-    expect(allPassed(await codeRun(page))).toBe(5);
+    await page.evaluate(() => window.playlive.code.select('calendar-monthrange'));
+    await expect(page.locator('#codeFile')).toHaveText('calendar.py');
+    expect(allPassed(await codeRun(page))).toBe(7);
     expect(errors).toEqual([]);
   });
 
-  test('every Real world example passes on its installed code, in its framework, labelled by its file and function', async ({ page }) => {
+  test('every Real world example passes on its installed code, in its framework, its file names linking to its source', async ({ page }) => {
     test.setTimeout(2 * PYTHON);
     const examples = await realWorldCode();
-    expect(examples).toHaveLength(18);
+    expect(examples).toHaveLength(6);
     const { errors } = await openApp(page, { mode: 'python' });
     await ready(page);
     const failures = [];
-    for (const { id, label } of examples){
+    for (const { id, label, source } of examples){
       await page.evaluate(id => window.playlive.code.select(id), id);
       await expect(page.locator('#codeFile')).toHaveText(label);
+      // Both file names link to where they come from, in a tab of their own
+      await expect(page.locator('#codeFile a')).toHaveAttribute('href', source.code[0]);
+      await expect(page.locator('#codeTestsFile a')).toHaveAttribute('href', source.tests[0]);
+      await expect(page.locator('#codeFile a')).toHaveAttribute('target', '_blank');
       const said = await codeRun(page);
       if (!allPassed(said)) failures.push(`${id}: ${said}`);
     }
@@ -891,6 +905,7 @@ test.describe('Python mode', () => {
     expect(allPassed(await codeRun(page))).toBe(6);
     await page.evaluate(() => window.playlive.code.select('calculator'));
     await expect(page.locator('.code-fw [data-fw="unittest"]')).toBeEnabled();
+    await expect(page.locator('#codeFile a')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 
@@ -899,7 +914,7 @@ test.describe('Python mode', () => {
     const { errors } = await openApp(page, { mode: 'python' });
     await ready(page);
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    expect(ids).toHaveLength(93);
+    expect(ids).toHaveLength(81);
     const failures = [];
     for (const fw of ['unittest', 'pytest']){
       await page.evaluate(fw => window.playlive.code.framework(fw), fw);

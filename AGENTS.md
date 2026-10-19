@@ -91,9 +91,12 @@ steps:
 
 **Real world example:**
 - One function of a package Pyodide ships, and that project's own tests: only the ones named, with the imports they use, otherwise unchanged.
-- `<module>.py` is the function unindented, copied from the version Pyodide ships (rich 14.3.3, CPython 3.14.2). The tests import the package.
+- `<module>.py` is the function unindented, copied from the version Pyodide ships (rich 14.3.3, attrs 26.1.0, CPython 3.14.2); a long docstring may go. The tests import the package.
+- Or a few of the module's functions and statements: `"module:main,other"`, main first. The file keeps the module's order, each part at the left edge after a blank line.
+- A row in `examples/sources.js`: GitHub permalinks to the upstream lines, at the release's commit, one for the code and one per block of tests. The panels' file names link to them.
 - Manifest row: `installed("module:Class.function")` for pytest, `stdlib(...)` for unittest. One framework, Python only.
 - The worker splices the code into the installed file (stdlib: a copy in `/installed`), so edits run. No Mutation or Create.
+- Not from a frozen module (`posixpath`) or a stdlib package (`html`): the copy would never run, or would hide the package's other modules.
 
 **Practice lesson:**
 - Same idea as its example, different code. Small: one idea, no nested functions, no comments in the code.

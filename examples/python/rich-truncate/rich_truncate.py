@@ -24,4 +24,3 @@ def truncate(
             spaces = max_width - length
             self._text = [f"{self.plain}{' ' * spaces}"]
             self._length = len(self.plain)
-

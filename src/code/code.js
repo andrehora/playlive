@@ -1,5 +1,6 @@
 import { $id, KEY } from '../dom.js';
 import { installedName } from '../../examples/code.js';
+import { SOURCES } from '../../examples/sources.js';
 import { LOGOS } from './logos.js';
 import { syncUrl } from '../share.js';
 import { mode, setCodeExample } from '../state.js';
@@ -434,6 +435,12 @@ function drawSwitches(){
   draw(document.querySelector('.code-lang'), LANGS, cur, 'lang', { logoOnly: true });
 }
 const fits = writtenFor;
+// A file's name on top of its panel, a link to its source when it has one
+function fileName(el, name, url){
+  if (!url) return el.replaceChildren(name);
+  const a = Object.assign(document.createElement('a'), { href: url, target: '_blank', rel: 'noopener', textContent: name, title: 'Open on GitHub' });
+  el.replaceChildren(a);
+}
 // Put the example, in the framework and language chosen, into the editors.
 // One written for some frameworks only opens in the first of them it has.
 function show(){
@@ -460,8 +467,12 @@ function show(){
     applyTools();
     coverLesson();
     $id('codeTitle').textContent = P().codeTitle(s.lang);
-    $id('codeFile').textContent = P().examples[id]?.installed ? installedName(P().examples[id].installed) : f.code;
-    $id('codeTestsFile').textContent = f.tests;
+    // A Real world example's file names link to where they come from
+    const from = P().examples[id]?.installed && SOURCES[id];
+    fileName($id('codeFile'), from ? installedName(P().examples[id].installed) : f.code, from?.code[0]);
+    fileName($id('codeTestsFile'), f.tests, from?.tests[0]);
+    // the example's group, as a site's category is shown in the end-to-end modes
+    $id('codeCat').textContent = P().examples[id]?.group ?? '';
     tests = []; collectError = null; folded.clear(); runIds = null; tally.clear();
     clearConsole(); readTests(); setCoverage(null);
     resetMutation();

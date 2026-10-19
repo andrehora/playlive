@@ -20,10 +20,11 @@
 // first letter capital ("saved-cart" is Saved cart).
 // The Integration examples, and a few others, are written for pytest alone
 const PYTEST = { frameworks: ["pytest"] };
-// and CPython's own tests (Real world - CPython) for unittest alone
+// and CPython's own tests (Real world) for unittest alone
 const UNITTEST = { frameworks: ["unittest"] };
 // A Real world example's code is one function of a package Pyodide installs,
-// or of the standard library, "module:Class.function", and its tests are that
+// or of the standard library, "module:Class.function" (or a few of its
+// functions and statements, comma separated, the main one first), and its tests are that
 // package's own, in its framework: they import the package, so the code runs
 // where the package has it. No Mutation or Create.
 const installed = (what, fw = PYTEST) => ({ ...fw, installed: what });
@@ -84,29 +85,13 @@ const GROUPS = [
     ]
   },
   {
-    group: "Real world - Rich", examples: [
-      ["rich-contains", "Checking true or false", installed("rich.text:Text.__contains__")],
-      ["rich-clamp", "Optional arguments", installed("rich.measure:Measurement.clamp")],
-      ["rich-padding-unpack", "Testing exceptions", installed("rich.padding:Padding.unpack")],
-      ["rich-ratio-reduce", "Parametrized tests", installed("rich._ratio:ratio_reduce")],
-      ["rich-pick-bool", "Too many checks in one test", installed("rich._pick:pick_bool")],
-      ["rich-pick-first", "Only the unhappy path", installed("rich.style:Style.pick_first")],
-      ["rich-style-at-offset", "A branch left out", installed("rich.text:Text.get_style_at_offset")],
-      ["rich-align", "A boundary left out", installed("rich.text:Text.align")],
-      ["rich-rstrip-end", "Every line, not every branch", installed("rich.text:Text.rstrip_end")],
-      ["rich-truncate", "An option left out", installed("rich.text:Text.truncate")],
-    ]
-  },
-  {
-    group: "Real world - CPython", examples: [
-      ["calendar-isleap", "Full coverage, a case left out", stdlib("calendar:isleap")],
-      ["calendar-leapdays", "Testing boundaries", stdlib("calendar:leapdays")],
-      ["calendar-monthrange", "Valid and invalid boundaries", stdlib("calendar:monthrange")],
-      ["calendar-month-name", "Both ways of a flag", stdlib("calendar:HTMLCalendar.formatmonthname")],
-      ["calendar-timegm", "A round trip", stdlib("calendar:timegm")],
-      ["calendar-weekdays", "Logic in tests", stdlib("calendar:Calendar.iterweekdays")],
-      ["calendar-deprecated", "Testing warnings", stdlib("calendar:__getattr__")],
-      ["calendar-first-weekday", "Tests that change global state", stdlib("calendar:setfirstweekday")],
+    group: "Real world", examples: [
+      ["calendar-monthrange", "Valid and invalid boundaries", stdlib("calendar:monthrange,_validate_month,weekday,isleap,mdays")],
+      ["calendar-isleap", "Full coverage is not enough", stdlib("calendar:isleap")],
+      ["attrs-to-bool", "Untested inputs", installed("attr.converters:to_bool")],
+      ["rich-pick-bool", "One test, many asserts", installed("rich._pick:pick_bool")],
+      ["rich-align", "The exact boundary", installed("rich.text:Text.align")],
+      ["rich-truncate", "An untested option", installed("rich.text:Text.truncate")],
     ]
   },
   {
@@ -170,9 +155,9 @@ export const CODE_EXAMPLES = Object.fromEntries(GROUPS.flatMap(({ group, example
 
 export const CODE_IDS = Object.keys(CODE_EXAMPLES);
 
-// What a Real world example's code is called: where it is, then which function
-// ("rich.text:Text.truncate" is "rich/text.py · Text.truncate")
-export const installedName = installed => installed.replace(/^([\w.]+):(.+)$/, (_, m, f) => `${m.replace(/\./g, '/')}.py · ${f}`);
+// What a Real world example's code is called: the file it is in
+// ("rich.text:Text.truncate" is "text.py")
+export const installedName = installed => `${installed.split(':')[0].split('.').pop()}.py`;
 
 // Whether example `id` is written for framework `fw`
 export const hasFramework = (id, fw) => !CODE_EXAMPLES[id].frameworks || CODE_EXAMPLES[id].frameworks.includes(fw);

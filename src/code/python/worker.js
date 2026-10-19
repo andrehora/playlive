@@ -54,9 +54,11 @@ def tell(kind, **data):
 
 # ---------- Installed code: a Real world example's function, in its package ----------
 # The code file is one function of a package Pyodide installed ("rich.text:
-# Text.truncate"), unindented, and the tests import the package, so the file
-# is put back in the package's own file in that function's place, indented as
-# it was. The lines from there on count as the code file's; set per job.
+# Text.truncate"), or a few of its functions and statements, comma separated
+# ("calendar:monthrange,isleap,mdays"), unindented and in the module's order,
+# and the tests import the package. So the code file is put back in the
+# package's own file, each part in its place, indented as it was, and a map
+# says which line of the code file each of those lines is; set per job.
 # The standard library is in a zip, which cannot be written: its module is
 # copied to SHADOW, ahead of it on the path, and the copy removed after.
 # Each module's file and source are read once, as installed: a module already
@@ -79,28 +81,69 @@ def view(spec=None, cover=None):
     if module not in PRISTINE:
         found = importlib.util.find_spec(module)
         path = found.origin
+        # A frozen module (posixpath, os) is built in and found before any copy
+        if found.origin == 'frozen' or found.loader.get_source(module) is None:
+            raise ValueError(f'{module} is built into this Python, so its code cannot be changed. Choose another module.')
         if not os.path.isfile(path):
+            # a package's copy would hide its other modules (html.entities)
+            if found.submodule_search_locations is not None:
+                raise ValueError(f'{module} is a package of the standard library, so its code cannot be changed here. Choose a module.')
             path = os.path.join(SHADOW, *module.split('.')) + '.py'
             os.makedirs(os.path.dirname(path), exist_ok=True)
         PRISTINE[module] = (path, found.loader.get_source(module))
     path, src = PRISTINE[module]
     if path.startswith(SHADOW + '/') and SHADOW not in sys.path:
         sys.path.insert(0, SHADOW)
-    node = ast.parse(src)
-    for part in qualname.split('.'):
-        node = next((n for n in node.body if isinstance(n, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == part), None)
+    lines, parts = src.split(chr(10)), []
+    for name in qualname.split(','):
+        node = find_part(ast.parse(src), name)
         if node is None:
-            raise ValueError(f'{qualname} is not in the installed {module}. Update the example to match it.')
-    start = min([node.lineno] + [d.lineno for d in node.decorator_list])
-    VIEW[0] = {'name': cover, 'path': path, 'lines': src.split(chr(10)), 'start': start, 'end': node.end_lineno,
-               'indent': ' ' * node.col_offset, 'package': module.split('.')[0], 'n': 0}
+            raise ValueError(f'{name} is not in the installed {module}. Update the example to match it.')
+        start = min([node.lineno] + [d.lineno for d in getattr(node, 'decorator_list', [])])
+        # with the comment right above it, as one part
+        while start > 1 and lines[start - 2].strip().startswith('#'):
+            start -= 1
+        parts.append((start, node.end_lineno, ' ' * node.col_offset))
+    VIEW[0] = {'name': cover, 'path': path, 'lines': lines, 'parts': sorted(parts),
+               'package': module.split('.')[0], 'map': {}}
 
-# The package's file with the code file in the function's place
+# A def, a class or an assignment, by its name: "Class.method" in a class
+def find_part(node, name):
+    for word in name.split('.'):
+        node = next((n for n in node.body if (isinstance(n, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == word)
+                     or (isinstance(n, (ast.Assign, ast.AnnAssign)) and word in {t.id for t in getattr(n, 'targets', [getattr(n, 'target', None)]) if isinstance(t, ast.Name)})), None)
+        if node is None:
+            return None
+    return node
+
+# The code file's parts: each starts at the left edge after a blank line,
+# as (its first line in the code file, its lines)
+def parts_of(src):
+    rows, out = src.rstrip(chr(10)).split(chr(10)), []
+    for i, row in enumerate(rows):
+        if row.strip() and not row[0].isspace() and (i == 0 or not rows[i - 1].strip()) or not out:
+            out.append((i, []))
+        out[-1][1].append(row)
+    for _, part in out:
+        while part and not part[-1].strip():
+            part.pop()
+    return out
+
+# The package's file with each part of the code file in its place, and the map
+# from its lines (from 1) to the code file's (from 0)
 def spliced(src):
     v = VIEW[0]
-    body = [v['indent'] + l if l.strip() else l for l in src.rstrip(chr(10)).split(chr(10))]
-    v['n'] = len(body)
-    return chr(10).join(v['lines'][:v['start'] - 1] + body + v['lines'][v['end']:])
+    chunks = [(0, src.rstrip(chr(10)).split(chr(10)))] if len(v['parts']) == 1 else parts_of(src)
+    if len(chunks) != len(v['parts']):
+        raise ValueError(f"The code has {len(v['parts'])} parts, each starting at the left edge after a blank line. Keep them so, or press Reset.")
+    out, at, v['map'] = [], 0, {}
+    for (start, end, indent), (first, rows) in zip(v['parts'], chunks):
+        out += v['lines'][at:start - 1]
+        for i, row in enumerate(rows):
+            v['map'][len(out) + 1] = first + i
+            out.append(indent + row if row.strip() else row)
+        at = end
+    return chr(10).join(out + v['lines'][at:])
 
 # Where the code under test runs from, which coverage watches
 def watched(cover):
@@ -135,8 +178,8 @@ def frames(pairs):
     for path, lineno in pairs:
         name = os.path.basename(str(path))
         if v and lineno and os.path.abspath(str(path)) == v['path']:
-            if v['start'] <= lineno < v['start'] + v['n']:
-                out.append({'file': v['name'], 'line': lineno - v['start']})
+            if lineno in v['map']:
+                out.append({'file': v['name'], 'line': v['map'][lineno]})
         elif name in FILES and lineno:
             out.append({'file': name, 'line': lineno - 1})
     return out
@@ -318,18 +361,19 @@ def code_map(src, name):
 
 # What a run measured of the code file, from 0: the lines holding code, those
 # that ran, and the branches. Installed code is measured in its package's
-# file, and only its own lines are kept, counted from its first.
+# file, and only its own lines are kept, as the code file counts them.
 def covered(src):
     v = VIEW[0]
     if not v or WATCH[0] != v['path']:
         lines, points = code_map(src, WATCH[0])
         return (sorted(n - 1 for n in lines), sorted(n - 1 for n in HIT & lines),
                 statement_branches(src, points, HIT) if BRANCHING else None)
-    full, off = spliced(src), v['start'] - 1
+    full = spliced(src)
+    at = v['map']
     lines, points = code_map(full, WATCH[0])
-    lines = {n for n in lines if off < n <= off + v['n']}
-    branches = [[l - off, w, t] for l, w, t in statement_branches(full, points, HIT) if off <= l < off + v['n']] if BRANCHING else None
-    return sorted(n - 1 - off for n in lines), sorted(n - 1 - off for n in HIT & lines), branches
+    lines = {n for n in lines if n in at}
+    branches = [[at[l + 1], w, t] for l, w, t in statement_branches(full, points, HIT) if l + 1 in at] if BRANCHING else None
+    return sorted(at[n] for n in lines), sorted(at[n] for n in HIT & lines), branches
 
 # An if that ends its function with no else jumps, when false, to a copy of
 # the function's "return None" that the compiler gives the jump's own place,

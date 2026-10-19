@@ -461,6 +461,8 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 :root:not([data-mode^="python"], [data-mode^="javascript"]) .code-panel{display:none}
 :root:is([data-mode^="python"], [data-mode^="javascript"]) :is(.left > .panel:not(.code-panel), .left > .resizer:not(.code-panel), .browser){display:none}
 .code-file{font:500 12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
+.code-file a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.code-file a:hover{color:var(--ink)}
 .code-tests-panel{flex:0 0 auto;min-height:0}
 /* Its handle sets the code's height, as the editor's does in the other modes;
    Results and Output take whatever is left */
@@ -493,8 +495,15 @@ iframe{flex:1;width:100%;height:100%;border:0;background:#fff;display:block}
 .code-console .empty{display:block;white-space:normal;font-family:"IBM Plex Sans",system-ui,sans-serif}
 /* Coverage: a check on top of the code, while the Mutation tab is open, that
    shades its lines; the Coverage tab puts the scores there instead */
+/* The code's coverage, on a row of its own under the file's name, and only
+   while one of its parts is showing */
+.code-covbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 10px 6px 14px;border-bottom:1px solid var(--line);min-width:0}
+.code-covbar:not(:has(>:not([hidden]))),.code-module-panel[data-fold="collapsed"] .code-covbar{display:none}
+.code-module-panel .panel-head h2 .cat-badge{flex:none}
 .cov-toggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer}
 .cov-toggle input{margin:0;width:14px;height:14px;accent-color:var(--run);cursor:pointer}
+.cov-toggle:has(input:disabled){cursor:default;opacity:.6}
+.cov-toggle input:disabled{cursor:default}
 .cov-score[data-band="ok"]{--band:var(--pass)}
 .cov-score[data-band="warn"]{--band:var(--running);--band-ink:var(--running-ink)}
 .cov-score[data-band="bad"]{--band:var(--fail)}
@@ -796,12 +805,10 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
   .code-tests-panel .head-actions>.icon-btn{order:1}
   .code-tests-panel .head-actions>.seg{order:2;flex:1}
   .code-tests-panel .head-actions>.seg button{flex:1;justify-content:center}
-  /* The code's head the same way: Reset and the fold end the name's row, and
-     Code/Flow, the scores and the note share the row below */
-  .code-module-panel .head-actions{display:contents}
-  .code-module-panel .panel-head h2{flex:1 1 calc(100% - 2 * var(--icon-tap) - 16px);min-width:0}
-  .code-module-panel .head-actions>.icon-btn{order:1}
-  .code-module-panel .head-actions>:is(.seg, .cov-note, .cov-toggle){order:2}
+  /* The code's coverage row: Code/Flow, the scores and the note fill it */
+  .code-module-panel .panel-head{flex-wrap:nowrap}
+  .code-module-panel .head-actions{flex:none;flex-wrap:nowrap}
+  .code-module-panel .panel-head h2{flex:1 1 auto;overflow:hidden}
   .code-module-panel .cov-toggle{min-height:var(--small-tap)}
   .code-module-panel .cov-seg{flex:1 1 0;min-width:0}
   .code-module-panel :is(.cov-seg, .code-flowseg) button{min-height:var(--small-tap)}
@@ -872,6 +879,8 @@ dialog::backdrop{background:rgba(10,14,22,.5)}
 }
 /* ---------- Phones: one control per row rather than a crowded line ---------- */
 @media (max-width:600px){
+  /* No room for the group beside the code's name: the picker shows it */
+  .code-module-panel .panel-head .cat-badge{display:none}
   /* Two rows that each use the whole width: the name, then Reset, Share and the
      repository spread across the rest of the first, then the example's list
      across the whole second. */

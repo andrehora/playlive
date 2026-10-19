@@ -30,10 +30,11 @@ export async function mutatedCodeIds(ids, fws = []){
   return (await steadyCodeIds(ids, fws)).filter(id => !CODE_EXAMPLES[id].installed);
 }
 
-// The Real world examples, each with the label its code has
+// The Real world examples, each with the label its code has and its links
 export async function realWorldCode(){
   const { CODE_EXAMPLES, CODE_IDS, installedName } = await import(pathToFileURL(resolve(ROOT, 'examples/code.js')).href);
-  return CODE_IDS.filter(id => CODE_EXAMPLES[id].installed).map(id => ({ id, label: installedName(CODE_EXAMPLES[id].installed) }));
+  const { SOURCES } = await import(pathToFileURL(resolve(ROOT, 'examples/sources.js')).href);
+  return CODE_IDS.filter(id => CODE_EXAMPLES[id].installed).map(id => ({ id, label: installedName(CODE_EXAMPLES[id].installed), source: SOURCES[id] }));
 }
 
 // The manifest itself, for tests that ask what a site is rather than which exist.

@@ -115,16 +115,18 @@ test('both versions of an example test the same things, under the same names', a
   }
 });
 
-// The framework each group written for one alone is written for
-const ONE_FRAMEWORK = { 'Integration': 'pytest', 'Real world - Rich': 'pytest', 'Real world - CPython': 'unittest' };
+// Integration is written for pytest alone; a Real world example for one
+// framework, its project's own (unittest for the standard library's)
+const ALONE = ['Integration', 'Real world'];
 
 test('the Integration and Real world examples are written for one framework, so they are in Python alone', () => {
-  const alone = PY_IDS.filter(id => ONE_FRAMEWORK[PY_EXAMPLES[id].group]);
-  assert.deepEqual(Object.keys(ONE_FRAMEWORK).map(g => alone.some(id => PY_EXAMPLES[id].group === g)), [true, true, true]);
+  const alone = PY_IDS.filter(id => ALONE.includes(PY_EXAMPLES[id].group));
+  assert.ok(ALONE.every(g => alone.some(id => PY_EXAMPLES[id].group === g)));
   assert.deepEqual(CODE_IDS.filter(id => !inBoth(id) && PY_EXAMPLES[id].group !== 'Flaky tests'), alone);
   for (const id of alone){
-    const fw = ONE_FRAMEWORK[PY_EXAMPLES[id].group];
-    assert.deepEqual(FRAMEWORKS.filter(f => hasFramework(id, f)), [fw], id);
+    const fws = FRAMEWORKS.filter(f => hasFramework(id, f));
+    assert.equal(fws.length, 1, id);
+    if (PY_EXAMPLES[id].group === 'Integration') assert.deepEqual(fws, ['pytest'], id);
   }
   for (const id of CODE_IDS.filter(id => !inBoth(id)))
     assert.ok(!JAVASCRIPT.ids.includes(id) && !JAVASCRIPT.examples[id], id);
@@ -133,14 +135,30 @@ test('the Integration and Real world examples are written for one framework, so 
 test('a Real world example names an installed function, and only it does', () => {
   for (const id of PY_IDS){
     const { group, installed } = PY_EXAMPLES[id];
-    if (group.startsWith('Real world')) assert.match(installed, /^\w+(\.\w+)*:\w+(\.\w+)*$/, `${id}: installed is "module:Class.function"`);
+    if (group === 'Real world') assert.match(installed, /^\w+(\.\w+)*:\w+(\.\w+)*(,\w+(\.\w+)*)*$/, `${id}: installed is "module:Class.function", or a few, comma separated`);
     else assert.equal(installed, null, id);
   }
 });
 
-test('a Real world example is labelled by its file and function', () => {
-  assert.equal(installedName('rich.text:Text.truncate'), 'rich/text.py · Text.truncate');
-  assert.equal(installedName('calendar:isleap'), 'calendar.py · isleap');
+test('a Real world example, and only it, links its code and its tests to GitHub, at a commit', async () => {
+  const { SOURCES } = await load('examples/sources.js');
+  const real = PY_IDS.filter(id => PY_EXAMPLES[id].installed);
+  assert.deepEqual(Object.keys(SOURCES).sort(), real.sort());
+  const permalink = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/blob\/[0-9a-f]{40}\/[\w./-]+\.py#L\d+(-L\d+)?$/;
+  for (const id of real){
+    // one link per part of the code, in the manifest's order
+    assert.equal(SOURCES[id].code.length, PY_EXAMPLES[id].installed.split(',').length, id);
+    for (const url of SOURCES[id].code) assert.match(url, permalink, id);
+    assert.ok(SOURCES[id].tests.length, `${id} links its tests`);
+    for (const url of SOURCES[id].tests) assert.match(url, permalink, id);
+  }
+});
+
+test('a Real world example is labelled by its file', () => {
+  assert.equal(installedName('rich.text:Text.truncate'), 'text.py');
+  assert.equal(installedName('attr.converters:to_bool'), 'converters.py');
+  assert.equal(installedName('calendar:isleap'), 'calendar.py');
+  assert.equal(installedName('calendar:monthrange,isleap,mdays'), 'calendar.py');
 });
 
 test('Calculator comes first, and no Python example shares an id with a site', () => {

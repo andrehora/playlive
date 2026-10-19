@@ -13,13 +13,14 @@ import { band, escH } from '../util.js';
    with a branch (code/flow.js draws them). The code is coloured by lines or by
    branches, as chosen on top of it. An edit to the code moves its
    lines, so it makes the measure stale until the next run. `note` says why
-   there is none, on top of the code while the tab is open. While the
-   Mutation tab is, a Coverage check on top of the code shades it by lines. */
+   there is none, on top of the code while the tab is open. In any other tab,
+   the Coverage check beside the code's name shades it by lines. */
 const codeCov = $id('codeCov'), codeBranch = $id('codeBranch'), lineCov = $id('codeLineCov'), covNote = $id('codeCovNote');
 const covShow = $id('codeCovShow'), covToggle = covShow.closest('label');
 const covSeg = document.querySelector('.cov-seg'), viewSeg = document.querySelector('.code-flowseg'), flowEl = $id('codeFlow');
 export let coverage = null, coverageNote = '';
 let covBy = 'lines', codeView = 'code';    // what colours the code, and code or flow
+let shade = false;                          // the Coverage check, as chosen for the other tabs
 // The code, not its flow: where a row of another panel takes you
 export function showCode(){ codeView = 'code'; renderFlow(); }
 // A lesson opens shaded by what it is about: by branch where it names branches
@@ -52,10 +53,10 @@ function boxClass(lines, decision){
   return !code.length ? 'none' : ran === code.length ? 'hit' : ran ? 'part' : 'miss';
 }
 export function renderCoverage(){
-  // The Coverage tab (Practice's Lesson tab is its), or the Mutation tab with its
+  // The Coverage tab (Practice's Lesson tab is its), or any other tab with the
   // check on, which shades by lines alone. A lesson shows lines alone, its
   // goal, unless it is about branches (examples/practice.js).
-  const tab = view === 'coverage' || view === 'lesson', checked = view === 'mutation' && covShow.checked, shown = tab || checked;
+  const tab = view === 'coverage' || view === 'lesson', checked = !tab && shade, shown = tab || checked;
   const linesOnly = view === 'lesson' && !shows('branches');
   const live = coverage && !coverage.stale, on = live && shown, br = live && !linesOnly && coverage.branches;
   if (live){
@@ -70,7 +71,10 @@ export function renderCoverage(){
   // Practice's is a score alone, with nothing to choose
   covSeg.hidden = !(on && tab) || linesOnly;
   lineCov.hidden = !(on && linesOnly);
-  covToggle.hidden = view !== 'mutation';
+  // The tab shows the coverage anyway: the check says so, and keeps its choice
+  covShow.checked = tab || shade;
+  covShow.disabled = tab;
+  covToggle.title = tab ? 'This tab always shows coverage' : 'Shade the lines the tests ran';
   codeBranch.hidden = !br;
   for (const b of covSeg.querySelectorAll('[data-covby]')) b.setAttribute('aria-pressed', String(b.dataset.covby === covBy));
   // Open with nothing to show: why
@@ -103,7 +107,7 @@ function goToBox(e){
 }
 flowEl.addEventListener('click', goToBox);
 flowEl.addEventListener('keydown', goToBox);
-covShow.addEventListener('change', renderCoverage);
+covShow.addEventListener('change', () => { shade = covShow.checked; renderCoverage(); });
 covSeg.addEventListener('click', e => { const b = e.target.closest('[data-covby]'); if (b){ covBy = b.dataset.covby; renderCoverage(); } });
 viewSeg.addEventListener('click', e => { const b = e.target.closest('[data-codeview]'); if (b){ codeView = b.dataset.codeview; renderFlow(); } });
 codeEd.ta.addEventListener('input', () => { if (coverage && !coverage.stale){ coverage.stale = true; renderCoverage(); } });
