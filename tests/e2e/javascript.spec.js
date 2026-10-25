@@ -129,13 +129,13 @@ test.describe('JS/TS mode', () => {
     expect(await overflow(page)).toBeLessThanOrEqual(0);
 
     await expect(page.locator('#siteName')).toHaveText('Counter');
-    await expect(page.locator('#siteCount')).toHaveText('1 of 71');
+    await expect(page.locator('#siteCount')).toHaveText('1 of 73');
     await expect(page.locator('#codeTitle')).toHaveText('JS source');
     await expect(page.locator('#codeFile')).toHaveText('counter.js');
     await expect(page.locator('#codeTestsFile')).toHaveText('counter.spec.js');
     await expect(page.locator('.code-fw [data-fw="jasmine"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-lang [data-lang="js"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#codeCount')).toHaveText('6 tests');
+    await expect(page.locator('#codeCount')).toHaveText('5 tests');
     await expect(page.locator('#codeResults .code-name').first()).toHaveText('starts at zero');
     expect(new URL(page.url()).hash).toBe('#javascript');
 
@@ -236,7 +236,7 @@ test.describe('JS/TS mode', () => {
     test.setTimeout(4 * LOAD);
     const { errors } = await openApp(page, { mode: 'javascript' });
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    expect(ids).toHaveLength(71);
+    expect(ids).toHaveLength(73);
     const failures = [];
     for (const fw of ['jasmine', 'mocha']) for (const lang of ['js', 'ts']){
       await page.evaluate(([fw, lang]) => { window.playlive.code.framework(fw); window.playlive.code.lang(lang); }, [fw, lang]);
@@ -329,14 +329,14 @@ test.describe('JS/TS mode', () => {
     const panel = page.locator('#codeRanking'), score = panel.locator('.rank-score');
     await page.click('.code-seg [data-codetab="coverage"]');
     await panel.locator('[data-codecov="all"]').click();
-    await expect(score).toHaveText(/^\d+ of 71 files fully covered$/, { timeout: 2 * LOAD });
-    await expect(panel.locator('.rank-row')).toHaveCount(71);
+    await expect(score).toHaveText(/^\d+ of 73 files fully covered$/, { timeout: 2 * LOAD });
+    await expect(panel.locator('.rank-row')).toHaveCount(73);
     const pcts = (await panel.locator('.rank-lines').allTextContents()).map(parseFloat);
     expect(pcts).toEqual([...pcts].sort((a, b) => b - a));
     await expect(panel.locator('.rank-row', { hasText: 'water.js' }).locator('.rank-lines')).not.toHaveText('100%');
     // Another language forgets the ranking, and is measured on its own files
     await page.click('.code-lang [data-lang="ts"]');
-    await expect(score).toHaveText(/^\d+ of 71 files fully covered$/, { timeout: 2 * LOAD });
+    await expect(score).toHaveText(/^\d+ of 73 files fully covered$/, { timeout: 2 * LOAD });
     await expect(panel.locator('.rank-line').first()).toHaveText(/\.ts$/);
     expect(errors).toEqual([]);
   });
@@ -377,7 +377,7 @@ test.describe('JS/TS mode', () => {
     await page.evaluate(() => { window.playlive.code.framework('mocha'); window.playlive.code.lang('ts'); });
     await expect(page.locator('#codeTestsFile')).toHaveText('bank-account.test.ts');
     await panel.locator('[data-codesmells="all"]').click();
-    await expect(score).toHaveText('3 of 71 examples have one');
+    await expect(score).toHaveText('3 of 73 examples have one');
     await expect(group('duplication-of-setup').locator('.smell-what')).toHaveText(['Cart', 'Bank account']);
     await expect(panel.locator('.smell-group')).toHaveCount(4);
     expect(errors).toEqual([]);

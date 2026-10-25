@@ -25,11 +25,6 @@ class CounterTest(unittest.TestCase):
         counter.decrement()
         self.assertEqual(counter.value, 0)
 
-    def test_stops_decrementing_at_zero(self):
-        counter = Counter()
-        counter.decrement()
-        self.assertEqual(counter.value, 0)
-
     def test_reset_goes_back_to_zero(self):
         counter = Counter()
         counter.increment()

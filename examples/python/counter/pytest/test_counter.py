@@ -27,12 +27,6 @@ def test_increment_and_decrement():
     assert counter.value == 0
 
 
-def test_stops_decrementing_at_zero():
-    counter = Counter()
-    counter.decrement()
-    assert counter.value == 0
-
-
 def test_reset_goes_back_to_zero():
     counter = Counter()
     counter.increment()

@@ -6,8 +6,7 @@ class Counter:
         self.value += 1
 
     def decrement(self):
-        if self.value > 0:
-            self.value -= 1
+        self.value -= 1
 
     def reset(self):
         self.value = 0

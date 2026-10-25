@@ -27,18 +27,19 @@ def test_increment_and_decrement():
     assert counter.value == 0
 
 
-def test_stops_decrementing_at_zero():
-    counter = Counter()
-    counter.decrement()
-    assert counter.value == 0
-
-
 def test_reset_goes_back_to_zero():
     counter = Counter()
     counter.increment()
     counter.increment()
     counter.reset()
     assert counter.value == 0
+
+
+def test_stops_decrementing_at_zero():
+    counter = Counter()
+    counter.decrement()
+    assert counter.value == 0
+
 
 
 def test_undo_reverts_increment():
@@ -61,3 +62,13 @@ def test_undo_with_nothing_to_undo():
     counter = Counter()
     counter.undo()
     assert counter.value == 0
+
+
+def test_multiple_undos():
+    counter = Counter()
+    counter.increment()
+    counter.increment()
+    counter.increment()
+    counter.undo()
+    counter.undo()
+    assert counter.value == 1

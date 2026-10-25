@@ -6,9 +6,7 @@ export class Counter {
   }
 
   decrement(): void {
-    if (this.value > 0) {
-      this.value -= 1;
-    }
+    this.value -= 1;
   }
 
   reset(): void {

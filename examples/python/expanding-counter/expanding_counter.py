@@ -8,9 +8,10 @@ class Counter:
         self.value += 1
 
     def decrement(self):
-        if self.value > 0:
-            self.history.append(self.value)
-            self.value -= 1
+        if self.value == 0:
+            return
+        self.history.append(self.value)
+        self.value -= 1
 
     def reset(self):
         self.history.append(self.value)

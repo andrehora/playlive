@@ -178,7 +178,7 @@ test('unit mode offers language, framework and its extra tabs', async ({ page })
           - button "Mutation"
           - button "Smells"
           - button "Create"
-      - heading "Python source counter.py Basics" [level=2]
+      - heading "Python source counter.py A first example" [level=2]
       - checkbox "Coverage"
       - textbox "Python code under test"
   `);

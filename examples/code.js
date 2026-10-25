@@ -8,7 +8,7 @@
 // on purpose.
 //
 // The picker shows the groups in this order, each under its heading, and the
-// examples in a group from the simplest up. Basics, Flaky tests, Fixtures and
+// examples in a group from the simplest up. A first example opens it; Basics, Flaky tests, Fixtures and
 // Test doubles show one tool each; Best practices, last, shows each practice three times.
 // The first example is where both modes open.
 //
@@ -17,7 +17,8 @@
 // some frameworks only names them, { frameworks: ['pytest'] }, and shows in
 // the modes that have one of them; a framework without it is greyed out. The id names the
 // folders and the link; the app shows it as a name, "-" as spaces and the
-// first letter capital ("saved-cart" is Saved cart).
+// first letter capital ("saved-cart" is Saved cart), unless the row says
+// { name } (the four in A first example are all Counter).
 // The Integration examples, and a few others, are written for pytest alone
 const PYTEST = { frameworks: ["pytest"] };
 // and CPython's own tests (Real world) for unittest alone
@@ -32,9 +33,15 @@ const stdlib = what => installed(what, UNITTEST);
 
 const GROUPS = [
   {
+    group: "A first example", examples: [
+      ["counter", "First tests"],
+      ["fixed-counter", "Fixing a bug", { name: "Counter" }],
+      ["expanding-counter", "Adding a feature", { name: "Counter" }],
+      ["refactored-counter", "Refactoring", { name: "Counter" }],
+    ]
+  },
+  {
     group: "Basics", examples: [
-      ["counter", "A first example"],
-      ["expanding-counter", "Adding a feature"],
       ["calculator", "Naming tests"],
       ["password-check", "Checking true or false"],
       ["cart", "Testing a class"],
@@ -153,7 +160,7 @@ const nameOf = id => id[0].toUpperCase() + id.slice(1).replace(/-/g, ' ');
 // frameworks, installed }, frameworks null when it is written for all of them
 // and installed null but for a Real world example
 export const CODE_EXAMPLES = Object.fromEntries(GROUPS.flatMap(({ group, examples }) =>
-  examples.map(([id, teaches, { flaky = false, frameworks = null, installed = null } = {}]) => [id, { name: nameOf(id), teaches, group, flaky, frameworks, installed }])));
+  examples.map(([id, teaches, { flaky = false, frameworks = null, installed = null, name = nameOf(id) } = {}]) => [id, { name, teaches, group, flaky, frameworks, installed }])));
 
 export const CODE_IDS = Object.keys(CODE_EXAMPLES);
 

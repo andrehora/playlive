@@ -25,16 +25,16 @@ class CounterTest(unittest.TestCase):
         counter.decrement()
         self.assertEqual(counter.value, 0)
 
-    def test_stops_decrementing_at_zero(self):
-        counter = Counter()
-        counter.decrement()
-        self.assertEqual(counter.value, 0)
-
     def test_reset_goes_back_to_zero(self):
         counter = Counter()
         counter.increment()
         counter.increment()
         counter.reset()
+        self.assertEqual(counter.value, 0)
+
+    def test_stops_decrementing_at_zero(self):
+        counter = Counter()
+        counter.decrement()
         self.assertEqual(counter.value, 0)
 
     def test_undo_reverts_increment(self):
@@ -55,6 +55,15 @@ class CounterTest(unittest.TestCase):
         counter = Counter()
         counter.undo()
         self.assertEqual(counter.value, 0)
+
+    def test_multiple_undos(self):
+        counter = Counter()
+        counter.increment()
+        counter.increment()
+        counter.increment()
+        counter.undo()
+        counter.undo()
+        self.assertEqual(counter.value, 1)
 
 
 if __name__ == "__main__":

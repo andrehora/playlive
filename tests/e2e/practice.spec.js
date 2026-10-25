@@ -15,7 +15,7 @@ test.describe('Practice', () => {
 
     // The lesson, under what its example teaches, with pytest alone and no other grader
     await expect(page.locator('#siteName')).toHaveText('Username');
-    await expect(page.locator('#siteGoal')).toHaveText('A first example');
+    await expect(page.locator('#siteGoal')).toHaveText('Naming tests');
     await expect(page.locator('#codeFile')).toHaveText('username.py');
     await expect(page.locator('#codeTestsFile')).toHaveText('test_username.py');
     await expect(page.locator('#newCode')).toBeHidden();

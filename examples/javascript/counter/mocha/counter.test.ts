@@ -28,12 +28,6 @@ describe("Counter", () => {
     expect(counter.value).to.equal(0);
   });
 
-  it("stops decrementing at zero", () => {
-    const counter = new Counter();
-    counter.decrement();
-    expect(counter.value).to.equal(0);
-  });
-
   it("reset goes back to zero", () => {
     const counter = new Counter();
     counter.increment();
