@@ -33,7 +33,9 @@ const stdlib = what => installed(what, UNITTEST);
 const GROUPS = [
   {
     group: "Basics", examples: [
-      ["calculator", "A first example"],
+      ["counter", "A first example"],
+      ["expanding-counter", "Adding a feature"],
+      ["calculator", "Naming tests"],
       ["password-check", "Checking true or false"],
       ["cart", "Testing a class"],
       ["shopping-list", "Comparing objects"],

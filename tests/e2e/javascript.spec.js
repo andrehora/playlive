@@ -128,33 +128,33 @@ test.describe('JS/TS mode', () => {
     await expect(page.locator('.browser')).toBeHidden();
     expect(await overflow(page)).toBeLessThanOrEqual(0);
 
-    await expect(page.locator('#siteName')).toHaveText('Calculator');
-    await expect(page.locator('#siteCount')).toHaveText('1 of 69');
+    await expect(page.locator('#siteName')).toHaveText('Counter');
+    await expect(page.locator('#siteCount')).toHaveText('1 of 71');
     await expect(page.locator('#codeTitle')).toHaveText('JS source');
-    await expect(page.locator('#codeFile')).toHaveText('calculator.js');
-    await expect(page.locator('#codeTestsFile')).toHaveText('calculator.spec.js');
+    await expect(page.locator('#codeFile')).toHaveText('counter.js');
+    await expect(page.locator('#codeTestsFile')).toHaveText('counter.spec.js');
     await expect(page.locator('.code-fw [data-fw="jasmine"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-lang [data-lang="js"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#codeCount')).toHaveText('12 tests');
-    await expect(page.locator('#codeResults .code-name').first()).toHaveText('works');
+    await expect(page.locator('#codeCount')).toHaveText('6 tests');
+    await expect(page.locator('#codeResults .code-name').first()).toHaveText('starts at zero');
     expect(new URL(page.url()).hash).toBe('#javascript');
 
     // The other framework and language, and the files they name
     await page.click('.code-fw [data-fw="mocha"]');
-    await expect(page.locator('#codeTestsFile')).toHaveText('calculator.test.js');
+    await expect(page.locator('#codeTestsFile')).toHaveText('counter.test.js');
     await expect(page.locator('#codeTestsEd textarea')).toHaveValue(/require\("chai"\)/);
     await page.click('.code-lang [data-lang="ts"]');
     await expect(page.locator('#codeTitle')).toHaveText('TS source');
-    await expect(page.locator('#codeFile')).toHaveText('calculator.ts');
+    await expect(page.locator('#codeFile')).toHaveText('counter.ts');
     await expect(page.locator('#codeTestsEd textarea')).toHaveValue(/import \{ expect \} from "chai"/);
 
     // Python keeps its own framework, and coming back finds this one as it was
     await setMode(page, 'python');
-    await expect(page.locator('#codeFile')).toHaveText('calculator.py');
+    await expect(page.locator('#codeFile')).toHaveText('counter.py');
     await expect(page.locator('.code-lang [data-lang="python"]')).toHaveAttribute('aria-pressed', 'true');
     await page.click('.code-lang [data-lang="ts"]');
-    await expect(page.locator('#codeFile')).toHaveText('calculator.ts');
-    await expect(page.locator('#codeTestsFile')).toHaveText('calculator.test.ts');
+    await expect(page.locator('#codeFile')).toHaveText('counter.ts');
+    await expect(page.locator('#codeTestsFile')).toHaveText('counter.test.ts');
 
     // Changing language keeps the example, and Code comes back to the one left
     await page.evaluate(() => window.playlive.code.select('stack'));
@@ -236,7 +236,7 @@ test.describe('JS/TS mode', () => {
     test.setTimeout(4 * LOAD);
     const { errors } = await openApp(page, { mode: 'javascript' });
     const ids = await page.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(b => b.dataset.site));
-    expect(ids).toHaveLength(69);
+    expect(ids).toHaveLength(71);
     const failures = [];
     for (const fw of ['jasmine', 'mocha']) for (const lang of ['js', 'ts']){
       await page.evaluate(([fw, lang]) => { window.playlive.code.framework(fw); window.playlive.code.lang(lang); }, [fw, lang]);
@@ -329,14 +329,14 @@ test.describe('JS/TS mode', () => {
     const panel = page.locator('#codeRanking'), score = panel.locator('.rank-score');
     await page.click('.code-seg [data-codetab="coverage"]');
     await panel.locator('[data-codecov="all"]').click();
-    await expect(score).toHaveText(/^\d+ of 69 files fully covered$/, { timeout: 2 * LOAD });
-    await expect(panel.locator('.rank-row')).toHaveCount(69);
+    await expect(score).toHaveText(/^\d+ of 71 files fully covered$/, { timeout: 2 * LOAD });
+    await expect(panel.locator('.rank-row')).toHaveCount(71);
     const pcts = (await panel.locator('.rank-lines').allTextContents()).map(parseFloat);
     expect(pcts).toEqual([...pcts].sort((a, b) => b - a));
     await expect(panel.locator('.rank-row', { hasText: 'water.js' }).locator('.rank-lines')).not.toHaveText('100%');
     // Another language forgets the ranking, and is measured on its own files
     await page.click('.code-lang [data-lang="ts"]');
-    await expect(score).toHaveText(/^\d+ of 69 files fully covered$/, { timeout: 2 * LOAD });
+    await expect(score).toHaveText(/^\d+ of 71 files fully covered$/, { timeout: 2 * LOAD });
     await expect(panel.locator('.rank-line').first()).toHaveText(/\.ts$/);
     expect(errors).toEqual([]);
   });
@@ -377,14 +377,14 @@ test.describe('JS/TS mode', () => {
     await page.evaluate(() => { window.playlive.code.framework('mocha'); window.playlive.code.lang('ts'); });
     await expect(page.locator('#codeTestsFile')).toHaveText('bank-account.test.ts');
     await panel.locator('[data-codesmells="all"]').click();
-    await expect(score).toHaveText('3 of 69 examples have one');
+    await expect(score).toHaveText('3 of 71 examples have one');
     await expect(group('duplication-of-setup').locator('.smell-what')).toHaveText(['Cart', 'Bank account']);
     await expect(panel.locator('.smell-group')).toHaveCount(4);
     expect(errors).toEqual([]);
   });
 
   test('Create starts from the titles, and Check says what a test misses', async ({ page }) => {
-    const { errors } = await openApp(page, { hash: '#javascript-create' });
+    const { errors } = await openApp(page, { hash: '#javascript-create#calculator' });
     await expect(page.locator('.code-seg [data-codetab="create"]')).toHaveAttribute('aria-pressed', 'true');
     const tests = page.locator('#codeTestsEd textarea');
     await expect(tests).toHaveValue('const { add, subtract, multiply, divide } = require("./calculator");\n\n'
@@ -441,7 +441,7 @@ describe("Mine", () => {
 
   test('autocomplete writes a test, and offers the framework\'s own checks', async ({ page }) => {
     test.setTimeout(2 * LOAD);
-    const { errors } = await openApp(page, { mode: 'javascript' });
+    const { errors } = await openApp(page, { hash: '#javascript#calculator' });
     const tests = page.locator('#codeTestsEd textarea'), pop = page.locator('#codeAc');
     await expect(tests).toHaveValue(/describe\("Calculator"/);
     // A new test inside the describe, before its closing line

@@ -54,7 +54,7 @@ export const shareUrl = (id = editorSite, m = mode, codeExample = codeModeOf(m) 
   return `${location.origin}${homePath()}${location.search}#${LINKS[m] || m}${ex === first ? '' : '#' + ex}`;
 };
 // Whether the address already says this place, in any spelling: "/" and
-// "#python" are both home, and "#python#calculator" is "#python".
+// "#python" are both home, and "#python#counter" is "#python".
 const says = (id, m) => {
   if (location.hash.replace(/^#/, '') && !modeFromHash()) return false;
   if (linkedMode() !== m) return false;

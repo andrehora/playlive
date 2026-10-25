@@ -28,7 +28,7 @@ test.describe('Practice', () => {
     await expect(page.locator('#codeTestsOpen')).toBeHidden();
     await expect(page.locator('.code-seg [data-codetab="lesson"]')).toHaveAttribute('aria-pressed', 'true');
     const lesson = page.locator('#codeLesson'), answerBtn = lesson.locator('.lesson-answer');
-    await expect(lesson.locator('.lesson-from a')).toHaveText('A first example: Calculator');
+    await expect(lesson.locator('.lesson-from a')).toHaveText('Naming tests: Calculator');
     await expect(answerBtn).toBeDisabled();
 
     // The tests it starts with pass, but leave lines unrun: still locked

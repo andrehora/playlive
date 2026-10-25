@@ -161,8 +161,8 @@ test('a Real world example is labelled by its file', () => {
   assert.equal(installedName('calendar:monthrange,isleap,mdays'), 'calendar.py');
 });
 
-test('Calculator comes first, and no Python example shares an id with a site', () => {
-  assert.equal(PY_IDS[0], 'calculator');
+test('Counter comes first, and no Python example shares an id with a site', () => {
+  assert.equal(PY_IDS[0], 'counter');
   assert.deepEqual(PY_IDS.filter(id => SITES[id]), [], 'a link could not tell which was meant');
 });
 

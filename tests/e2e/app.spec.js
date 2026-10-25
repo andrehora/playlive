@@ -97,7 +97,7 @@ test.describe('Shareable links', () => {
   test('an example that does not exist opens home', async ({ page }) => {
     const { errors } = await openApp(page, { hash: '#no-such-example' });
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
-    await expect(page.locator('#siteName')).toHaveText('Calculator');
+    await expect(page.locator('#siteName')).toHaveText('Counter');
     expect(new URL(page.url()).hash).toBe('#python');
     expect(errors).toEqual([]);
   });
@@ -108,15 +108,15 @@ test.describe('Shareable links', () => {
     expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
     await expect(page.locator('.area-seg [data-area="code"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.code-lang [data-lang="python"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#siteName')).toHaveText('Calculator');
+    await expect(page.locator('#siteName')).toHaveText('Counter');
     expect(new URL(page.url()).pathname).toBe('/');
     expect(new URL(page.url()).hash).toBe('');
 
-    // "#python" and "#python#calculator" are home spelled out, and stay as typed
-    for (const hash of ['#python', '#python#calculator']){
+    // "#python" and "#python#counter" are home spelled out, and stay as typed
+    for (const hash of ['#python', '#python#counter']){
       await openApp(page, { hash });
       expect(await page.evaluate(() => window.playlive.modes.get())).toBe('python');
-      await expect(page.locator('#siteName')).toHaveText('Calculator');
+      await expect(page.locator('#siteName')).toHaveText('Counter');
       expect(new URL(page.url()).hash).toBe(hash);
     }
 
@@ -149,7 +149,7 @@ test.describe('Shareable links', () => {
     await openApp(page, { hash: '#html#coupon-code' });
     await page.click('.brand');
     await expect.poll(() => page.evaluate(() => window.playlive?.modes.get())).toBe('python');
-    await expect(page.locator('#siteName')).toHaveText('Calculator');
+    await expect(page.locator('#siteName')).toHaveText('Counter');
     expect(new URL(page.url()).pathname).toBe('/');
     expect(new URL(page.url()).hash).toBe('');
   });

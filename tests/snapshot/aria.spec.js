@@ -160,7 +160,7 @@ test('unit mode offers language, framework and its extra tabs', async ({ page })
   await setMode(page, 'python');
   await expect(page.locator('main')).toMatchAriaSnapshot(`
     - main:
-      - heading /Tests test_calculator\\.py \\d+ tests/ [level=2]
+      - heading /Tests test_counter\\.py \\d+ tests/ [level=2]
       - group "Language":
         - button "Python" [pressed]
         - button "JavaScript"
@@ -178,7 +178,7 @@ test('unit mode offers language, framework and its extra tabs', async ({ page })
           - button "Mutation"
           - button "Smells"
           - button "Create"
-      - heading "Python source calculator.py Basics" [level=2]
+      - heading "Python source counter.py Basics" [level=2]
       - checkbox "Coverage"
       - textbox "Python code under test"
   `);
